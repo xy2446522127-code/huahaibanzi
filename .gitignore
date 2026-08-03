@@ -1,2 +1,5 @@
 .superpowers/
 .codex/artifacts/ui-qa/
+**/bin/
+**/obj/
+.vs/

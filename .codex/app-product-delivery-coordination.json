@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "project_revision": 2,
-  "integration_commit": "2bd1eabc30b55fcaa4916b097870fc20d7ff6169",
+  "project_revision": 3,
+  "integration_commit": "4b48603416cff97a7beb644084f7faf82fa8e42f",
   "contract_versions": {
     "visual": "1.0.0",
     "ui-shell-plan": "1.0.0"
@@ -83,6 +83,14 @@
       "contract_versions": {
         "ui-shell-plan": "1.0.0"
       }
+    },
+    {
+      "change_id": "ui-shell-foundation-integrated-2026-08-04",
+      "project_revision": 3,
+      "commit": "4b48603416cff97a7beb644084f7faf82fa8e42f",
+      "scope": "Integrated the verified .NET 8 WinUI solution boundary and enabled generated-output ignores; no product behavior or visual contract changed",
+      "affected_tasks": [],
+      "contract_versions": {}
     }
   ]
 }
