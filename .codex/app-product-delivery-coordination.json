@@ -1,9 +1,10 @@
 {
   "version": 1,
-  "project_revision": 1,
-  "integration_commit": "b8d31d3b46678f11470f1aab2b3f75521dd4aee3",
+  "project_revision": 2,
+  "integration_commit": "2bd1eabc30b55fcaa4916b097870fc20d7ff6169",
   "contract_versions": {
-    "visual": "1.0.0"
+    "visual": "1.0.0",
+    "ui-shell-plan": "1.0.0"
   },
   "tasks": {},
   "changes": [
@@ -15,6 +16,16 @@
       "affected_tasks": [],
       "contract_versions": {
         "visual": "1.0.0"
+      }
+    },
+    {
+      "change_id": "ui-shell-plan-2026-08-04",
+      "project_revision": 2,
+      "commit": "2bd1eabc30b55fcaa4916b097870fc20d7ff6169",
+      "scope": "Gate 0B and Gate 0C UI shell implementation plan",
+      "affected_tasks": [],
+      "contract_versions": {
+        "ui-shell-plan": "1.0.0"
       }
     }
   ]
