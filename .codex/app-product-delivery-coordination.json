@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "project_revision": 4,
-  "integration_commit": "b9384ddb89e784856d04c2862d228427448f5354",
+  "project_revision": 5,
+  "integration_commit": "11bd9ebe64c0875b7ce810650761392775a045de",
   "contract_versions": {
     "visual": "1.0.0",
     "ui-shell-plan": "1.0.0"
@@ -172,6 +172,14 @@
       "project_revision": 4,
       "commit": "b9384ddb89e784856d04c2862d228427448f5354",
       "scope": "Verified coordinator checkpoint containing foundation integration metadata and generated-output ignore rules",
+      "affected_tasks": [],
+      "contract_versions": {}
+    },
+    {
+      "change_id": "ui-shell-visual-policies-integrated-2026-08-04",
+      "project_revision": 5,
+      "commit": "11bd9ebe64c0875b7ce810650761392775a045de",
+      "scope": "Integrated five visual themes, immutable appearance/motion settings, Windows 10/11 visual modes, and memory settings mock; core contract consumers remain compatible",
       "affected_tasks": [],
       "contract_versions": {}
     }
