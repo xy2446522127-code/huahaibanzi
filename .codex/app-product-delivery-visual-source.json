@@ -1,0 +1,111 @@
+{
+  "approved_direction": {
+    "brand": "花海剪贴板",
+    "decision_status": "approved",
+    "material": "玫瑰紫强流动 Liquid Glass",
+    "motion": "A 折射涟漪 + E 磁吸浮起",
+    "petals": "A 稀疏慢落，背景层，默认低强度，可关闭",
+    "wordmark": "A 花瓣流线"
+  },
+  "canonical_evidence": [
+    {
+      "path": ".superpowers/brainstorm/visual-companion-1/content/full-product-effect-v12.html",
+      "surface": "product-scenes"
+    },
+    {
+      "path": ".superpowers/brainstorm/visual-companion-1/content/huahai-wordmark-integrated-v15.html",
+      "surface": "brand-placement"
+    },
+    {
+      "path": ".superpowers/brainstorm/visual-companion-1/content/click-motion-ae-candidate-v11.html",
+      "surface": "click-motion"
+    },
+    {
+      "path": ".superpowers/brainstorm/visual-companion-1/content/petal-motion-background-v17.html",
+      "surface": "petal-background-motion"
+    }
+  ],
+  "component_contracts": {
+    "content_lens": "Dark translucent layers preserve text contrast above decorative material.",
+    "edge_handle": "Theme-colored vertical handle; right by default, draggable to left.",
+    "icons": "Simple single-color system icons; independent 花 mark for tray and installer icon.",
+    "record_row": "Stable 52px class height, type icon, primary content, metadata, pin/favorite state.",
+    "settings": "Unframed two-column settings window with appearance, motion, input, clipboard, privacy, behavior, displays, and system sections."
+  },
+  "interaction_contracts": {
+    "middle_click": "Intercept only after the cursor panel opens successfully; excluded apps retain native middle-click behavior.",
+    "single_click": "Copy the selected record and hide the cursor panel after success.",
+    "double_click_or_enter": "Copy, return focus to the originating window, paste, then hide; preserve clipboard content and show recovery guidance if paste fails."
+  },
+  "motion_tokens": {
+    "click_duration_ms": 760,
+    "click_reduced_motion_ms": 120,
+    "click_style": "refraction-ripple-plus-magnetic-lift",
+    "petal_default_count": 5,
+    "petal_layer": "background",
+    "petal_max_width_px": 7,
+    "petal_user_levels": [
+      "off",
+      "low",
+      "medium",
+      "high"
+    ]
+  },
+  "prohibited_variations": [
+    "large white reflection patches",
+    "petals above text or record cards",
+    "foreground petal overlays",
+    "low-contrast secondary text",
+    "unapproved purple-only replacement layouts",
+    "motion that changes layout dimensions",
+    "decorative controls without actions"
+  ],
+  "status": "gate-0a-approved-gate-0b-pending",
+  "surfaces": [
+    {
+      "id": "floating-panel-default",
+      "language": "zh-CN",
+      "state": "default-with-history",
+      "theme": "rose-purple",
+      "viewport": "desktop"
+    },
+    {
+      "id": "edge-panel-expanded",
+      "language": "zh-CN",
+      "state": "favorites-and-pinned",
+      "theme": "rose-purple",
+      "viewport": "desktop"
+    },
+    {
+      "id": "settings-appearance",
+      "language": "zh-CN",
+      "state": "rose-theme-selected",
+      "theme": "rose-purple",
+      "viewport": "desktop"
+    },
+    {
+      "id": "record-click-motion",
+      "language": "zh-CN",
+      "state": "middle-keyframe",
+      "theme": "rose-purple",
+      "viewport": "desktop"
+    },
+    {
+      "id": "petal-background-motion",
+      "language": "zh-CN",
+      "state": "low-intensity",
+      "theme": "rose-purple",
+      "viewport": "desktop"
+    }
+  ],
+  "tokens": {
+    "brand_accent": "#e9a6d1",
+    "content_background": "rgba(32, 14, 37, 0.70)",
+    "focus_border": "rgba(224, 177, 217, 0.62)",
+    "glass_bottom": "#4b2a54",
+    "reflection": "#bc7caf",
+    "text_primary": "#ffffff",
+    "text_secondary": "rgba(255, 255, 255, 0.80)"
+  },
+  "version": "1.0.0"
+}
