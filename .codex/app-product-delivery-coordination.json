@@ -66,7 +66,7 @@
       "task_id": "ui-shell-core-contracts",
       "role": "worker",
       "outcome": "Define immutable clipboard record models, UI-facing action/history/navigation contracts, and deterministic mock clipboard data for the Gate 0B shell",
-      "status": "ready",
+      "status": "running",
       "base_commit": "b9384ddb89e784856d04c2862d228427448f5354",
       "seen_project_revision": 4,
       "contract_versions": {
@@ -100,7 +100,7 @@
       "task_id": "ui-shell-visual-policies",
       "role": "worker",
       "outcome": "Define five visual themes, appearance and motion settings, Windows 10/11 visual-mode policy, and an in-memory settings mock for the Gate 0B shell",
-      "status": "ready",
+      "status": "running",
       "base_commit": "b9384ddb89e784856d04c2862d228427448f5354",
       "seen_project_revision": 4,
       "contract_versions": {
