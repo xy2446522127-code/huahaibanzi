@@ -11,7 +11,7 @@
       "task_id": "ui-shell-foundation",
       "role": "worker",
       "outcome": "Create and verify the shared .NET 8 WinUI solution boundary using the existing SDK, MSBuild, Windows SDK, and pinned NuGet packages",
-      "status": "blocked",
+      "status": "running",
       "base_commit": "2bd1eabc30b55fcaa4916b097870fc20d7ff6169",
       "seen_project_revision": 2,
       "contract_versions": {
@@ -44,7 +44,10 @@
         "project reference inventory: App -> Core, Core.Tests -> Core, Core has no project references",
         "git diff --check: passed",
         "dotnet build x64: failed with MC6000 then MSB4062 during diagnostic isolation",
-        "Visual Studio MSBuild: failed with MSB4236 and missing workload locator"
+        "Visual Studio MSBuild: failed with MSB4236 and missing workload locator",
+        "Visual Studio Build Tools 17.14.37: installation complete",
+        "Universal Build Tools and UWP Build Tools: installed",
+        "Microsoft.Build.Packaging.Pri.Tasks.dll: present"
       ],
       "evidence": [],
       "blocker": {
@@ -58,7 +61,10 @@
           "MSB4062",
           "MSB4236"
         ],
-        "recovery": "Free at least 5.91 GB on C: and install the approved Visual Studio WinUI/Windows App SDK build components before rerunning this task."
+        "recovery": "Free at least 5.91 GB on C: and install the approved Visual Studio WinUI/Windows App SDK build components before rerunning this task.",
+        "resolved": true,
+        "resolved_by": "Microsoft.VisualStudio.Workload.UniversalBuildTools",
+        "resolved_pri_task": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Microsoft\\VisualStudio\\v17.0\\AppxPackage\\Microsoft.Build.Packaging.Pri.Tasks.dll"
       }
     }
   },
