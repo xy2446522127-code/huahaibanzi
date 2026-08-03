@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "project_revision": 3,
-  "integration_commit": "4b48603416cff97a7beb644084f7faf82fa8e42f",
+  "project_revision": 4,
+  "integration_commit": "b9384ddb89e784856d04c2862d228427448f5354",
   "contract_versions": {
     "visual": "1.0.0",
     "ui-shell-plan": "1.0.0"
@@ -61,6 +61,61 @@
         "resolved_by": "Microsoft.VisualStudio.Workload.UniversalBuildTools",
         "resolved_pri_task": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Microsoft\\VisualStudio\\v17.0\\AppxPackage\\Microsoft.Build.Packaging.Pri.Tasks.dll"
       }
+    },
+    "ui-shell-core-contracts": {
+      "task_id": "ui-shell-core-contracts",
+      "role": "worker",
+      "outcome": "Define immutable clipboard record models, UI-facing action/history/navigation contracts, and deterministic mock clipboard data for the Gate 0B shell",
+      "status": "ready",
+      "base_commit": "b9384ddb89e784856d04c2862d228427448f5354",
+      "seen_project_revision": 4,
+      "contract_versions": {
+        "visual": "1.0.0",
+        "ui-shell-plan": "1.0.0"
+      },
+      "owned_paths": [
+        "src/HuahaiClipboard.Core/Models/ClipboardRecord.cs",
+        "src/HuahaiClipboard.Core/Models/ClipboardFilter.cs",
+        "src/HuahaiClipboard.Core/Models/PanelActionResult.cs",
+        "src/HuahaiClipboard.Core/Contracts/IClipboardHistorySource.cs",
+        "src/HuahaiClipboard.Core/Contracts/IPanelActionSink.cs",
+        "src/HuahaiClipboard.Core/Contracts/IWindowNavigator.cs",
+        "src/HuahaiClipboard.App/Infrastructure/Mocks/MockClipboardHistorySource.cs",
+        "src/HuahaiClipboard.App/Infrastructure/Mocks/MockPanelActionSink.cs",
+        "tests/HuahaiClipboard.Core.Tests/PanelViewModelTests.cs"
+      ],
+      "checkpoint": null,
+      "validation": [],
+      "evidence": []
+    },
+    "ui-shell-visual-policies": {
+      "task_id": "ui-shell-visual-policies",
+      "role": "worker",
+      "outcome": "Define five visual themes, appearance and motion settings, Windows 10/11 visual-mode policy, and an in-memory settings mock for the Gate 0B shell",
+      "status": "ready",
+      "base_commit": "b9384ddb89e784856d04c2862d228427448f5354",
+      "seen_project_revision": 4,
+      "contract_versions": {
+        "visual": "1.0.0",
+        "ui-shell-plan": "1.0.0"
+      },
+      "owned_paths": [
+        "src/HuahaiClipboard.Core/Settings/AppearanceSettings.cs",
+        "src/HuahaiClipboard.Core/Settings/MotionSettings.cs",
+        "src/HuahaiClipboard.Core/Settings/ShellSettings.cs",
+        "src/HuahaiClipboard.Core/Visual/ThemeDefinition.cs",
+        "src/HuahaiClipboard.Core/Visual/ThemeCatalog.cs",
+        "src/HuahaiClipboard.Core/Visual/VisualEnvironment.cs",
+        "src/HuahaiClipboard.Core/Visual/VisualMode.cs",
+        "src/HuahaiClipboard.Core/Visual/VisualModeResolver.cs",
+        "src/HuahaiClipboard.Core/Contracts/ISettingsStore.cs",
+        "src/HuahaiClipboard.App/Infrastructure/Mocks/MemorySettingsStore.cs",
+        "tests/HuahaiClipboard.Core.Tests/ThemeCatalogTests.cs",
+        "tests/HuahaiClipboard.Core.Tests/VisualModeResolverTests.cs"
+      ],
+      "checkpoint": null,
+      "validation": [],
+      "evidence": []
     }
   },
   "changes": [
@@ -89,6 +144,14 @@
       "project_revision": 3,
       "commit": "4b48603416cff97a7beb644084f7faf82fa8e42f",
       "scope": "Integrated the verified .NET 8 WinUI solution boundary and enabled generated-output ignores; no product behavior or visual contract changed",
+      "affected_tasks": [],
+      "contract_versions": {}
+    },
+    {
+      "change_id": "foundation-coordination-checkpoint-2026-08-04",
+      "project_revision": 4,
+      "commit": "b9384ddb89e784856d04c2862d228427448f5354",
+      "scope": "Verified coordinator checkpoint containing foundation integration metadata and generated-output ignore rules",
       "affected_tasks": [],
       "contract_versions": {}
     }
