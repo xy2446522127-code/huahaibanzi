@@ -1,8 +1,21 @@
 {
   "version": 1,
-  "project_revision": 0,
-  "integration_commit": "c6a34cdd85cca9ea8d07a8b0d64323b78366841e",
-  "contract_versions": {},
+  "project_revision": 1,
+  "integration_commit": "b8d31d3b46678f11470f1aab2b3f75521dd4aee3",
+  "contract_versions": {
+    "visual": "1.0.0"
+  },
   "tasks": {},
-  "changes": []
+  "changes": [
+    {
+      "change_id": "design-spec-2026-08-04",
+      "project_revision": 1,
+      "commit": "b8d31d3b46678f11470f1aab2b3f75521dd4aee3",
+      "scope": "product specification, visual source, and Gate 0A approval",
+      "affected_tasks": [],
+      "contract_versions": {
+        "visual": "1.0.0"
+      }
+    }
+  ]
 }
