@@ -1,0 +1,10 @@
+{
+  "artifact_path": ".codex/artifacts/ui-qa/",
+  "checkpoint_policy": "explicit-owned-paths",
+  "enabled": true,
+  "guidance_mode": "beginner_detailed_auto",
+  "guidance_version": 1,
+  "project_kind": "new",
+  "version": 2,
+  "visual_contract_path": ".codex/app-product-delivery-visual-contract.json"
+}
