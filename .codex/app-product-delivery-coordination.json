@@ -18,6 +18,14 @@
         "visual": "1.0.0",
         "ui-shell-plan": "1.0.0"
       },
+      "thread": {
+        "thread_id": "019fc8af-02b7-70f0-a63c-4c814a707a98",
+        "host_id": "local",
+        "project_id": "e7fb3579-651a-466d-a268-b39d2665c244",
+        "title": "花海剪贴板：UI 外壳基础",
+        "worktree": "C:\\Users\\DXY\\.codex\\worktrees\\c59b\\桌面粘贴悬浮面板",
+        "visibility_verified": true
+      },
       "owned_paths": [
         "global.json",
         "Directory.Build.props",
