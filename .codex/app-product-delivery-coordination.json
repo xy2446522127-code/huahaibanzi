@@ -6,7 +6,35 @@
     "visual": "1.0.0",
     "ui-shell-plan": "1.0.0"
   },
-  "tasks": {},
+  "tasks": {
+    "ui-shell-foundation": {
+      "task_id": "ui-shell-foundation",
+      "role": "worker",
+      "outcome": "Create and verify the shared .NET 8 WinUI solution boundary using the existing SDK, MSBuild, Windows SDK, and pinned NuGet packages",
+      "status": "ready",
+      "base_commit": "2bd1eabc30b55fcaa4916b097870fc20d7ff6169",
+      "seen_project_revision": 2,
+      "contract_versions": {
+        "visual": "1.0.0",
+        "ui-shell-plan": "1.0.0"
+      },
+      "owned_paths": [
+        "global.json",
+        "Directory.Build.props",
+        "Directory.Packages.props",
+        "HuahaiClipboard.sln",
+        "src/HuahaiClipboard.Core/HuahaiClipboard.Core.csproj",
+        "src/HuahaiClipboard.App/HuahaiClipboard.App.csproj",
+        "src/HuahaiClipboard.App/app.manifest",
+        "src/HuahaiClipboard.App/App.xaml",
+        "src/HuahaiClipboard.App/App.xaml.cs",
+        "tests/HuahaiClipboard.Core.Tests/HuahaiClipboard.Core.Tests.csproj"
+      ],
+      "checkpoint": null,
+      "validation": [],
+      "evidence": []
+    }
+  },
   "changes": [
     {
       "change_id": "design-spec-2026-08-04",
