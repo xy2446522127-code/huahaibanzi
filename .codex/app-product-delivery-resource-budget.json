@@ -26,7 +26,8 @@
     "worktrees": 0
   },
   "profile": "micro",
+  "result": "Current product verified, committed, pushed to private GitHub repository, and packaged as a ZIP whose extracted executable passed startup smoke.",
   "stage_id": "current-version-release",
-  "status": "active",
+  "status": "closed",
   "version": 2
 }

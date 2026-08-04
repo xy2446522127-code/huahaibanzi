@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "project_revision": 7,
-  "integration_commit": "9c3cd4558e6fd14c882357f2cd364a0578ee2dc8",
+  "project_revision": 8,
+  "integration_commit": "0f2e14b8643a84a43bd15a7946ed677fcf1e882f",
   "contract_versions": {
     "visual": "1.0.0",
     "ui-shell-plan": "1.0.0"
@@ -204,6 +204,14 @@
       "project_revision": 7,
       "commit": "9c3cd4558e6fd14c882357f2cd364a0578ee2dc8",
       "scope": "Integrated bindable panel and settings state for the mock-data UI shell; no system clipboard integration added",
+      "affected_tasks": [],
+      "contract_versions": {}
+    },
+    {
+      "change_id": "desktop-product-release-2026-08-05",
+      "project_revision": 8,
+      "commit": "0f2e14b8643a84a43bd15a7946ed677fcf1e882f",
+      "scope": "Integrated the real clipboard, tray, global summon, local persistence, privacy controls, release safety fixes, tests, and verified Windows x64 distribution.",
       "affected_tasks": [],
       "contract_versions": {}
     }
