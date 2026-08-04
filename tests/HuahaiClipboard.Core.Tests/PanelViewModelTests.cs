@@ -1,5 +1,6 @@
 using HuahaiClipboard.Core.Contracts;
 using HuahaiClipboard.Core.Models;
+using HuahaiClipboard.Core.Presentation;
 using HuahaiClipboard.App.Infrastructure.Mocks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -264,6 +265,117 @@ public sealed class PanelViewModelTests
         Assert.AreEqual(PanelActionResult.Failure("记录不存在或已删除"), pasteMissing);
     }
 
+    [TestMethod]
+    public async Task SearchAndFilter_ComposeWithoutChangingSourceOrder()
+    {
+        var viewModel = CreatePanelViewModel();
+        await viewModel.LoadAsync();
+        var originalOrder = viewModel.AllRecords.Select(record => record.Id).ToArray();
+
+        viewModel.SelectedFilter = ClipboardFilter.Link;
+        viewModel.SearchText = "  OPENAI  ";
+
+        Assert.AreEqual(1, viewModel.VisibleRecords.Count);
+        Assert.AreEqual(
+            Guid.Parse("00000000-0000-0000-0000-000000000002"),
+            viewModel.VisibleRecords[0].Id);
+        CollectionAssert.AreEqual(
+            originalOrder,
+            viewModel.AllRecords.Select(record => record.Id).ToArray());
+    }
+
+    [TestMethod]
+    public async Task Load_SortsPinnedRecordsFirstAndSelectsTheFirstVisibleRecord()
+    {
+        var viewModel = CreatePanelViewModel();
+
+        await viewModel.LoadAsync();
+
+        string[] expectedLeadingIds =
+        [
+            "00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000003",
+            "00000000-0000-0000-0000-000000000004",
+            "00000000-0000-0000-0000-000000000010"
+        ];
+        CollectionAssert.AreEqual(
+            expectedLeadingIds,
+            viewModel.VisibleRecords.Take(4).Select(record => record.Id.ToString()).ToArray());
+        Assert.AreEqual(viewModel.VisibleRecords[0], viewModel.SelectedRecord);
+        Assert.IsFalse(viewModel.IsLoading);
+        Assert.IsFalse(viewModel.IsEmpty);
+    }
+
+    [TestMethod]
+    public async Task CopyAndPaste_OnlyHideThePanelAfterSuccessfulActions()
+    {
+        var navigator = new RecordingWindowNavigator();
+        var viewModel = CreatePanelViewModel(navigator);
+        await viewModel.LoadAsync();
+        var successRecord = viewModel.AllRecords.Single(
+            record => record.Id == Guid.Parse("00000000-0000-0000-0000-000000000001"));
+        var recoveryRecord = viewModel.AllRecords.Single(
+            record => record.Id == Guid.Parse("00000000-0000-0000-0000-000000000012"));
+
+        await viewModel.CopyAsync(successRecord);
+        Assert.AreEqual(1, navigator.HideTransientPanelCalls);
+        Assert.IsNull(viewModel.RecoveryMessage);
+
+        await viewModel.PasteAsync(recoveryRecord);
+        Assert.AreEqual(1, navigator.HideTransientPanelCalls);
+        Assert.AreEqual("已复制，请按 Ctrl+V 手动粘贴", viewModel.RecoveryMessage);
+        Assert.IsFalse(viewModel.IsBusy);
+    }
+
+    [TestMethod]
+    public async Task RecordCommands_RefreshStateAndKeepSelectionUsable()
+    {
+        var navigator = new RecordingWindowNavigator();
+        var viewModel = CreatePanelViewModel(navigator);
+        await viewModel.LoadAsync();
+        var first = viewModel.SelectedRecord!;
+
+        await viewModel.ToggleFavoriteAsync(first);
+        await viewModel.TogglePinnedAsync(first);
+        Assert.IsFalse(viewModel.AllRecords.Single(record => record.Id == first.Id).IsFavorite);
+        Assert.IsFalse(viewModel.AllRecords.Single(record => record.Id == first.Id).IsPinned);
+
+        viewModel.MoveSelection(1);
+        var selectedAfterMove = viewModel.SelectedRecord;
+        Assert.IsNotNull(selectedAfterMove);
+        Assert.AreNotEqual(first.Id, selectedAfterMove.Id);
+
+        await viewModel.DeleteAsync(selectedAfterMove);
+        Assert.IsFalse(viewModel.AllRecords.Any(record => record.Id == selectedAfterMove.Id));
+        Assert.IsNotNull(viewModel.SelectedRecord);
+
+        viewModel.Close();
+        Assert.AreEqual(1, navigator.HideTransientPanelCalls);
+    }
+
+    [TestMethod]
+    public async Task ClearedHistory_LoadsAsAnEmptyPanel()
+    {
+        var source = new MockClipboardHistorySource();
+        await source.ClearAsync(CancellationToken.None);
+        var viewModel = new PanelViewModel(
+            source,
+            new MockPanelActionSink(),
+            new RecordingWindowNavigator());
+
+        await viewModel.LoadAsync();
+
+        Assert.IsTrue(viewModel.IsEmpty);
+        Assert.AreEqual(0, viewModel.VisibleRecords.Count);
+        Assert.IsNull(viewModel.SelectedRecord);
+    }
+
+    private static PanelViewModel CreatePanelViewModel(IWindowNavigator? navigator = null) =>
+        new(
+            new MockClipboardHistorySource(),
+            new MockPanelActionSink(),
+            navigator ?? new RecordingWindowNavigator());
+
     private static void AssertMethod<TContract>(
         string name,
         Type returnType,
@@ -273,5 +385,24 @@ public sealed class PanelViewModelTests
 
         Assert.IsNotNull(method, $"{typeof(TContract).Name}.{name} has the approved parameters.");
         Assert.AreEqual(returnType, method.ReturnType);
+    }
+
+    private sealed class RecordingWindowNavigator : IWindowNavigator
+    {
+        public int HideTransientPanelCalls { get; private set; }
+
+        public void ShowCursorPanel()
+        {
+        }
+
+        public void ShowEdgePanel()
+        {
+        }
+
+        public void ShowSettings()
+        {
+        }
+
+        public void HideTransientPanel() => HideTransientPanelCalls++;
     }
 }

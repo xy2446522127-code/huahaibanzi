@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "project_revision": 5,
-  "integration_commit": "11bd9ebe64c0875b7ce810650761392775a045de",
+  "project_revision": 6,
+  "integration_commit": "4affdf99fb8309ca80aba543aae179e2b98a17e9",
   "contract_versions": {
     "visual": "1.0.0",
     "ui-shell-plan": "1.0.0"
@@ -188,6 +188,14 @@
       "project_revision": 5,
       "commit": "11bd9ebe64c0875b7ce810650761392775a045de",
       "scope": "Integrated five visual themes, immutable appearance/motion settings, Windows 10/11 visual modes, and memory settings mock; core contract consumers remain compatible",
+      "affected_tasks": [],
+      "contract_versions": {}
+    },
+    {
+      "change_id": "ui-shell-core-contracts-integrated-2026-08-04",
+      "project_revision": 6,
+      "commit": "4affdf99fb8309ca80aba543aae179e2b98a17e9",
+      "scope": "Integrated immutable clipboard contracts, deterministic local mock adapters, and executable mock behavior coverage; no real clipboard or Windows hooks added",
       "affected_tasks": [],
       "contract_versions": {}
     }
