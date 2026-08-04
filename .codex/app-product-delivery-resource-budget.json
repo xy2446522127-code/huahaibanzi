@@ -1,0 +1,30 @@
+{
+  "cleanup_plan": "Stop owned processes, release leases, rotate logs, and reconcile orphans.",
+  "completion_boundary": "Verified and integrated Core contracts, deterministic mocks, panel/settings view models, and the reusable WinUI shell preview up to the Gate 0C approval boundary",
+  "critical_path_benefit": "",
+  "limits": {
+    "concurrent_reviewers": 0,
+    "concurrent_writers": 1,
+    "focused_test_runs": 6,
+    "full_suite_runs": 1,
+    "images_per_decision": 3,
+    "inherited_turns": 0,
+    "integration_test_runs": 1,
+    "model_turns": 16,
+    "ports": 1,
+    "preview_services": 1,
+    "retained_artifact_bytes": 104857600,
+    "retained_log_bytes": 26214400,
+    "runtime_processes": 2,
+    "task_packet_chars": 12000,
+    "tool_batches": 16,
+    "tool_output_kb": 128,
+    "top_level_tasks": 1,
+    "visual_sets": 1,
+    "worktrees": 1
+  },
+  "profile": "small",
+  "stage_id": "gate-0b-shell-continuation",
+  "status": "active",
+  "version": 1
+}

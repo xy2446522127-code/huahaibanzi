@@ -11,4 +11,10 @@
     <PackageReference Include="MSTest.TestFramework" />
     <ProjectReference Include="..\..\src\HuahaiClipboard.Core\HuahaiClipboard.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Mocks\MockClipboardHistorySource.cs"
+             Link="Infrastructure\Mocks\MockClipboardHistorySource.cs" />
+    <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Mocks\MockPanelActionSink.cs"
+             Link="Infrastructure\Mocks\MockPanelActionSink.cs" />
+  </ItemGroup>
 </Project>

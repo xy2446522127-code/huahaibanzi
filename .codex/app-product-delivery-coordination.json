@@ -66,7 +66,7 @@
       "task_id": "ui-shell-core-contracts",
       "role": "worker",
       "outcome": "Define immutable clipboard record models, UI-facing action/history/navigation contracts, and deterministic mock clipboard data for the Gate 0B shell",
-      "status": "running",
+      "status": "completed",
       "base_commit": "b9384ddb89e784856d04c2862d228427448f5354",
       "seen_project_revision": 4,
       "contract_versions": {
@@ -92,9 +92,15 @@
         "src/HuahaiClipboard.App/Infrastructure/Mocks/MockPanelActionSink.cs",
         "tests/HuahaiClipboard.Core.Tests/PanelViewModelTests.cs"
       ],
-      "checkpoint": null,
-      "validation": [],
-      "evidence": []
+      "checkpoint": "759ea5990b6b4f0511f017aa3451e91e3d928827",
+      "validation": [
+        "Core.Tests Release passed 21/21, 0 skipped; VS MSBuild Debug x64 passed, 0 warnings/0 errors; Core-only ProjectReference preserved; mock runtime behavior covered"
+      ],
+      "evidence": [
+        "Core contract tests plus App build and deterministic mock structure checks; runtime App mock behavior deferred to CompositionRoot integration"
+      ],
+      "thread_status": "completed",
+      "reconciliation_reason": "verified_checkpoint"
     },
     "ui-shell-visual-policies": {
       "task_id": "ui-shell-visual-policies",
@@ -131,11 +137,13 @@
       ],
       "checkpoint": "512f75ad90248ed516e1919b4ca2193b8e99e682",
       "validation": [
-        "independent dotnet test Release --no-restore: passed 11/11, 0 skipped; independent dotnet build Debug x64 --no-restore: passed, 0 warnings, 0 errors; git diff --check: passed; checkpoint contains exactly 12 owned paths"
+        "thread completed and checkpoint already integrated as 11bd9ebe64c0875b7ce810650761392775a045de"
       ],
       "evidence": [
-        "no screenshot or motion evidence: pure Core visual-policy contract slice; deterministic theme/mode tests are the selected evidence adapter"
-      ]
+        "deterministic theme/mode tests; no rendering evidence for pure policy slice"
+      ],
+      "thread_status": "completed",
+      "reconciliation_reason": "verified_checkpoint"
     }
   },
   "changes": [
