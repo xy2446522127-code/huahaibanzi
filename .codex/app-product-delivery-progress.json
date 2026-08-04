@@ -1,0 +1,66 @@
+{
+  "blockers": [],
+  "core_percent": 100,
+  "current_milestone": "remote-sync",
+  "delivery_target": "release",
+  "execution_mode": "autonomous_implementation",
+  "milestones": [
+    {
+      "blocker": "",
+      "core": true,
+      "evidence": "Core Release tests passed 62/62.",
+      "id": "core-product",
+      "label": "Current clipboard product behavior",
+      "status": "verified",
+      "weight": 45
+    },
+    {
+      "blocker": "",
+      "core": true,
+      "evidence": "Four P1 findings were fixed with regression tests; independent review found no remaining P0/P1.",
+      "id": "release-safety",
+      "label": "Privacy and release blocker closure",
+      "status": "verified",
+      "weight": 25
+    },
+    {
+      "blocker": "",
+      "core": true,
+      "evidence": "Visual Studio Build Tools Release x64 build and 10-second startup smoke passed.",
+      "id": "release-build",
+      "label": "Release build and startup",
+      "status": "verified",
+      "weight": 15
+    },
+    {
+      "blocker": "",
+      "core": false,
+      "evidence": "ZIP extracted to 48 files and the extracted executable passed a 10-second visible-window smoke test.",
+      "id": "portable-package",
+      "label": "Friend-ready portable ZIP",
+      "status": "verified",
+      "weight": 10
+    },
+    {
+      "blocker": "",
+      "core": false,
+      "evidence": "Repository name huahaibanzi selected; remote creation follows the verified local commit.",
+      "id": "remote-sync",
+      "label": "GitHub repository sync",
+      "status": "pending",
+      "weight": 5
+    }
+  ],
+  "overall_percent": 95,
+  "project_scale": "micro",
+  "risk_level": "medium",
+  "scope_changes": [
+    {
+      "reason": "User froze the current product and requested a verified Git sync plus friend-ready package.",
+      "revision": 3
+    }
+  ],
+  "scope_revision": 3,
+  "updated_at": "2026-08-04T20:15:00Z",
+  "version": 1
+}

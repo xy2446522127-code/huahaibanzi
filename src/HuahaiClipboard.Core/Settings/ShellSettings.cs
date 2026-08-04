@@ -2,7 +2,8 @@ namespace HuahaiClipboard.Core.Settings;
 
 public sealed record ShellSettings(
     AppearanceSettings Appearance,
-    MotionSettings Motion)
+    MotionSettings Motion,
+    InputSettings Input)
 {
     public static ShellSettings Default => new(
         new AppearanceSettings(
@@ -13,5 +14,9 @@ public sealed record ShellSettings(
             CompactMode: false),
         new MotionSettings(
             PetalLevel: PetalLevel.Low,
-            ReduceMotion: false));
+            ReduceMotion: false),
+        new InputSettings(
+            RightDoubleClickEnabled: true,
+            HotkeyEnabled: true,
+            ExcludedApplications: []));
 }

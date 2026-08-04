@@ -7,6 +7,9 @@
     <SolidColorBrush x:Key="HuahaiFocusBrush" Color="#9EE0B1D9" />
     <SolidColorBrush x:Key="HuahaiAccentBrush" Color="#FFE9A6D1" />
     <SolidColorBrush x:Key="HuahaiGlassBottomBrush" Color="#FF4B2A54" />
+    <SolidColorBrush x:Key="HuahaiPanelSurfaceBrush" Color="#B5200E25" />
+    <SolidColorBrush x:Key="HuahaiRowSurfaceBrush" Color="#A629142F" />
+    <SolidColorBrush x:Key="HuahaiControlSurfaceBrush" Color="#70351540" />
     <LinearGradientBrush x:Key="HuahaiGlassBrush" StartPoint="0,0" EndPoint="1,1">
         <GradientStop Color="#D04C344F" Offset="0" />
         <GradientStop Color="#F04B2A54" Offset="1" />

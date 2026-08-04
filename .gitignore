@@ -2,4 +2,6 @@
 .codex/artifacts/ui-qa/
 **/bin/
 **/obj/
+# Local preview output
+dist/
 .vs/

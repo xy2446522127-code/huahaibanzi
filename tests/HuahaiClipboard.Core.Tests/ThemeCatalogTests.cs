@@ -93,7 +93,8 @@ public sealed class ThemeCatalogTests
         Assert.AreEqual(
             new ShellSettings(
                 new AppearanceSettings("rose-purple", 0.86, 32, 0.72, false),
-                new MotionSettings(PetalLevel.Low, false)),
+                new MotionSettings(PetalLevel.Low, false),
+                new InputSettings(true, true, [])),
             ShellSettings.Default);
     }
 

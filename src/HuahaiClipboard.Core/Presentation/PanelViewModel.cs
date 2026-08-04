@@ -120,23 +120,23 @@ public sealed class PanelViewModel : ObservableObject
     public Task ToggleFavoriteAsync(
         ClipboardRecord record,
         CancellationToken cancellationToken = default) =>
-        RunMutationAsync(
+        RunRecordMutationAsync(
+            record,
             () => historySource.SetFavoriteAsync(record.Id, !record.IsFavorite, cancellationToken),
-            cancellationToken);
+            value => value with { IsFavorite = !value.IsFavorite });
 
     public Task TogglePinnedAsync(
         ClipboardRecord record,
         CancellationToken cancellationToken = default) =>
-        RunMutationAsync(
+        RunRecordMutationAsync(
+            record,
             () => historySource.SetPinnedAsync(record.Id, !record.IsPinned, cancellationToken),
-            cancellationToken);
+            value => value with { IsPinned = !value.IsPinned });
 
     public Task DeleteAsync(
         ClipboardRecord record,
         CancellationToken cancellationToken = default) =>
-        RunMutationAsync(
-            () => historySource.DeleteAsync(record.Id, cancellationToken),
-            cancellationToken);
+        RunDeleteAsync(record, cancellationToken);
 
     public void MoveSelection(int delta)
     {
@@ -151,6 +151,12 @@ public sealed class PanelViewModel : ObservableObject
             : IndexOf(VisibleRecords, SelectedRecord.Id);
         var targetIndex = Math.Clamp(currentIndex + delta, 0, VisibleRecords.Count - 1);
         SelectedRecord = VisibleRecords[targetIndex];
+    }
+
+    public void SelectRecord(ClipboardRecord record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        SelectedRecord = VisibleRecords.FirstOrDefault(value => value.Id == record.Id);
     }
 
     public void Close() => navigator.HideTransientPanel();
@@ -186,7 +192,10 @@ public sealed class PanelViewModel : ObservableObject
         }
     }
 
-    private async Task RunMutationAsync(Func<Task> mutation, CancellationToken cancellationToken)
+    private async Task RunRecordMutationAsync(
+        ClipboardRecord record,
+        Func<Task> mutation,
+        Func<ClipboardRecord, ClipboardRecord> update)
     {
         if (IsBusy)
         {
@@ -198,7 +207,31 @@ public sealed class PanelViewModel : ObservableObject
         try
         {
             await mutation();
-            await RefreshAllRecordsAsync(cancellationToken);
+            AllRecords = AllRecords
+                .Select(value => value.Id == record.Id ? update(value) : value)
+                .ToArray();
+            RefreshVisibleRecords();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task RunDeleteAsync(ClipboardRecord record, CancellationToken cancellationToken)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        RecoveryMessage = null;
+        try
+        {
+            await historySource.DeleteAsync(record.Id, cancellationToken);
+            AllRecords = AllRecords.Where(value => value.Id != record.Id).ToArray();
+            RefreshVisibleRecords();
         }
         finally
         {

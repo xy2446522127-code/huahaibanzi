@@ -55,6 +55,14 @@ public sealed class SettingsViewModel : ObservableObject
         return SaveDraftAsync(Draft with { Motion = motion }, cancellationToken);
     }
 
+    public Task UpdateInputAsync(
+        InputSettings input,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        return SaveDraftAsync(Draft with { Input = input }, cancellationToken);
+    }
+
     public Task ResetAppearanceAsync(CancellationToken cancellationToken = default) =>
         SaveDraftAsync(Draft with { Appearance = ShellSettings.Default.Appearance }, cancellationToken);
 

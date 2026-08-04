@@ -4,14 +4,49 @@
     <Style x:Key="HuahaiRecordRowStyle" TargetType="ListViewItem">
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="Margin" Value="0,3" />
-        <Setter Property="MinHeight" Value="52" />
+        <Setter Property="Margin" Value="0,4" />
+        <Setter Property="MinHeight" Value="58" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
     </Style>
     <Style x:Key="HuahaiIconButtonStyle" TargetType="Button">
-        <Setter Property="Width" Value="32" />
-        <Setter Property="Height" Value="32" />
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
         <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Foreground" Value="{StaticResource HuahaiTextPrimaryBrush}" />
+        <Setter Property="Background" Value="#443A2143" />
+        <Setter Property="BorderBrush" Value="#4DE0B1D9" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="HuahaiActionToggleStyle" TargetType="ToggleButton">
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Foreground" Value="{StaticResource HuahaiTextPrimaryBrush}" />
+        <Setter Property="Background" Value="#443A2143" />
+        <Setter Property="BorderBrush" Value="#4DE0B1D9" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="HuahaiFilterToggleStyle" TargetType="ToggleButton">
+        <Setter Property="Width" Value="54" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="Padding" Value="6,0" />
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="Foreground" Value="{StaticResource HuahaiTextPrimaryBrush}" />
+        <Setter Property="Background" Value="#49301738" />
+        <Setter Property="BorderBrush" Value="#35E0B1D9" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style x:Key="HuahaiSettingsNavStyle" TargetType="ListViewItem">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="MinHeight" Value="42" />
+        <Setter Property="Margin" Value="0,2" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="CornerRadius" Value="10" />
     </Style>
 </ResourceDictionary>

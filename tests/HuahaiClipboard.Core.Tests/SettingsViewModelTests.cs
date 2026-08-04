@@ -71,6 +71,19 @@ public sealed class SettingsViewModelTests
         Assert.AreEqual(3, store.SaveCalls);
     }
 
+    [TestMethod]
+    public async Task InputUpdate_SavesRightDoubleClickHotkeyAndExcludedApplications()
+    {
+        var store = new RecordingSettingsStore(ShellSettings.Default);
+        var viewModel = new SettingsViewModel(store);
+        var input = new InputSettings(false, true, ["game.exe", "secret.exe"]);
+
+        await viewModel.UpdateInputAsync(input);
+
+        Assert.AreEqual(input, viewModel.Draft.Input);
+        Assert.AreEqual(input, store.SavedSettings!.Input);
+    }
+
     private sealed class RecordingSettingsStore(ShellSettings initial) : ISettingsStore
     {
         public int SaveCalls { get; private set; }

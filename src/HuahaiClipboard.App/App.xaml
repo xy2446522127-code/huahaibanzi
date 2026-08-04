@@ -5,9 +5,11 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/HuahaiClipboard.App/Resources/Brushes.xaml" />
-                <ResourceDictionary Source="/HuahaiClipboard.App/Resources/ControlStyles.xaml" />
-                <ResourceDictionary Source="/HuahaiClipboard.App/Resources/Typography.xaml" />
+                <!-- Load WinUI control templates before application-specific resources. -->
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <ResourceDictionary Source="Resources/Brushes.xaml" />
+                <ResourceDictionary Source="Resources/ControlStyles.xaml" />
+                <ResourceDictionary Source="Resources/Typography.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

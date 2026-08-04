@@ -53,6 +53,8 @@
   },
   "prohibited_variations": [
     "large white reflection patches",
+    "rectangular native window borders outside the rounded glass silhouette",
+    "white or bright highlight strokes along the outer glass edge",
     "petals above text or record cards",
     "foreground petal overlays",
     "low-contrast secondary text",
@@ -65,6 +67,10 @@
     {
       "id": "floating-panel-default",
       "language": "zh-CN",
+      "latest_baseline": "1.0.2",
+      "parent_baseline": "1.0.1",
+      "evidence": ".codex/artifacts/ui-qa/floating-panel-fully-transparent-edge-final.png",
+      "approval_status": "approved-derivative",
       "state": "default-with-history",
       "theme": "rose-purple",
       "viewport": "desktop"
@@ -79,6 +85,10 @@
     {
       "id": "settings-appearance",
       "language": "zh-CN",
+      "latest_baseline": "1.0.2",
+      "parent_baseline": "1.0.1",
+      "evidence": ".codex/artifacts/ui-qa/settings-fully-transparent-edge-final.png",
+      "approval_status": "approved-derivative",
       "state": "rose-theme-selected",
       "theme": "rose-purple",
       "viewport": "desktop"
@@ -107,5 +117,43 @@
     "text_primary": "#ffffff",
     "text_secondary": "rgba(255, 255, 255, 0.80)"
   },
-  "version": "1.0.0"
+  "derivatives": [
+    {
+      "version": "1.0.1",
+      "parent_version": "1.0.0",
+      "classification": "local-surface-adjustment",
+      "scope": "Remove the rectangular native host outline and clip the real WinUI window to the approved 29px glass silhouette.",
+      "preserved": "Layout, typography, theme colors, list behavior, settings content, petals, and A+E click motion.",
+      "affected_surfaces": [
+        "floating-panel-default",
+        "settings-appearance"
+      ],
+      "evidence": [
+        ".codex/artifacts/ui-qa/floating-panel-border-final-dist-clean.png",
+        ".codex/artifacts/ui-qa/settings-border-final-dist.png"
+      ],
+      "checkpoint": null,
+      "checkpoint_status": "not-created-preexisting-overlap",
+      "approval_status": "approved-by-user-request"
+    },
+    {
+      "version": "1.0.2",
+      "parent_version": "1.0.1",
+      "classification": "local-surface-adjustment",
+      "scope": "Remove every XAML and native Windows frame stroke so the liquid-glass material reaches the rounded window edge without a white outline.",
+      "preserved": "Window geometry, glass fill, theme colors, layout, typography, records, settings, petals, and A+E click motion.",
+      "affected_surfaces": [
+        "floating-panel-default",
+        "settings-appearance"
+      ],
+      "evidence": [
+        ".codex/artifacts/ui-qa/floating-panel-fully-transparent-edge-final.png",
+        ".codex/artifacts/ui-qa/settings-fully-transparent-edge-final.png"
+      ],
+      "checkpoint": null,
+      "checkpoint_status": "not-created-preexisting-overlap",
+      "approval_status": "approved-by-user-request"
+    }
+  ],
+  "version": "1.0.2"
 }

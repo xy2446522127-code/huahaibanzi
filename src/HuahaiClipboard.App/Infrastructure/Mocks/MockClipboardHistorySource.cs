@@ -21,6 +21,27 @@ public sealed class MockClipboardHistorySource : IClipboardHistorySource
         }
     }
 
+    public Task<ClipboardRecord?> FindAsync(Guid recordId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (syncRoot)
+        {
+            return Task.FromResult(records.FirstOrDefault(record => record.Id == recordId));
+        }
+    }
+
+    public Task UpsertAsync(ClipboardRecord record, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(record);
+        lock (syncRoot)
+        {
+            records.Add(record);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public Task SetFavoriteAsync(Guid recordId, bool value, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

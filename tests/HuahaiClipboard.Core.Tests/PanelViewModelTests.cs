@@ -62,6 +62,16 @@ public sealed class PanelViewModelTests
             typeof(Task<IReadOnlyList<ClipboardRecord>>),
             typeof(CancellationToken));
         AssertMethod<IClipboardHistorySource>(
+            "FindAsync",
+            typeof(Task<ClipboardRecord>),
+            typeof(Guid),
+            typeof(CancellationToken));
+        AssertMethod<IClipboardHistorySource>(
+            "UpsertAsync",
+            typeof(Task),
+            typeof(ClipboardRecord),
+            typeof(CancellationToken));
+        AssertMethod<IClipboardHistorySource>(
             "SetFavoriteAsync",
             typeof(Task),
             typeof(Guid),
@@ -82,7 +92,7 @@ public sealed class PanelViewModelTests
             "ClearAsync",
             typeof(Task),
             typeof(CancellationToken));
-        Assert.AreEqual(5, typeof(IClipboardHistorySource).GetMethods().Length);
+        Assert.AreEqual(7, typeof(IClipboardHistorySource).GetMethods().Length);
 
         AssertMethod<IPanelActionSink>(
             "CopyAsync",
@@ -222,6 +232,8 @@ public sealed class PanelViewModelTests
         Func<Task>[] operations =
         [
             async () => await source.GetAllAsync(cancellationToken),
+            async () => await source.FindAsync(id, cancellationToken),
+            () => source.UpsertAsync(new ClipboardRecord(id, ClipboardItemKind.Text, "x", "x", DateTimeOffset.UtcNow, false, false, true, null), cancellationToken),
             () => source.SetFavoriteAsync(id, true, cancellationToken),
             () => source.SetPinnedAsync(id, true, cancellationToken),
             () => source.DeleteAsync(id, cancellationToken),
@@ -354,6 +366,55 @@ public sealed class PanelViewModelTests
     }
 
     [TestMethod]
+    public async Task FavoriteAndPin_UpdateVisibleStateWithoutReloadingTheWholeHistory()
+    {
+        var history = new CountingHistorySource(new MockClipboardHistorySource());
+        var viewModel = new PanelViewModel(
+            history,
+            new MockPanelActionSink(),
+            new RecordingWindowNavigator());
+        await viewModel.LoadAsync();
+        var record = viewModel.VisibleRecords.Single(value =>
+            value.Id == Guid.Parse("00000000-0000-0000-0000-000000000005"));
+
+        await viewModel.ToggleFavoriteAsync(record);
+        var favorite = viewModel.VisibleRecords.Single(value => value.Id == record.Id);
+        await viewModel.TogglePinnedAsync(favorite);
+        var pinned = viewModel.VisibleRecords.Single(value => value.Id == record.Id);
+
+        Assert.IsTrue(favorite.IsFavorite);
+        Assert.IsTrue(pinned.IsPinned);
+        Assert.AreEqual(1, history.GetAllCalls, "Row actions must not re-read and rebuild the entire history.");
+    }
+
+    [TestMethod]
+    public async Task ClickFeedback_RunsApprovedMotionBeforeTheClipboardAction()
+    {
+        var controller = new ClickFeedbackController();
+        var events = new List<string>();
+        TimeSpan duration = TimeSpan.Zero;
+        Func<TimeSpan, CancellationToken, Task> animate = (value, _) =>
+        {
+            duration = value;
+            events.Add("animation");
+            return Task.CompletedTask;
+        };
+        Func<CancellationToken, Task> action = _ =>
+        {
+            events.Add("action");
+            return Task.CompletedTask;
+        };
+
+        await controller.RunAsync(false, animate, action, CancellationToken.None);
+
+        CollectionAssert.AreEqual(new[] { "animation", "action" }, events);
+        Assert.AreEqual(TimeSpan.FromMilliseconds(760), duration);
+
+        await controller.RunAsync(true, animate, action, CancellationToken.None);
+        Assert.AreEqual(TimeSpan.FromMilliseconds(120), duration);
+    }
+
+    [TestMethod]
     public async Task ClearedHistory_LoadsAsAnEmptyPanel()
     {
         var source = new MockClipboardHistorySource();
@@ -404,5 +465,33 @@ public sealed class PanelViewModelTests
         }
 
         public void HideTransientPanel() => HideTransientPanelCalls++;
+    }
+
+    private sealed class CountingHistorySource(IClipboardHistorySource inner) : IClipboardHistorySource
+    {
+        public int GetAllCalls { get; private set; }
+
+        public async Task<IReadOnlyList<ClipboardRecord>> GetAllAsync(CancellationToken cancellationToken)
+        {
+            GetAllCalls++;
+            return await inner.GetAllAsync(cancellationToken);
+        }
+
+        public Task<ClipboardRecord?> FindAsync(Guid recordId, CancellationToken cancellationToken) =>
+            inner.FindAsync(recordId, cancellationToken);
+
+        public Task UpsertAsync(ClipboardRecord record, CancellationToken cancellationToken) =>
+            inner.UpsertAsync(record, cancellationToken);
+
+        public Task SetFavoriteAsync(Guid recordId, bool value, CancellationToken cancellationToken) =>
+            inner.SetFavoriteAsync(recordId, value, cancellationToken);
+
+        public Task SetPinnedAsync(Guid recordId, bool value, CancellationToken cancellationToken) =>
+            inner.SetPinnedAsync(recordId, value, cancellationToken);
+
+        public Task DeleteAsync(Guid recordId, CancellationToken cancellationToken) =>
+            inner.DeleteAsync(recordId, cancellationToken);
+
+        public Task ClearAsync(CancellationToken cancellationToken) => inner.ClearAsync(cancellationToken);
     }
 }
