@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "project_revision": 6,
-  "integration_commit": "4affdf99fb8309ca80aba543aae179e2b98a17e9",
+  "project_revision": 7,
+  "integration_commit": "9c3cd4558e6fd14c882357f2cd364a0578ee2dc8",
   "contract_versions": {
     "visual": "1.0.0",
     "ui-shell-plan": "1.0.0"
@@ -196,6 +196,14 @@
       "project_revision": 6,
       "commit": "4affdf99fb8309ca80aba543aae179e2b98a17e9",
       "scope": "Integrated immutable clipboard contracts, deterministic local mock adapters, and executable mock behavior coverage; no real clipboard or Windows hooks added",
+      "affected_tasks": [],
+      "contract_versions": {}
+    },
+    {
+      "change_id": "ui-shell-view-models-integrated-2026-08-04",
+      "project_revision": 7,
+      "commit": "9c3cd4558e6fd14c882357f2cd364a0578ee2dc8",
+      "scope": "Integrated bindable panel and settings state for the mock-data UI shell; no system clipboard integration added",
       "affected_tasks": [],
       "contract_versions": {}
     }

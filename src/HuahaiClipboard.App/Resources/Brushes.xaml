@@ -1,0 +1,14 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="HuahaiTextPrimaryBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="HuahaiTextSecondaryBrush" Color="#CCFFFFFF" />
+    <SolidColorBrush x:Key="HuahaiContentLensBrush" Color="#B3200E25" />
+    <SolidColorBrush x:Key="HuahaiFocusBrush" Color="#9EE0B1D9" />
+    <SolidColorBrush x:Key="HuahaiAccentBrush" Color="#FFE9A6D1" />
+    <SolidColorBrush x:Key="HuahaiGlassBottomBrush" Color="#FF4B2A54" />
+    <LinearGradientBrush x:Key="HuahaiGlassBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#D04C344F" Offset="0" />
+        <GradientStop Color="#F04B2A54" Offset="1" />
+    </LinearGradientBrush>
+</ResourceDictionary>
