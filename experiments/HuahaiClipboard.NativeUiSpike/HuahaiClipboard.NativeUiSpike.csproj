@@ -11,5 +11,6 @@
     <ProjectReference Include="..\..\src\HuahaiClipboard.Core\HuahaiClipboard.Core.csproj" />
     <Page Include="..\..\ui\generated\HuahaiUiTokens.xaml" Link="Generated\HuahaiUiTokens.xaml" />
     <Resource Include="..\..\src\HuahaiClipboard.App\Assets\Brand\fox-icon.ico" Link="Assets\fox-icon.ico" />
+    <Resource Include="..\..\src\HuahaiClipboard.App\Assets\Brand\fox-icon-source.png" Link="Assets\fox-icon-source.png" />
   </ItemGroup>
 </Project>

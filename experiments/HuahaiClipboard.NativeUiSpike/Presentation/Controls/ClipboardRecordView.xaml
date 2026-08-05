@@ -1,0 +1,96 @@
+<UserControl x:Class="HuahaiClipboard.NativeUiSpike.Presentation.Controls.ClipboardRecordView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             MinHeight="57">
+    <Border x:Name="RecordChrome"
+            Margin="0,3.5"
+            Padding="9,8"
+            Background="{DynamicResource HuahaiRecordBrush}"
+            BorderBrush="{DynamicResource HuahaiHairlineBrush}"
+            BorderThickness="1"
+            CornerRadius="13"
+            Cursor="Hand"
+            MouseLeftButtonUp="RecordChrome_MouseLeftButtonUp">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="31" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Border Width="29"
+                    Height="29"
+                    VerticalAlignment="Center"
+                    Background="#57D786BB"
+                    CornerRadius="9">
+                <TextBlock HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                           FontSize="14"
+                           Text="{Binding KindGlyph}" />
+            </Border>
+
+            <StackPanel Grid.Column="1"
+                        Margin="9,0"
+                        VerticalAlignment="Center">
+                <TextBlock FontSize="14"
+                           FontWeight="SemiBold"
+                           Text="{Binding Title}"
+                           TextTrimming="CharacterEllipsis" />
+                <StackPanel Margin="0,3,0,0" Orientation="Horizontal">
+                    <TextBlock FontSize="11"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource HuahaiAccentBrush}"
+                               Text="置顶 · "
+                               Visibility="{Binding IsPinned, Converter={StaticResource HuahaiBoolVisibility}}" />
+                    <TextBlock FontSize="11"
+                               Foreground="{DynamicResource HuahaiMutedTextBrush}"
+                               Text="{Binding Metadata}"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
+                <Button Click="PinButton_Click"
+                        FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                        ToolTip="置顶">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource HuahaiRowActionButtonStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource HuahaiAccentBrush}" />
+                                    <Setter Property="Background" Value="#24DB78B9" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <Viewbox Width="13" Height="13">
+                        <Path Data="M 4,1 L 12,1 L 11,5 L 14,8 L 14,10 L 9,10 L 8,15 L 7,10 L 2,10 L 2,8 L 5,5 Z"
+                              Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                    </Viewbox>
+                </Button>
+                <Button Click="FavoriteButton_Click"
+                        ToolTip="收藏">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource HuahaiRowActionButtonStyle}">
+                            <Setter Property="Content" Value="★" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource HuahaiAccentBrush}" />
+                                    <Setter Property="Background" Value="#24DB78B9" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Click="DeleteButton_Click"
+                        Content="×"
+                        FontSize="16"
+                        Style="{StaticResource HuahaiRowActionButtonStyle}"
+                        ToolTip="删除" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

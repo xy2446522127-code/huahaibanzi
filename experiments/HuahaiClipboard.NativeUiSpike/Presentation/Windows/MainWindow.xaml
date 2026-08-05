@@ -5,7 +5,7 @@
         Width="430"
         Height="680"
         MinWidth="430"
-        MinHeight="680"
+        MinHeight="650"
         WindowStyle="None"
         ResizeMode="NoResize"
         AllowsTransparency="False"
