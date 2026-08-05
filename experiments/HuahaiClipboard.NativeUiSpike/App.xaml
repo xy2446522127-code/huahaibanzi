@@ -1,0 +1,13 @@
+<Application x:Class="HuahaiClipboard.NativeUiSpike.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="Presentation/Windows/MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/HuahaiClipboard.NativeUiSpike;component/Generated/HuahaiUiTokens.xaml" />
+                <ResourceDictionary Source="/HuahaiClipboard.NativeUiSpike;component/Presentation/Styles/NativeUiStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

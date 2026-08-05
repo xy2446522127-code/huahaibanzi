@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <PlatformTarget>x64</PlatformTarget>
+    <RootNamespace>HuahaiClipboard.NativeUiSpike</RootNamespace>
+    <ApplicationIcon>..\..\src\HuahaiClipboard.App\Assets\Brand\fox-icon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\HuahaiClipboard.Core\HuahaiClipboard.Core.csproj" />
+    <Page Include="..\..\ui\generated\HuahaiUiTokens.xaml" Link="Generated\HuahaiUiTokens.xaml" />
+    <Resource Include="..\..\src\HuahaiClipboard.App\Assets\Brand\fox-icon.ico" Link="Assets\fox-icon.ico" />
+  </ItemGroup>
+</Project>
