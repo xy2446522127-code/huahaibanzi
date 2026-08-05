@@ -1,0 +1,2428 @@
+{
+  "contract_revision": "huahai-native-1.1.0-interactions-v1",
+  "controls": [
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "panel.search",
+      "disposition": "interactive",
+      "expected": {
+        "type": "visible-items-filtered"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.panel.search",
+      "trigger": {
+        "type": "text-input"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "panel.minimize",
+      "disposition": "interactive",
+      "expected": {
+        "type": "window-hidden-process-alive"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.panel.minimize",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "???????????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "panel.settings",
+      "disposition": "interactive",
+      "exit_control_id": "settings.back",
+      "expected": {
+        "type": "settings-visible"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": true,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.panel.settings",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "filter.all",
+      "disposition": "interactive",
+      "expected": {
+        "type": "list-filtered"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.filter.all",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "filter.text",
+      "disposition": "interactive",
+      "expected": {
+        "type": "list-filtered"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.filter.text",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "filter.link",
+      "disposition": "interactive",
+      "expected": {
+        "type": "list-filtered"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.filter.link",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "filter.image",
+      "disposition": "interactive",
+      "expected": {
+        "type": "list-filtered"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.filter.image",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "filter.file",
+      "disposition": "interactive",
+      "expected": {
+        "type": "list-filtered"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.filter.file",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "filter.favorites",
+      "disposition": "interactive",
+      "expected": {
+        "type": "list-filtered"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.filter.favorites",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "records.scroll",
+      "disposition": "interactive",
+      "expected": {
+        "type": "virtualized-list-scrolls"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.records.scroll",
+      "trigger": {
+        "type": "mouse-wheel"
+      },
+      "user_intent": "????????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "record.copy",
+      "disposition": "interactive",
+      "expected": {
+        "type": "clipboard-updated-window-hidden"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.record.copy",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "???????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "record.pin",
+      "disposition": "interactive",
+      "expected": {
+        "type": "pin-state-persisted"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.record.pin",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "record.favorite",
+      "disposition": "interactive",
+      "expected": {
+        "type": "favorite-state-persisted"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.record.favorite",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "record.delete",
+      "disposition": "interactive",
+      "expected": {
+        "type": "record-removed"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.record.delete",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "panel.autohide",
+      "disposition": "interactive",
+      "expected": {
+        "type": "autohide-state-updated"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.panel.autohide",
+      "trigger": {
+        "type": "toggle"
+      },
+      "user_intent": "?????????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "panel.drag",
+      "disposition": "interactive",
+      "expected": {
+        "type": "window-position-updated"
+      },
+      "fixture": {
+        "route": "native://panel",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.panel.drag",
+      "trigger": {
+        "type": "pointer-drag"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "settings.nav.appearance",
+      "disposition": "interactive",
+      "expected": {
+        "type": "settings-page-visible"
+      },
+      "fixture": {
+        "route": "native://settings",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.settings.nav.appearance",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "?????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "settings.nav.motion",
+      "disposition": "interactive",
+      "expected": {
+        "type": "settings-page-visible"
+      },
+      "fixture": {
+        "route": "native://settings",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.settings.nav.motion",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "?????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "settings.nav.input",
+      "disposition": "interactive",
+      "expected": {
+        "type": "settings-page-visible"
+      },
+      "fixture": {
+        "route": "native://settings",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.settings.nav.input",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "???????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "settings.nav.storage",
+      "disposition": "interactive",
+      "expected": {
+        "type": "settings-page-visible"
+      },
+      "fixture": {
+        "route": "native://settings",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.settings.nav.storage",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "?????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "settings.nav.system",
+      "disposition": "interactive",
+      "expected": {
+        "type": "settings-page-visible"
+      },
+      "fixture": {
+        "route": "native://settings",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.settings.nav.system",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "?????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "settings.nav.about",
+      "disposition": "interactive",
+      "expected": {
+        "type": "settings-page-visible"
+      },
+      "fixture": {
+        "route": "native://settings",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.settings.nav.about",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "?????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "settings.back",
+      "disposition": "interactive",
+      "expected": {
+        "type": "panel-visible"
+      },
+      "fixture": {
+        "route": "native://settings",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.settings.back",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "theme.rose",
+      "disposition": "interactive",
+      "expected": {
+        "type": "theme-applied"
+      },
+      "fixture": {
+        "route": "native://settings/appearance",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.theme.rose",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "theme.cobalt",
+      "disposition": "interactive",
+      "expected": {
+        "type": "theme-applied"
+      },
+      "fixture": {
+        "route": "native://settings/appearance",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.theme.cobalt",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "theme.emerald",
+      "disposition": "interactive",
+      "expected": {
+        "type": "theme-applied"
+      },
+      "fixture": {
+        "route": "native://settings/appearance",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.theme.emerald",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "theme.amber",
+      "disposition": "interactive",
+      "expected": {
+        "type": "theme-applied"
+      },
+      "fixture": {
+        "route": "native://settings/appearance",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.theme.amber",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "theme.aurora",
+      "disposition": "interactive",
+      "expected": {
+        "type": "theme-applied"
+      },
+      "fixture": {
+        "route": "native://settings/appearance",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.theme.aurora",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "appearance.opacity",
+      "disposition": "interactive",
+      "expected": {
+        "type": "material-opacity-updated"
+      },
+      "fixture": {
+        "route": "native://settings/appearance",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.appearance.opacity",
+      "trigger": {
+        "type": "slider"
+      },
+      "user_intent": "???????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "appearance.scale",
+      "disposition": "interactive",
+      "expected": {
+        "type": "panel-scale-updated"
+      },
+      "fixture": {
+        "route": "native://settings/appearance",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.appearance.scale",
+      "trigger": {
+        "type": "slider"
+      },
+      "user_intent": "???????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "appearance.reset-scale",
+      "disposition": "interactive",
+      "expected": {
+        "type": "panel-scale-reset"
+      },
+      "fixture": {
+        "route": "native://settings/appearance",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.appearance.reset-scale",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "motion.petals",
+      "disposition": "interactive",
+      "expected": {
+        "type": "petal-state-updated"
+      },
+      "fixture": {
+        "route": "native://settings/motion",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.motion.petals",
+      "trigger": {
+        "type": "toggle"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "motion.reduced",
+      "disposition": "interactive",
+      "expected": {
+        "type": "motion-reduced"
+      },
+      "fixture": {
+        "route": "native://settings/motion",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.motion.reduced",
+      "trigger": {
+        "type": "toggle"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "motion.duration",
+      "disposition": "interactive",
+      "expected": {
+        "type": "duration-updated"
+      },
+      "fixture": {
+        "route": "native://settings/motion",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.motion.duration",
+      "trigger": {
+        "type": "slider"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "input.right-double",
+      "disposition": "interactive",
+      "expected": {
+        "type": "gesture-state-updated"
+      },
+      "fixture": {
+        "route": "native://settings/input",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.input.right-double",
+      "trigger": {
+        "type": "toggle"
+      },
+      "user_intent": "????????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "input.capture-shortcut",
+      "disposition": "interactive",
+      "expected": {
+        "type": "shortcut-saved"
+      },
+      "fixture": {
+        "route": "native://settings/input",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.input.capture-shortcut",
+      "trigger": {
+        "type": "capture-input"
+      },
+      "user_intent": "????????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "input.reset-shortcut",
+      "disposition": "interactive",
+      "expected": {
+        "type": "shortcut-reset"
+      },
+      "fixture": {
+        "route": "native://settings/input",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.input.reset-shortcut",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "input.exclusions",
+      "disposition": "interactive",
+      "expected": {
+        "type": "draft-updated"
+      },
+      "fixture": {
+        "route": "native://settings/input",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.input.exclusions",
+      "trigger": {
+        "type": "text-input"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "input.save-exclusions",
+      "disposition": "interactive",
+      "expected": {
+        "type": "exclusions-saved"
+      },
+      "fixture": {
+        "route": "native://settings/input",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.input.save-exclusions",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "storage.open-folder",
+      "disposition": "interactive",
+      "expected": {
+        "type": "folder-opened"
+      },
+      "fixture": {
+        "route": "native://settings/storage",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.storage.open-folder",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "storage.retention-3",
+      "disposition": "interactive",
+      "expected": {
+        "type": "retention-saved"
+      },
+      "fixture": {
+        "route": "native://settings/storage",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.storage.retention-3",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "storage.retention-7",
+      "disposition": "interactive",
+      "expected": {
+        "type": "retention-saved"
+      },
+      "fixture": {
+        "route": "native://settings/storage",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.storage.retention-7",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "storage.retention-30",
+      "disposition": "interactive",
+      "expected": {
+        "type": "retention-saved"
+      },
+      "fixture": {
+        "route": "native://settings/storage",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.storage.retention-30",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "???????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "storage.clear-ordinary",
+      "disposition": "interactive",
+      "expected": {
+        "type": "ordinary-history-removed"
+      },
+      "fixture": {
+        "route": "native://settings/storage",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.storage.clear-ordinary",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "storage.clear-all",
+      "disposition": "interactive",
+      "expected": {
+        "type": "all-history-removed"
+      },
+      "fixture": {
+        "route": "native://settings/storage",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.storage.clear-all",
+      "trigger": {
+        "type": "double-click-confirm"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "system.startup",
+      "disposition": "interactive",
+      "expected": {
+        "type": "startup-updated"
+      },
+      "fixture": {
+        "route": "native://settings/system",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.system.startup",
+      "trigger": {
+        "type": "toggle"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "system.background",
+      "disposition": "interactive",
+      "expected": {
+        "type": "background-updated"
+      },
+      "fixture": {
+        "route": "native://settings/system",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.system.background",
+      "trigger": {
+        "type": "toggle"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "about.update-toggle",
+      "disposition": "interactive",
+      "expected": {
+        "type": "update-setting-saved"
+      },
+      "fixture": {
+        "route": "native://settings/about",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.about.update-toggle",
+      "trigger": {
+        "type": "toggle"
+      },
+      "user_intent": "????????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "about.check-update",
+      "disposition": "interactive",
+      "expected": {
+        "type": "update-status-visible"
+      },
+      "fixture": {
+        "route": "native://settings/about",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.about.check-update",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "about.open-release",
+      "disposition": "interactive",
+      "expected": {
+        "type": "browser-opened"
+      },
+      "fixture": {
+        "route": "native://settings/about",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.about.open-release",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "?????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "global.custom-shortcut",
+      "disposition": "interactive",
+      "expected": {
+        "type": "topmost-panel-visible"
+      },
+      "fixture": {
+        "route": "native://background",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.global.custom-shortcut",
+      "trigger": {
+        "type": "global-input"
+      },
+      "user_intent": "???????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "global.right-double-click",
+      "disposition": "interactive",
+      "expected": {
+        "type": "topmost-panel-visible"
+      },
+      "fixture": {
+        "route": "native://background",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.global.right-double-click",
+      "trigger": {
+        "type": "global-input"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "tray.open-panel",
+      "disposition": "interactive",
+      "expected": {
+        "type": "panel-visible"
+      },
+      "fixture": {
+        "route": "native://tray",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.tray.open-panel",
+      "trigger": {
+        "type": "click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "tray.open-settings",
+      "disposition": "interactive",
+      "exit_control_id": "settings.back",
+      "expected": {
+        "type": "settings-visible"
+      },
+      "fixture": {
+        "route": "native://tray",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": true,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.tray.open-settings",
+      "trigger": {
+        "type": "menu-click"
+      },
+      "user_intent": "??????"
+    },
+    {
+      "allowed_side_effects": [
+        "local-settings",
+        "encrypted-history",
+        "clipboard",
+        "window-visibility",
+        "system-shell"
+      ],
+      "control_id": "tray.exit",
+      "disposition": "interactive",
+      "expected": {
+        "type": "process-exited"
+      },
+      "fixture": {
+        "route": "native://tray",
+        "state": "production-data",
+        "viewport": {
+          "height": 680,
+          "width": 820
+        }
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "???????????????????"
+      },
+      "opens_surface": false,
+      "state_contract": {
+        "disabled": "??????????????",
+        "error": "?????????????",
+        "loading": "????????????????????",
+        "success": "??????????????"
+      },
+      "targets": {
+        "desktop": {
+          "adapter": "WPF event and production service",
+          "behavior": "native"
+        }
+      },
+      "test_id": "native.tray.exit",
+      "trigger": {
+        "type": "menu-click"
+      },
+      "user_intent": "????"
+    }
+  ],
+  "version": 1
+}

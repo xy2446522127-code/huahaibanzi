@@ -82,12 +82,28 @@ public sealed class JsonSettingsStore(string filePath) : ISettingsStore
 
         return settings with
         {
+            Behavior = NormalizeBehavior(settings.Behavior),
             Input = settings.Input is null
                 ? ShellSettings.Default.Input
                 : settings.Input with
                 {
                     ExcludedApplications = settings.Input.ExcludedApplications ?? []
                 }
+        };
+    }
+
+    private static BehaviorSettings NormalizeBehavior(BehaviorSettings? behavior)
+    {
+        if (behavior is null)
+        {
+            return BehaviorSettings.Default;
+        }
+
+        return behavior with
+        {
+            AutoCleanupDays = behavior.AutoCleanupDays is 3 or 7 or 30
+                ? behavior.AutoCleanupDays
+                : BehaviorSettings.Default.AutoCleanupDays
         };
     }
 }

@@ -10,5 +10,7 @@ public interface IClipboardHistorySource
     Task SetFavoriteAsync(Guid recordId, bool value, CancellationToken cancellationToken);
     Task SetPinnedAsync(Guid recordId, bool value, CancellationToken cancellationToken);
     Task DeleteAsync(Guid recordId, CancellationToken cancellationToken);
+    Task ClearUnprotectedAsync(CancellationToken cancellationToken);
+    Task PruneAsync(DateTimeOffset cutoff, bool preserveProtected, CancellationToken cancellationToken);
     Task ClearAsync(CancellationToken cancellationToken);
 }

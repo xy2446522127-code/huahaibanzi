@@ -67,7 +67,7 @@
     {
       "id": "floating-panel-default",
       "language": "zh-CN",
-      "latest_baseline": "1.0.2",
+      "latest_baseline": "1.0.4",
       "parent_baseline": "1.0.1",
       "evidence": ".codex/artifacts/ui-qa/floating-panel-fully-transparent-edge-final.png",
       "approval_status": "approved-derivative",
@@ -85,7 +85,7 @@
     {
       "id": "settings-appearance",
       "language": "zh-CN",
-      "latest_baseline": "1.0.2",
+      "latest_baseline": "1.0.4",
       "parent_baseline": "1.0.1",
       "evidence": ".codex/artifacts/ui-qa/settings-fully-transparent-edge-final.png",
       "approval_status": "approved-derivative",
@@ -114,6 +114,10 @@
     "focus_border": "rgba(224, 177, 217, 0.62)",
     "glass_bottom": "#4b2a54",
     "reflection": "#bc7caf",
+    "typography_clipboard_primary_px": 13,
+    "typography_clipboard_metadata_px": 10,
+    "typography_settings_label_px": 12,
+    "typography_settings_description_px": 10,
     "text_primary": "#ffffff",
     "text_secondary": "rgba(255, 255, 255, 0.80)"
   },
@@ -153,7 +157,46 @@
       "checkpoint": null,
       "checkpoint_status": "not-created-preexisting-overlap",
       "approval_status": "approved-by-user-request"
+    },
+    {
+      "version": "1.0.3",
+      "parent_version": "1.0.2",
+      "classification": "shared-visual-system-correction",
+      "scope": "Apply the background-transparency setting to the liquid-glass material layers and native Desktop Acrylic backdrop instead of fading the complete panel including text and controls.",
+      "preserved": "Panel geometry, typography, themes, icons, records, settings layout, petals, A+E click motion, and all clipboard behavior.",
+      "affected_surfaces": [
+        "floating-panel-default",
+        "settings-appearance"
+      ],
+      "evidence": [
+        ".codex/artifacts/ui-qa/opacity-sanitized-65.png",
+        ".codex/artifacts/ui-qa/opacity-sanitized-88.png",
+        ".codex/artifacts/ui-qa/opacity-sanitized-96.png",
+        ".codex/artifacts/ui-qa/opacity-sanitized-diff-65-vs-96.png"
+      ],
+      "checkpoint": null,
+      "checkpoint_status": "not-created-preexisting-overlap",
+      "approval_status": "implemented-pending-user-visual-review"
+    },
+    {
+      "version": "1.0.4",
+      "parent_version": "1.0.3",
+      "classification": "shared-visual-system-change",
+      "scope": "Increase the approved typography scale for clipboard rows, settings labels, descriptions, navigation, controls, and feedback while retaining the fixed panel geometry.",
+      "preserved": "Liquid-glass material, A+E motion, five themes, icon language, panel dimensions, spacing structure, records, petals, and clipboard behavior.",
+      "affected_surfaces": [
+        "floating-panel-default",
+        "settings-appearance"
+      ],
+      "evidence": [
+        ".codex/artifacts/ui-qa/typography-before-sanitized.png",
+        ".codex/artifacts/ui-qa/typography-after-sanitized.png",
+        ".codex/artifacts/ui-qa/typography-diff-sanitized.png"
+      ],
+      "checkpoint": null,
+      "checkpoint_status": "not-created-preexisting-overlap",
+      "approval_status": "approved-by-user-request"
     }
   ],
-  "version": "1.0.2"
+  "version": "1.0.4"
 }

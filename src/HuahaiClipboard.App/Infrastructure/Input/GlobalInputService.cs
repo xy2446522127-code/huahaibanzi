@@ -16,8 +16,12 @@ public sealed class GlobalInputService : IDisposable
     private const int WhMouseLowLevel = 14;
     private const uint WmRightButtonDown = 0x0204;
     private const uint WmRightButtonUp = 0x0205;
-    private const string HotkeyConflictWarning = "Ctrl+Shift+V 已被其他程序占用，请使用右键双击或托盘图标。";
-    private const string HotkeyReleaseWarning = "Ctrl+Shift+V 未能释放，重启花海剪贴板后将恢复。";
+    private const uint WmMiddleButtonDown = 0x0207;
+    private const uint WmMiddleButtonUp = 0x0208;
+    private const uint WmXButtonDown = 0x020B;
+    private const uint WmXButtonUp = 0x020C;
+    private const string HotkeyConflictWarning = "自定义键盘快捷键已被其他程序占用，请更换后重试。";
+    private const string HotkeyReleaseWarning = "旧快捷键未能释放，重启花海剪贴板后将恢复。";
     private readonly IntPtr windowHandle;
     private readonly DispatcherQueue dispatcherQueue;
     private readonly InputSettingsSnapshot settingsSnapshot;
@@ -36,6 +40,7 @@ public sealed class GlobalInputService : IDisposable
     private bool clipboardListenerRegistered;
     private bool hotkeyRegistered;
     private bool suppressRightButtonUp;
+    private uint suppressCustomMouseUp;
 
     public GlobalInputService(
         IntPtr windowHandle,
@@ -65,7 +70,7 @@ public sealed class GlobalInputService : IDisposable
                 initializationWarnings.Add("剪贴板监听未能启动，本次复制内容可能不会进入历史。");
             }
 
-            ApplyHotkeyRegistration(settingsSnapshot.Current.HotkeyEnabled);
+            ApplyHotkeyRegistration(settingsSnapshot.Current);
         }
 
         mouseHook = SetWindowsHookEx(WhMouseLowLevel, mouseHookProcedure, GetModuleHandle(null), 0);
@@ -80,7 +85,7 @@ public sealed class GlobalInputService : IDisposable
     public void UpdateInputSettings(InputSettings settings)
     {
         settingsSnapshot.Update(settings);
-        ApplyHotkeyRegistration(settings.HotkeyEnabled);
+        ApplyHotkeyRegistration(settings);
     }
 
     private IntPtr WindowSubclassProcedure(
@@ -117,7 +122,13 @@ public sealed class GlobalInputService : IDisposable
 
     private IntPtr MouseHookCore(int code, UIntPtr wParam, IntPtr lParam)
     {
-        if (code >= 0 && wParam.ToUInt64() == WmRightButtonDown)
+        if (code < 0)
+        {
+            return CallNextHookEx(mouseHook, code, wParam, lParam);
+        }
+
+        var message = unchecked((uint)wParam.ToUInt64());
+        if (message == WmRightButtonDown)
         {
             var target = GetForegroundWindow();
             var identity = ClipboardCaptureService.WindowIdentity.FromHandle(target);
@@ -135,50 +146,103 @@ public sealed class GlobalInputService : IDisposable
                 }
             }
         }
-        else if (code >= 0 && wParam.ToUInt64() == WmRightButtonUp && suppressRightButtonUp)
+        else if (message == WmRightButtonUp && suppressRightButtonUp)
         {
             suppressRightButtonUp = false;
+            return new IntPtr(1);
+        }
+        else if (message is WmMiddleButtonDown or WmXButtonDown &&
+                 TrySummonCustomMouse(message, lParam))
+        {
+            suppressCustomMouseUp = message == WmMiddleButtonDown
+                ? WmMiddleButtonUp
+                : WmXButtonUp;
+            return new IntPtr(1);
+        }
+        else if (message == suppressCustomMouseUp)
+        {
+            suppressCustomMouseUp = 0;
             return new IntPtr(1);
         }
 
         return CallNextHookEx(mouseHook, code, wParam, lParam);
     }
 
-    private void ApplyHotkeyRegistration(bool enabled)
+    private bool TrySummonCustomMouse(uint message, IntPtr lParam)
+    {
+        var settings = settingsSnapshot.Current;
+        if (!settings.HotkeyEnabled ||
+            !ShortcutGestureParser.TryParse(settings.CustomShortcut, out var gesture) ||
+            gesture is null ||
+            gesture.Kind == ShortcutGestureKind.Keyboard)
+        {
+            return false;
+        }
+
+        var mouse = Marshal.PtrToStructure<MouseHookData>(lParam);
+        var matches = gesture.Kind switch
+        {
+            ShortcutGestureKind.MiddleMouse => message == WmMiddleButtonDown,
+            ShortcutGestureKind.XButton1 => message == WmXButtonDown && HighWord(mouse.mouseData) == 1,
+            ShortcutGestureKind.XButton2 => message == WmXButtonDown && HighWord(mouse.mouseData) == 2,
+            _ => false
+        };
+        if (!matches)
+        {
+            return false;
+        }
+
+        var target = GetForegroundWindow();
+        var identity = ClipboardCaptureService.WindowIdentity.FromHandle(target);
+        var filter = new ClipboardPrivacyFilter(settings.ExcludedApplications);
+        return !filter.ShouldExclude(identity.ProcessName, identity.WindowTitle) &&
+               dispatcherQueue.TryEnqueue(() =>
+                   summonAction(target, new PointInt32(mouse.point.X, mouse.point.Y)));
+    }
+
+    private void ApplyHotkeyRegistration(InputSettings settings)
     {
         if (!subclassInstalled)
         {
             return;
         }
 
-        if (enabled && !hotkeyRegistered)
+        if (hotkeyRegistered)
         {
-            hotkeyRegistered = RegisterHotKey(windowHandle, HotkeyId, 0x0002 | 0x0004, 0x56);
-            if (hotkeyRegistered)
+            if (!UnregisterHotKey(windowHandle, HotkeyId))
             {
-                initializationWarnings.Remove(HotkeyConflictWarning);
-                initializationWarnings.Remove(HotkeyReleaseWarning);
-            }
-            else if (!initializationWarnings.Contains(HotkeyConflictWarning))
-            {
-                initializationWarnings.Add(HotkeyConflictWarning);
-            }
-        }
-        else if (!enabled && hotkeyRegistered)
-        {
-            if (UnregisterHotKey(windowHandle, HotkeyId))
-            {
-                hotkeyRegistered = false;
-                initializationWarnings.Remove(HotkeyReleaseWarning);
-            }
-            else if (!initializationWarnings.Contains(HotkeyReleaseWarning))
-            {
-                initializationWarnings.Add(HotkeyReleaseWarning);
+                if (!initializationWarnings.Contains(HotkeyReleaseWarning))
+                {
+                    initializationWarnings.Add(HotkeyReleaseWarning);
+                }
+
+                return;
             }
 
-            initializationWarnings.Remove(HotkeyConflictWarning);
+            hotkeyRegistered = false;
+            initializationWarnings.Remove(HotkeyReleaseWarning);
+        }
+
+        initializationWarnings.Remove(HotkeyConflictWarning);
+        if (!settings.HotkeyEnabled ||
+            !ShortcutGestureParser.TryParse(settings.CustomShortcut, out var gesture) ||
+            gesture is not { Kind: ShortcutGestureKind.Keyboard })
+        {
+            return;
+        }
+
+        hotkeyRegistered = RegisterHotKey(
+            windowHandle,
+            HotkeyId,
+            gesture.Modifiers,
+            gesture.VirtualKey);
+        if (!hotkeyRegistered)
+        {
+            initializationWarnings.Add(HotkeyConflictWarning);
         }
     }
+
+    private static uint HighWord(uint value) => (value >> 16) & 0xFFFF;
 
     public void Dispose()
     {

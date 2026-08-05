@@ -3,8 +3,15 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
     <PlatformTarget>x64</PlatformTarget>
     <RootNamespace>HuahaiClipboard.NativeUiSpike</RootNamespace>
+    <Version>1.1.0</Version>
+    <AssemblyTitle>花海剪贴板</AssemblyTitle>
+    <Product>花海剪贴板</Product>
+    <Company>HuahaiClipboard</Company>
+    <Description>轻量、私密的 Windows 桌面剪贴板工具</Description>
     <ApplicationIcon>..\..\src\HuahaiClipboard.App\Assets\Brand\fox-icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
@@ -12,5 +19,10 @@
     <Page Include="..\..\ui\generated\HuahaiUiTokens.xaml" Link="Generated\HuahaiUiTokens.xaml" />
     <Resource Include="..\..\src\HuahaiClipboard.App\Assets\Brand\fox-icon.ico" Link="Assets\fox-icon.ico" />
     <Resource Include="..\..\src\HuahaiClipboard.App\Assets\Brand\fox-icon-source.png" Link="Assets\fox-icon-source.png" />
+    <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Clipboard\ClipboardCaptureService.cs" Link="Production\ClipboardCaptureService.cs" />
+    <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Clipboard\WindowsClipboardPlatform.cs" Link="Production\WindowsClipboardPlatform.cs" />
+    <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Storage\DpapiTextProtector.cs" Link="Production\DpapiTextProtector.cs" />
+    <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Startup\StartupRegistrationService.cs" Link="Production\StartupRegistrationService.cs" />
+    <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Tray\TrayService.cs" Link="Production\TrayService.cs" />
   </ItemGroup>
 </Project>

@@ -4,14 +4,23 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Diagnostics;
+using HuahaiClipboard.Core.Settings;
+using HuahaiClipboard.Core.Services;
+using HuahaiClipboard.NativeUiSpike.Services;
 
 namespace HuahaiClipboard.NativeUiSpike.Presentation.Views;
 
 public partial class SettingsView : UserControl
 {
     private readonly DispatcherTimer clearAllTimer;
+    private readonly DispatcherTimer appearanceSaveTimer;
+    private readonly DispatcherTimer motionSaveTimer;
     private readonly DispatcherTimer toastTimer;
+    private readonly GitHubUpdateCheckService updateService = GitHubUpdateCheckService.CreateDefault();
+    private bool applyingSettings;
     private bool clearAllPending;
+    private string? currentShortcut;
     private bool shortcutCaptureActive;
 
     public SettingsView()
@@ -25,7 +34,27 @@ public partial class SettingsView : UserControl
         };
         clearAllTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2.5) };
         clearAllTimer.Tick += (_, _) => ResetClearAllConfirmation();
-        Loaded += (_, _) => SelectPage("Appearance", AppearanceNav);
+        appearanceSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(180) };
+        appearanceSaveTimer.Tick += async (_, _) =>
+        {
+            appearanceSaveTimer.Stop();
+            await PersistAppearanceAsync();
+        };
+        motionSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(180) };
+        motionSaveTimer.Tick += async (_, _) =>
+        {
+            motionSaveTimer.Stop();
+            await PersistMotionAsync();
+        };
+        Loaded += (_, _) =>
+        {
+            SelectPage("Appearance", AppearanceNav);
+            ApplyPersistedSettings();
+            if (ViewModel?.CurrentSettings.Behavior.CheckUpdatesOnStartup == true)
+            {
+                _ = CheckForUpdatesAsync(showToast: false);
+            }
+        };
     }
 
     public event EventHandler? BackRequested;
@@ -39,6 +68,8 @@ public partial class SettingsView : UserControl
     public event Action<bool>? ReducedMotionChanged;
 
     public event Action<string>? ThemeRequested;
+
+    public event Action<bool>? StartupChanged;
 
     private NativeUiSpikeViewModel? ViewModel => DataContext as NativeUiSpikeViewModel;
 
@@ -77,10 +108,11 @@ public partial class SettingsView : UserControl
     private void BackButton_Click(object sender, RoutedEventArgs e) =>
         BackRequested?.Invoke(this, EventArgs.Empty);
 
-    private void ThemeButton_Click(object sender, RoutedEventArgs e)
+    private async void ThemeButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.Tag is not string themeId || ViewModel?.SetTheme(themeId) != true) return;
         ThemeRequested?.Invoke(themeId);
+        await PersistAppearanceAsync();
         HighlightTheme(button);
         ShowToast("主题已切换");
     }
@@ -104,6 +136,7 @@ public partial class SettingsView : UserControl
         var percent = (int)Math.Round(e.NewValue);
         OpacityValue.Text = $"{percent}%";
         OpacityRequested?.Invoke(percent / 100d);
+        if (!applyingSettings) RestartTimer(appearanceSaveTimer);
     }
 
     private void ScaleSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -112,6 +145,7 @@ public partial class SettingsView : UserControl
         var percent = (int)Math.Round(e.NewValue / 5d) * 5;
         ScaleValue.Text = $"{percent}%";
         PanelScaleRequested?.Invoke(percent / 100d);
+        if (!applyingSettings) RestartTimer(appearanceSaveTimer);
     }
 
     private void ResetScale_Click(object sender, RoutedEventArgs e)
@@ -124,17 +158,40 @@ public partial class SettingsView : UserControl
     {
         if (DurationValue is null) return;
         DurationValue.Text = $"{(int)Math.Round(e.NewValue)}ms";
+        if (!applyingSettings) RestartTimer(motionSaveTimer);
     }
 
-    private void Toggle_Click(object sender, RoutedEventArgs e)
+    private async void Toggle_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not ToggleButton toggle) return;
         var enabled = toggle.IsChecked == true;
         var name = toggle.Tag?.ToString() ?? "选项";
         ShowToast($"{name}：{(enabled ? "已开启" : "已关闭")}");
 
-        if (ReferenceEquals(toggle, PetalToggle)) PetalsChanged?.Invoke(enabled);
-        if (name == "减少动态效果") ReducedMotionChanged?.Invoke(enabled);
+        if (applyingSettings || ViewModel is null) return;
+
+        if (ReferenceEquals(toggle, PetalToggle))
+        {
+            PetalsChanged?.Invoke(enabled);
+            await PersistMotionAsync();
+        }
+        else if (ReferenceEquals(toggle, ReducedMotionToggle))
+        {
+            ReducedMotionChanged?.Invoke(enabled);
+            await PersistMotionAsync();
+        }
+        else if (ReferenceEquals(toggle, RightDoubleToggle))
+        {
+            await PersistInputAsync();
+        }
+        else if (ReferenceEquals(toggle, StartupToggle))
+        {
+            StartupChanged?.Invoke(enabled);
+        }
+        else if (ReferenceEquals(toggle, BackgroundToggle) || ReferenceEquals(toggle, UpdateToggle))
+        {
+            await PersistBehaviorAsync();
+        }
     }
 
     private void CaptureShortcut_Click(object sender, RoutedEventArgs e)
@@ -149,54 +206,83 @@ public partial class SettingsView : UserControl
     {
         if (!shortcutCaptureActive) return;
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
-        var modifiers = Keyboard.Modifiers == ModifierKeys.None ? string.Empty : $"{Keyboard.Modifiers} + ";
-        CompleteShortcutCapture($"{modifiers}{key}");
+        var gesture = FormatKeyboardGesture(Keyboard.Modifiers, key);
+        if (gesture is null)
+        {
+            ShowToast("普通按键需要搭配 Ctrl、Alt、Shift 或 Win");
+            return;
+        }
+
+        CompleteShortcutCapture(gesture);
         e.Handled = true;
     }
 
     private void Root_PreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
         if (!shortcutCaptureActive) return;
-        CompleteShortcutCapture($"鼠标 {e.ChangedButton}");
+        var gesture = e.ChangedButton switch
+        {
+            MouseButton.Middle => "鼠标中键",
+            MouseButton.XButton1 => "鼠标侧键 1",
+            MouseButton.XButton2 => "鼠标侧键 2",
+            _ => null,
+        };
+        if (gesture is null)
+        {
+            ShowToast("左键和右键用于正常操作，请使用中键或侧键");
+            return;
+        }
+
+        CompleteShortcutCapture(gesture);
         e.Handled = true;
     }
 
     private void CompleteShortcutCapture(string gesture)
     {
         shortcutCaptureActive = false;
+        currentShortcut = gesture;
         CaptureShortcutButton.Content = $"点击后自定义快捷唤出　　{gesture}";
+        _ = PersistInputAsync();
         ShowToast($"已保存：{gesture}");
     }
 
-    private void ResetShortcut_Click(object sender, RoutedEventArgs e)
+    private async void ResetShortcut_Click(object sender, RoutedEventArgs e)
     {
         shortcutCaptureActive = false;
+        currentShortcut = null;
         CaptureShortcutButton.Content = "点击后自定义快捷唤出　　未设置";
+        await PersistInputAsync(hotkeyEnabled: false);
         ShowToast("已恢复默认右键双击唤出");
     }
 
-    private void SaveExclusions_Click(object sender, RoutedEventArgs e)
+    private async void SaveExclusions_Click(object sender, RoutedEventArgs e)
     {
         var count = ExclusionTextBox.Text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
-        ShowToast($"应用排除列表已保存（{count} 项模拟数据）");
+        await PersistInputAsync();
+        ShowToast($"应用排除列表已保存（{count} 项）");
     }
 
-    private void OpenFolder_Click(object sender, RoutedEventArgs e) =>
-        ShowToast("样机不会打开或修改真实数据目录");
+    private void OpenFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var path = DataPathText.Text;
+        Directory.CreateDirectory(path);
+        Process.Start(new ProcessStartInfo("explorer.exe", $"\"{path}\"") { UseShellExecute = true });
+    }
 
-    private void Retention_Click(object sender, RoutedEventArgs e)
+    private async void Retention_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button button || !int.TryParse(button.Tag?.ToString(), out var days) || ViewModel?.SetRetentionDays(days) != true) return;
+        await PersistBehaviorAsync();
         ShowToast($"自动清理期限已设为 {(days == 30 ? "1 个月" : $"{days} 天")}");
     }
 
-    private void ClearOrdinary_Click(object sender, RoutedEventArgs e)
+    private async void ClearOrdinary_Click(object sender, RoutedEventArgs e)
     {
-        var removed = ViewModel?.ClearOrdinary() ?? 0;
+        var removed = ViewModel is null ? 0 : await ViewModel.ClearOrdinaryAsync();
         ShowToast($"已清空 {removed} 条普通记录，收藏和置顶已保留");
     }
 
-    private void ClearAll_Click(object sender, RoutedEventArgs e)
+    private async void ClearAll_Click(object sender, RoutedEventArgs e)
     {
         if (!clearAllPending)
         {
@@ -204,13 +290,13 @@ public partial class SettingsView : UserControl
             ClearAllButton.Content = "再次点击确认";
             clearAllTimer.Stop();
             clearAllTimer.Start();
-            ShowToast("再次点击将删除全部样机记录");
+            ShowToast("再次点击将删除全部历史记录");
             return;
         }
 
-        var removed = ViewModel?.ClearAll() ?? 0;
+        var removed = ViewModel is null ? 0 : await ViewModel.ClearAllAsync();
         ResetClearAllConfirmation();
-        ShowToast($"已清空全部 {removed} 条样机记录");
+        ShowToast($"已清空全部 {removed} 条历史记录");
     }
 
     private void ResetClearAllConfirmation()
@@ -220,14 +306,112 @@ public partial class SettingsView : UserControl
         ClearAllButton.Content = "清空全部";
     }
 
-    private void CheckUpdate_Click(object sender, RoutedEventArgs e)
-    {
-        UpdateStatus.Text = "检查完成：隔离样机不会联网。正式版将读取 GitHub Release 元数据并只提醒用户。";
-        ShowToast("更新检查体验已完成（未联网）");
-    }
+    private async void CheckUpdate_Click(object sender, RoutedEventArgs e) =>
+        await CheckForUpdatesAsync(showToast: true);
 
     private void Release_Click(object sender, RoutedEventArgs e) =>
-        ShowToast("样机不会打开外部链接；正式版将由用户确认后打开 Release 页面");
+        Process.Start(new ProcessStartInfo(GitHubUpdateCheckService.ReleasesPage) { UseShellExecute = true });
+
+    private async Task CheckForUpdatesAsync(bool showToast)
+    {
+        UpdateStatus.Text = "正在连接 GitHub 检查更新…";
+        try
+        {
+            var result = await updateService.CheckAsync(CancellationToken.None);
+            UpdateStatus.Text = result.UpdateAvailable
+                ? $"发现新版本 {result.LatestVersion}，点击“查看 GitHub Release”下载。"
+                : $"已是最新版本 {result.CurrentVersion}。";
+            if (showToast) ShowToast(result.UpdateAvailable ? "发现可用更新" : "当前已是最新版");
+        }
+        catch (Exception exception)
+        {
+            UpdateStatus.Text = $"暂时无法检查更新：{exception.Message}";
+            if (showToast) ShowToast("更新检查失败，请稍后重试");
+        }
+    }
+
+    public void SetStartupState(bool enabled)
+    {
+        applyingSettings = true;
+        StartupToggle.IsChecked = enabled;
+        applyingSettings = false;
+    }
+
+    private void ApplyPersistedSettings()
+    {
+        if (ViewModel is null) return;
+        var settings = ViewModel.CurrentSettings;
+        applyingSettings = true;
+        OpacitySlider.Value = settings.Appearance.Opacity * 100;
+        ScaleSlider.Value = settings.Appearance.PanelScale * 100;
+        PetalToggle.IsChecked = settings.Motion.PetalLevel != PetalLevel.Off;
+        ReducedMotionToggle.IsChecked = settings.Motion.ReduceMotion;
+        DurationSlider.Value = settings.Motion.ClickDurationMs;
+        RightDoubleToggle.IsChecked = settings.Input.RightDoubleClickEnabled;
+        BackgroundToggle.IsChecked = settings.Behavior.BackgroundEnabled;
+        UpdateToggle.IsChecked = settings.Behavior.CheckUpdatesOnStartup;
+        currentShortcut = settings.Input.CustomShortcut;
+        CaptureShortcutButton.Content = $"点击后自定义快捷唤出　　{(currentShortcut ?? "未设置")}";
+        ExclusionTextBox.Text = string.Join(Environment.NewLine, settings.Input.ExcludedApplications);
+        DataPathText.Text = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "HuahaiClipboard");
+        applyingSettings = false;
+    }
+
+    private Task PersistAppearanceAsync() => ViewModel is null
+        ? Task.CompletedTask
+        : ViewModel.UpdateAppearanceAsync(
+            ViewModel.ThemeId,
+            OpacitySlider.Value / 100d,
+            ScaleSlider.Value / 100d);
+
+    private Task PersistMotionAsync() => ViewModel is null
+        ? Task.CompletedTask
+        : ViewModel.UpdateMotionAsync(
+            PetalToggle.IsChecked == true ? PetalLevel.Low : PetalLevel.Off,
+            ReducedMotionToggle.IsChecked == true,
+            (int)Math.Round(DurationSlider.Value));
+
+    private Task PersistInputAsync(bool? hotkeyEnabled = null)
+    {
+        if (ViewModel is null) return Task.CompletedTask;
+        var exclusions = ExclusionTextBox.Text.Split(
+            ['\r', '\n'],
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return ViewModel.UpdateInputAsync(
+            RightDoubleToggle.IsChecked == true,
+            hotkeyEnabled ?? !string.IsNullOrWhiteSpace(currentShortcut),
+            exclusions,
+            currentShortcut);
+    }
+
+    private Task PersistBehaviorAsync() => ViewModel is null
+        ? Task.CompletedTask
+        : ViewModel.UpdateBehaviorAsync(
+            BackgroundToggle.IsChecked == true,
+            ViewModel.RetentionDays,
+            UpdateToggle.IsChecked == true);
+
+    private static string? FormatKeyboardGesture(ModifierKeys modifiers, Key key)
+    {
+        var parts = new List<string>();
+        if (modifiers.HasFlag(ModifierKeys.Control)) parts.Add("Ctrl");
+        if (modifiers.HasFlag(ModifierKeys.Alt)) parts.Add("Alt");
+        if (modifiers.HasFlag(ModifierKeys.Shift)) parts.Add("Shift");
+        if (modifiers.HasFlag(ModifierKeys.Windows)) parts.Add("Win");
+        var isFunctionKey = key is >= Key.F1 and <= Key.F24;
+        if (parts.Count == 0 && !isFunctionKey) return null;
+        parts.Add(key.ToString());
+        var gesture = string.Join(" + ", parts);
+        return ShortcutGestureParser.TryParse(gesture, out _) ? gesture : null;
+    }
+
+    private static void RestartTimer(DispatcherTimer timer)
+    {
+        timer.Stop();
+        timer.Start();
+    }
 
     private void ShowToast(string message)
     {

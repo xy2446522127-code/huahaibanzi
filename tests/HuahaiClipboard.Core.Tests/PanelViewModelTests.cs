@@ -89,10 +89,20 @@ public sealed class PanelViewModelTests
             typeof(Guid),
             typeof(CancellationToken));
         AssertMethod<IClipboardHistorySource>(
+            "ClearUnprotectedAsync",
+            typeof(Task),
+            typeof(CancellationToken));
+        AssertMethod<IClipboardHistorySource>(
+            "PruneAsync",
+            typeof(Task),
+            typeof(DateTimeOffset),
+            typeof(bool),
+            typeof(CancellationToken));
+        AssertMethod<IClipboardHistorySource>(
             "ClearAsync",
             typeof(Task),
             typeof(CancellationToken));
-        Assert.AreEqual(7, typeof(IClipboardHistorySource).GetMethods().Length);
+        Assert.AreEqual(9, typeof(IClipboardHistorySource).GetMethods().Length);
 
         AssertMethod<IPanelActionSink>(
             "CopyAsync",
@@ -388,7 +398,7 @@ public sealed class PanelViewModelTests
     }
 
     [TestMethod]
-    public async Task ClickFeedback_RunsApprovedMotionBeforeTheClipboardAction()
+    public async Task ClickFeedback_RunsTheClipboardActionBeforeOptionalMotion()
     {
         var controller = new ClickFeedbackController();
         var events = new List<string>();
@@ -407,8 +417,8 @@ public sealed class PanelViewModelTests
 
         await controller.RunAsync(false, animate, action, CancellationToken.None);
 
-        CollectionAssert.AreEqual(new[] { "animation", "action" }, events);
-        Assert.AreEqual(TimeSpan.FromMilliseconds(760), duration);
+        CollectionAssert.AreEqual(new[] { "action", "animation" }, events);
+        Assert.AreEqual(TimeSpan.FromMilliseconds(620), duration);
 
         await controller.RunAsync(true, animate, action, CancellationToken.None);
         Assert.AreEqual(TimeSpan.FromMilliseconds(120), duration);
@@ -429,6 +439,27 @@ public sealed class PanelViewModelTests
         Assert.IsTrue(viewModel.IsEmpty);
         Assert.AreEqual(0, viewModel.VisibleRecords.Count);
         Assert.IsNull(viewModel.SelectedRecord);
+    }
+
+    [TestMethod]
+    public async Task PanelViewModel_ClearHistoryEmptiesTheVisibleAndStoredRecords()
+    {
+        var source = new MockClipboardHistorySource();
+        var viewModel = new PanelViewModel(
+            source,
+            new MockPanelActionSink(),
+            new RecordingWindowNavigator());
+        await viewModel.LoadAsync();
+        var method = typeof(PanelViewModel).GetMethod(
+            "ClearAsync",
+            [typeof(CancellationToken)]);
+
+        Assert.IsNotNull(method);
+        Assert.AreEqual(typeof(Task), method.ReturnType);
+        await (Task)method.Invoke(viewModel, [CancellationToken.None])!;
+        Assert.IsTrue(viewModel.IsEmpty);
+        Assert.AreEqual(0, viewModel.AllRecords.Count);
+        Assert.AreEqual(0, (await source.GetAllAsync(CancellationToken.None)).Count);
     }
 
     private static PanelViewModel CreatePanelViewModel(IWindowNavigator? navigator = null) =>
@@ -491,6 +522,12 @@ public sealed class PanelViewModelTests
 
         public Task DeleteAsync(Guid recordId, CancellationToken cancellationToken) =>
             inner.DeleteAsync(recordId, cancellationToken);
+
+        public Task ClearUnprotectedAsync(CancellationToken cancellationToken) =>
+            inner.ClearUnprotectedAsync(cancellationToken);
+
+        public Task PruneAsync(DateTimeOffset cutoff, bool preserveProtected, CancellationToken cancellationToken) =>
+            inner.PruneAsync(cutoff, preserveProtected, cancellationToken);
 
         public Task ClearAsync(CancellationToken cancellationToken) => inner.ClearAsync(cancellationToken);
     }

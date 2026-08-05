@@ -19,8 +19,8 @@ public sealed class ClickFeedbackController
         Func<CancellationToken, Task> actionAsync,
         CancellationToken cancellationToken)
     {
-        var duration = TimeSpan.FromMilliseconds(reduceMotion ? 120 : 760);
-        await playAnimationAsync(duration, cancellationToken);
+        var duration = TimeSpan.FromMilliseconds(reduceMotion ? 120 : 620);
         await actionAsync(cancellationToken);
+        await playAnimationAsync(duration, cancellationToken);
     }
 }

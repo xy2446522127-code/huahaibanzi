@@ -63,6 +63,14 @@ public sealed class SettingsViewModel : ObservableObject
         return SaveDraftAsync(Draft with { Input = input }, cancellationToken);
     }
 
+    public Task UpdateBehaviorAsync(
+        BehaviorSettings behavior,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(behavior);
+        return SaveDraftAsync(Draft with { Behavior = behavior }, cancellationToken);
+    }
+
     public Task ResetAppearanceAsync(CancellationToken cancellationToken = default) =>
         SaveDraftAsync(Draft with { Appearance = ShellSettings.Default.Appearance }, cancellationToken);
 

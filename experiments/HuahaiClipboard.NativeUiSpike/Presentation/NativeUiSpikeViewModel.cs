@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
+using HuahaiClipboard.Core.Contracts;
 using HuahaiClipboard.Core.Models;
 using HuahaiClipboard.Core.Presentation;
+using HuahaiClipboard.Core.Settings;
 using HuahaiClipboard.NativeUiSpike.Models;
 
 namespace HuahaiClipboard.NativeUiSpike.Presentation;
@@ -17,19 +19,38 @@ public sealed class NativeUiSpikeViewModel : ObservableObject
     ];
 
     private bool isSettingsOpen;
+    private ShellSettings currentSettings = ShellSettings.Default;
+    private readonly IClipboardHistorySource? historySource;
+    private readonly IPanelActionSink? actionSink;
+    private readonly ISettingsStore? settingsStore;
     private int retentionDays = 7;
     private string searchText = string.Empty;
     private ClipboardFilter selectedFilter = ClipboardFilter.All;
     private string themeId = "rose-purple";
     private IReadOnlyList<SpikeClipboardItem> visibleItems = [];
 
-    private NativeUiSpikeViewModel(IEnumerable<SpikeClipboardItem> items)
+    private NativeUiSpikeViewModel(
+        IEnumerable<SpikeClipboardItem> items,
+        IClipboardHistorySource? historySource = null,
+        IPanelActionSink? actionSink = null,
+        ISettingsStore? settingsStore = null)
     {
+        this.historySource = historySource;
+        this.actionSink = actionSink;
+        this.settingsStore = settingsStore;
         AllItems = new ObservableCollection<SpikeClipboardItem>(items);
         RefreshVisibleItems();
     }
 
     public ObservableCollection<SpikeClipboardItem> AllItems { get; }
+
+    public ShellSettings CurrentSettings
+    {
+        get => currentSettings;
+        private set => SetProperty(ref currentSettings, value);
+    }
+
+    public event EventHandler<ShellSettings>? SettingsChanged;
 
     public IReadOnlyList<SpikeClipboardItem> VisibleItems
     {
@@ -79,6 +100,158 @@ public sealed class NativeUiSpikeViewModel : ObservableObject
     {
         ArgumentOutOfRangeException.ThrowIfNegative(count);
         return new NativeUiSpikeViewModel(Enumerable.Range(1, count).Select(CreateFixtureItem));
+    }
+
+    public static NativeUiSpikeViewModel CreateProduction(
+        IClipboardHistorySource historySource,
+        IPanelActionSink actionSink,
+        ISettingsStore settingsStore)
+    {
+        ArgumentNullException.ThrowIfNull(historySource);
+        ArgumentNullException.ThrowIfNull(actionSink);
+        ArgumentNullException.ThrowIfNull(settingsStore);
+        return new NativeUiSpikeViewModel([], historySource, actionSink, settingsStore);
+    }
+
+    public async Task LoadAsync(CancellationToken cancellationToken = default)
+    {
+        if (historySource is null || settingsStore is null) return;
+        var settings = await settingsStore.LoadAsync(cancellationToken);
+        CurrentSettings = settings;
+        retentionDays = settings.Behavior.AutoCleanupDays;
+        themeId = settings.Appearance.ThemeId;
+        await ReloadHistoryAsync(cancellationToken);
+        OnPropertyChanged(nameof(RetentionDays));
+        OnPropertyChanged(nameof(ThemeId));
+        OnPropertyChanged(nameof(HeaderSummary));
+    }
+
+    public Task UpdateAppearanceAsync(
+        string theme,
+        double opacity,
+        double panelScale,
+        CancellationToken cancellationToken = default) =>
+        SaveSettingsAsync(
+            CurrentSettings with
+            {
+                Appearance = CurrentSettings.Appearance with
+                {
+                    ThemeId = ThemeIds.Contains(theme) ? theme : CurrentSettings.Appearance.ThemeId,
+                    Opacity = Math.Clamp(opacity, 0.65, 0.96),
+                    PanelScale = Math.Clamp(panelScale, 0.8, 1.6),
+                },
+            },
+            cancellationToken);
+
+    public Task UpdateMotionAsync(
+        PetalLevel petalLevel,
+        bool reduceMotion,
+        int clickDurationMs,
+        CancellationToken cancellationToken = default) =>
+        SaveSettingsAsync(
+            CurrentSettings with
+            {
+                Motion = CurrentSettings.Motion with
+                {
+                    PetalLevel = petalLevel,
+                    ReduceMotion = reduceMotion,
+                    ClickDurationMs = Math.Clamp(clickDurationMs, 180, 900),
+                },
+            },
+            cancellationToken);
+
+    public Task UpdateInputAsync(
+        bool rightDoubleClickEnabled,
+        bool hotkeyEnabled,
+        string[] excludedApplications,
+        string? customShortcut,
+        CancellationToken cancellationToken = default) =>
+        SaveSettingsAsync(
+            CurrentSettings with
+            {
+                Input = new InputSettings(
+                    rightDoubleClickEnabled,
+                    hotkeyEnabled,
+                    excludedApplications
+                        .Where(value => !string.IsNullOrWhiteSpace(value))
+                        .Select(value => value.Trim())
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToArray(),
+                    string.IsNullOrWhiteSpace(customShortcut) ? null : customShortcut.Trim()),
+            },
+            cancellationToken);
+
+    public Task UpdateBehaviorAsync(
+        bool backgroundEnabled,
+        int autoCleanupDays,
+        bool checkUpdatesOnStartup,
+        CancellationToken cancellationToken = default) =>
+        SaveSettingsAsync(
+            CurrentSettings with
+            {
+                Behavior = new BehaviorSettings(
+                    backgroundEnabled,
+                    autoCleanupDays is 3 or 7 or 30 ? autoCleanupDays : 7,
+                    checkUpdatesOnStartup),
+            },
+            cancellationToken);
+
+    public async Task ReloadHistoryAsync(CancellationToken cancellationToken = default)
+    {
+        if (historySource is null) return;
+        var records = await historySource.GetAllAsync(cancellationToken);
+        AllItems.Clear();
+        foreach (var record in records) AllItems.Add(SpikeClipboardItem.FromRecord(record));
+        RefreshVisibleItems();
+    }
+
+    public async Task<bool> CopyAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        if (actionSink is null) return AllItems.Any(item => item.Id == id);
+        var result = await actionSink.CopyAsync(id, cancellationToken);
+        return result.Succeeded;
+    }
+
+    public async Task TogglePinnedAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var item = AllItems.FirstOrDefault(candidate => candidate.Id == id);
+        if (item is null) return;
+        if (historySource is not null) await historySource.SetPinnedAsync(id, !item.IsPinned, cancellationToken);
+        item.IsPinned = !item.IsPinned;
+        RefreshVisibleItems();
+    }
+
+    public async Task ToggleFavoriteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var item = AllItems.FirstOrDefault(candidate => candidate.Id == id);
+        if (item is null) return;
+        if (historySource is not null) await historySource.SetFavoriteAsync(id, !item.IsFavorite, cancellationToken);
+        item.IsFavorite = !item.IsFavorite;
+        RefreshVisibleItems();
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        if (historySource is not null) await historySource.DeleteAsync(id, cancellationToken);
+        Delete(id);
+    }
+
+    public async Task<int> ClearOrdinaryAsync(CancellationToken cancellationToken = default)
+    {
+        if (historySource is null) return ClearOrdinary();
+        var before = AllItems.Count;
+        await historySource.ClearUnprotectedAsync(cancellationToken);
+        await ReloadHistoryAsync(cancellationToken);
+        return before - AllItems.Count;
+    }
+
+    public async Task<int> ClearAllAsync(CancellationToken cancellationToken = default)
+    {
+        if (historySource is null) return ClearAll();
+        var before = AllItems.Count;
+        await historySource.ClearAsync(cancellationToken);
+        await ReloadHistoryAsync(cancellationToken);
+        return before;
     }
 
     public void TogglePinned(Guid id)
@@ -140,6 +313,18 @@ public sealed class NativeUiSpikeViewModel : ObservableObject
     }
 
     public void OpenSettings(bool open) => IsSettingsOpen = open;
+
+    private async Task SaveSettingsAsync(ShellSettings settings, CancellationToken cancellationToken)
+    {
+        if (settingsStore is not null) await settingsStore.SaveAsync(settings, cancellationToken);
+        CurrentSettings = settings;
+        retentionDays = settings.Behavior.AutoCleanupDays;
+        themeId = settings.Appearance.ThemeId;
+        OnPropertyChanged(nameof(RetentionDays));
+        OnPropertyChanged(nameof(ThemeId));
+        OnPropertyChanged(nameof(HeaderSummary));
+        SettingsChanged?.Invoke(this, settings);
+    }
 
     private static SpikeClipboardItem CreateFixtureItem(int number)
     {

@@ -15,8 +15,39 @@
     <Border x:Name="GlassRoot"
             CornerRadius="{DynamicResource HuahaiPanelCornerRadius}"
             Background="{DynamicResource HuahaiGlassBrush}"
+            BorderThickness="0"
             ClipToBounds="True">
         <Grid>
+            <Grid x:Name="AmbientLayer" IsHitTestVisible="False">
+                <Border x:Name="LiquidReflection"
+                        Width="731"
+                        Height="211"
+                        Margin="-206,-41,0,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Background="{DynamicResource HuahaiLiquidReflectionBrush}"
+                        CornerRadius="105"
+                        Opacity="0.42"
+                        RenderTransformOrigin="0.5,0.5">
+                    <Border.Effect>
+                        <BlurEffect Radius="15" RenderingBias="Performance" />
+                    </Border.Effect>
+                    <Border.RenderTransform>
+                        <TransformGroup>
+                            <RotateTransform Angle="22" />
+                            <TranslateTransform />
+                        </TransformGroup>
+                    </Border.RenderTransform>
+                </Border>
+
+                <Canvas x:Name="PetalLayer" Opacity="0.40" ClipToBounds="True">
+                    <Border x:Name="PetalOne" Canvas.Left="48" Canvas.Top="80" Width="5" Height="7" Background="#B8F5C6DF" CornerRadius="5,1,5,1" RenderTransformOrigin="0.5,0.5"><Border.RenderTransform><RotateTransform Angle="28" /></Border.RenderTransform></Border>
+                    <Border x:Name="PetalTwo" Canvas.Left="128" Canvas.Top="210" Width="4" Height="6" Background="#9CE8A6CF" CornerRadius="4,1,4,1" RenderTransformOrigin="0.5,0.5"><Border.RenderTransform><RotateTransform Angle="-22" /></Border.RenderTransform></Border>
+                    <Border x:Name="PetalThree" Canvas.Left="224" Canvas.Top="14" Width="5" Height="7" Background="#A7F4C2DC" CornerRadius="5,1,5,1" RenderTransformOrigin="0.5,0.5"><Border.RenderTransform><RotateTransform Angle="46" /></Border.RenderTransform></Border>
+                    <Border x:Name="PetalFour" Canvas.Left="318" Canvas.Top="360" Width="4" Height="6" Background="#8FEAA8CB" CornerRadius="4,1,4,1" RenderTransformOrigin="0.5,0.5"><Border.RenderTransform><RotateTransform Angle="12" /></Border.RenderTransform></Border>
+                    <Border x:Name="PetalFive" Canvas.Left="392" Canvas.Top="520" Width="5" Height="7" Background="#A6F7CBE2" CornerRadius="5,1,5,1" RenderTransformOrigin="0.5,0.5"><Border.RenderTransform><RotateTransform Angle="-35" /></Border.RenderTransform></Border>
+                </Canvas>
+            </Grid>
             <ContentControl x:Name="PanelHost" />
             <ContentControl x:Name="SettingsHost" Visibility="Collapsed" />
         </Grid>

@@ -8,10 +8,12 @@ public sealed class SpikeClipboardItem(
     string stableId,
     ClipboardItemKind kind,
     string title,
-    string metadata) : ObservableObject
+    string metadata,
+    bool pinned = false,
+    bool favorite = false) : ObservableObject
 {
-    private bool isFavorite;
-    private bool isPinned;
+    private bool isFavorite = favorite;
+    private bool isPinned = pinned;
 
     public Guid Id { get; } = id;
 
@@ -43,4 +45,13 @@ public sealed class SpikeClipboardItem(
         get => isFavorite;
         set => SetProperty(ref isFavorite, value);
     }
+
+    public static SpikeClipboardItem FromRecord(ClipboardRecord record) => new(
+        record.Id,
+        record.Id.ToString("N"),
+        record.Kind,
+        record.PrimaryText,
+        record.SecondaryText,
+        record.IsPinned,
+        record.IsFavorite);
 }

@@ -11,6 +11,21 @@ namespace HuahaiClipboard.Core.Tests;
 public sealed class ProductionClipboardTests
 {
     [TestMethod]
+    public void PrivacyFilter_BlocksTokensPasswordsAndOneTimeCodesWithoutBlockingNormalText()
+    {
+        var method = typeof(ClipboardPrivacyFilter).GetMethod(
+            "ShouldExcludeContent",
+            [typeof(string)]);
+
+        Assert.IsNotNull(method);
+        Assert.AreEqual(typeof(bool), method.ReturnType);
+        var filter = new ClipboardPrivacyFilter();
+        Assert.AreEqual(true, method.Invoke(filter, ["sk-example_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"]));
+        Assert.AreEqual(true, method.Invoke(filter, ["password = correct-horse-battery-staple"]));
+        Assert.AreEqual(true, method.Invoke(filter, ["验证码 482913"]));
+        Assert.AreEqual(false, method.Invoke(filter, ["花海剪贴板发布清单"]));
+    }
+    [TestMethod]
     public async Task History_UpsertDeduplicatesAndPersistsAcrossInstances()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"huahai-{Guid.NewGuid():N}");
@@ -106,6 +121,114 @@ public sealed class ProductionClipboardTests
         }
     }
 
+    [TestMethod]
+    public async Task History_PruneRemovesOnlyExpiredOrdinaryRecords()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-prune-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "history.dat");
+        try
+        {
+            var source = new JsonClipboardHistorySource(path, new PassthroughTextProtector());
+            var cutoff = DateTimeOffset.Parse("2026-08-01T00:00:00+08:00");
+            await source.UpsertAsync(CreateRecord("expired", cutoff.AddMinutes(-1)), CancellationToken.None);
+            await source.UpsertAsync(CreateRecord("current", cutoff), CancellationToken.None);
+
+            await source.PruneAsync(cutoff, preserveProtected: true, CancellationToken.None);
+
+            var records = await source.GetAllAsync(CancellationToken.None);
+            CollectionAssert.AreEquivalent(new[] { "current" }, records.Select(record => record.PrimaryText).ToArray());
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
+    [TestMethod]
+    public async Task History_PrunePreservesExpiredFavoriteAndPinnedRecords()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-prune-protected-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "history.dat");
+        try
+        {
+            var source = new JsonClipboardHistorySource(path, new PassthroughTextProtector());
+            var cutoff = DateTimeOffset.Parse("2026-08-01T00:00:00+08:00");
+            var favorite = CreateRecord("favorite", cutoff.AddDays(-10)) with { IsFavorite = true };
+            var pinned = CreateRecord("pinned", cutoff.AddDays(-10)) with { IsPinned = true };
+            await source.UpsertAsync(favorite, CancellationToken.None);
+            await source.UpsertAsync(pinned, CancellationToken.None);
+
+            await source.PruneAsync(cutoff, preserveProtected: true, CancellationToken.None);
+
+            var records = await source.GetAllAsync(CancellationToken.None);
+            CollectionAssert.AreEquivalent(
+                new[] { "favorite", "pinned" },
+                records.Select(record => record.PrimaryText).ToArray());
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
+    [TestMethod]
+    public async Task History_ClearUnprotectedPreservesFavoriteAndPinnedRecords()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-clear-ordinary-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "history.dat");
+        try
+        {
+            var source = new JsonClipboardHistorySource(path, new PassthroughTextProtector());
+            await source.UpsertAsync(CreateRecord("ordinary", DateTimeOffset.Now), CancellationToken.None);
+            await source.UpsertAsync(CreateRecord("favorite", DateTimeOffset.Now) with { IsFavorite = true }, CancellationToken.None);
+            await source.UpsertAsync(CreateRecord("pinned", DateTimeOffset.Now) with { IsPinned = true }, CancellationToken.None);
+
+            await source.ClearUnprotectedAsync(CancellationToken.None);
+
+            var records = await source.GetAllAsync(CancellationToken.None);
+            CollectionAssert.AreEquivalent(
+                new[] { "favorite", "pinned" },
+                records.Select(record => record.PrimaryText).ToArray());
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
+    [TestMethod]
+    public async Task History_ClearDeletesFavoriteAndPinnedRecordsToo()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-clear-all-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "history.dat");
+        try
+        {
+            var source = new JsonClipboardHistorySource(path, new PassthroughTextProtector());
+            await source.UpsertAsync(CreateRecord("favorite", DateTimeOffset.Now) with { IsFavorite = true }, CancellationToken.None);
+            await source.UpsertAsync(CreateRecord("pinned", DateTimeOffset.Now) with { IsPinned = true }, CancellationToken.None);
+
+            await source.ClearAsync(CancellationToken.None);
+
+            Assert.AreEqual(0, (await source.GetAllAsync(CancellationToken.None)).Count);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
     [DataTestMethod]
     [DataRow("Bitwarden.exe", "Bitwarden", true)]
     [DataRow("chrome.exe", "New Incognito Tab - Google Chrome", true)]
@@ -184,6 +307,8 @@ public sealed class ProductionClipboardTests
         public Task SetFavoriteAsync(Guid recordId, bool value, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task SetPinnedAsync(Guid recordId, bool value, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteAsync(Guid recordId, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task ClearUnprotectedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task PruneAsync(DateTimeOffset cutoff, bool preserveProtected, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task ClearAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }

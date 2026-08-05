@@ -1,11 +1,11 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <LinearGradientBrush x:Key="HuahaiLiquidReflectionBrush"
-                         StartPoint="0,0"
-                         EndPoint="1,1">
-        <GradientStop Offset="0" Color="#00FFFFFF" />
-        <GradientStop Offset="0.46" Color="#27FFFFFF" />
-        <GradientStop Offset="0.58" Color="#45D786BB" />
-        <GradientStop Offset="1" Color="#00FFFFFF" />
+                         StartPoint="0,0.5"
+                         EndPoint="1,0.5">
+        <GradientStop Offset="0" Color="#008F5BAA" />
+        <GradientStop Offset="0.38" Color="{DynamicResource HuahaiAccentColor}" />
+        <GradientStop Offset="0.62" Color="{DynamicResource HuahaiReflectionColor}" />
+        <GradientStop Offset="1" Color="#008F5BAA" />
     </LinearGradientBrush>
 </ResourceDictionary>

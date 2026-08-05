@@ -43,6 +43,10 @@ public sealed class CompositionRoot
 
     public ClipboardCaptureService CaptureService => captureService;
 
+    public JsonClipboardHistorySource HistorySource => historySource;
+
+    public ClipboardPanelActionSink ActionSink => actionSink;
+
     public WindowsClipboardPlatform ClipboardPlatform => clipboardPlatform;
 
     public ProtectedClipboardImageStore ImageStore => imageStore;

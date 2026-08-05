@@ -48,12 +48,18 @@ public sealed class ClipboardCaptureService(
             }
         }
 
-        if (record is null)
+        if (record is null ||
+            record.Kind is ClipboardItemKind.Text or ClipboardItemKind.Link &&
+            filter.ShouldExcludeContent(record.PrimaryText))
         {
             return;
         }
 
         await historySource.UpsertAsync(record, CancellationToken.None);
+        await historySource.PruneAsync(
+            DateTimeOffset.Now.AddDays(-settings.Behavior.AutoCleanupDays),
+            preserveProtected: true,
+            CancellationToken.None);
         HistoryChanged?.Invoke(this, EventArgs.Empty);
     }
 

@@ -1,13 +1,13 @@
 {
-  "cleanup_plan": "Stop all smoke-test app processes; retain only the final ignored publish folder and ZIP.",
-  "completion_boundary": "Current source is reviewed, tested, built, smoke-tested, committed, packaged as a complete portable ZIP, and pushed once an explicit remote URL is available.",
-  "critical_path_benefit": "One already-running independent read-only release review can expose blockers before the single integration commit without adding a writer.",
+  "cleanup_plan": "Stop only app and test processes owned by this stage, release any reserved preview port, and retain final UI evidence plus the packaged artifact.",
+  "completion_boundary": "A visible Windows x64 EXE loads the approved v6 HTML shell and completes real clipboard, history, settings, summon, tray, startup, and package smoke checks.",
+  "critical_path_benefit": "One writer reuses the approved same-source HTML and the existing native services; no parallel worker or second UI implementation.",
   "limits": {
-    "concurrent_reviewers": 1,
+    "concurrent_reviewers": 0,
     "concurrent_writers": 1,
     "context_tokens_per_turn": 32000,
     "focused_test_runs": 3,
-    "full_suite_runs": 1,
+    "full_suite_runs": 0,
     "images_per_decision": 3,
     "inherited_turns": 0,
     "integration_test_runs": 0,
@@ -26,8 +26,7 @@
     "worktrees": 0
   },
   "profile": "micro",
-  "result": "Current product verified, committed, pushed to private GitHub repository, and packaged as a ZIP whose extracted executable passed startup smoke.",
-  "stage_id": "current-version-release",
-  "status": "closed",
+  "stage_id": "webview-v6-exe",
+  "status": "active",
   "version": 2
 }

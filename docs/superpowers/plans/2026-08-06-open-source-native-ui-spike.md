@@ -634,7 +634,7 @@ Run the visual capture at 100%, 150%, and 200% DPI. Run the interaction pass wit
 
 ```powershell
 python "F:\Codex Data\skills\app-product-delivery\scripts\delivery_gate.py" `
-  "F:\Users\DXY\Documents\桌面粘贴悬浮面板" `
+  "<project-root>" `
   --gate checkpoint `
   --owned-path experiments/HuahaiClipboard.NativeUiSpike `
   --owned-path tests/HuahaiClipboard.NativeUiSpike.Smoke `

@@ -81,6 +81,33 @@ public sealed class MockClipboardHistorySource : IClipboardHistorySource
         return Task.CompletedTask;
     }
 
+    public Task ClearUnprotectedAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (syncRoot)
+        {
+            records.RemoveAll(record => !record.IsFavorite && !record.IsPinned);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task PruneAsync(
+        DateTimeOffset cutoff,
+        bool preserveProtected,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (syncRoot)
+        {
+            records.RemoveAll(record =>
+                record.LastCopiedAt < cutoff &&
+                (!preserveProtected || !record.IsFavorite && !record.IsPinned));
+        }
+
+        return Task.CompletedTask;
+    }
+
     private void UpdateRecord(Guid recordId, Func<ClipboardRecord, ClipboardRecord> update)
     {
         lock (syncRoot)

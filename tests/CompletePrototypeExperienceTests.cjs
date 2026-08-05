@@ -1,0 +1,76 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+
+const shellPath = 'src/HuahaiClipboard.App/Assets/Web/product-shell.html';
+const html = fs.readFileSync(shellPath, 'utf8');
+const count = (part) => html.split(part).length - 1;
+
+test('formal product shell uses the approved A petal-flow wordmark in both brand locations', () => {
+  assert.equal(count('class="petal-text"'), 2);
+  assert.equal(count('<span class="accent">花海</span>剪贴板'), 2);
+  assert.match(html, /\.petal-text\{[^}]*font-family:"STKaiti","KaiTi","Microsoft YaHei UI",sans-serif/);
+  assert.match(html, /\.petal-text\{[^}]*font-weight:700/);
+});
+
+test('settings gear has one live entry and every settings page shares a return path', () => {
+  assert.equal(count('id="settingsButton"'), 1);
+  assert.match(html, /hhQ\('#settingsButton'\)\.onclick=openSettings/);
+  assert.equal(count('id="backButton"'), 1);
+  assert.match(html, /hhQ\('#backButton'\)\.onclick=closeSettings/);
+
+  for (const page of ['appearance', 'motion', 'input', 'storage', 'system', 'about']) {
+    assert.match(html, new RegExp(`class="nav-button(?: active)?" data-page="${page}"`), `${page} nav`);
+    assert.match(html, new RegExp(`class="settings-page(?: active)?" data-page="${page}"`), `${page} page`);
+  }
+});
+
+test('appearance page exposes proportional panel scaling and a one-click reset', () => {
+  assert.equal(count('id="scaleRange"'), 1);
+  assert.match(html, /id="scaleRange"[^>]*min="80"[^>]*max="160"[^>]*step="5"[^>]*value="100"/);
+  assert.equal(count('id="scaleValue"'), 1);
+  assert.equal(count('id="resetScale"'), 1);
+  assert.equal(count('id="resizeHandle"'), 1);
+  assert.match(html, /hhQ\('#scaleRange'\)\.oninput=/);
+  assert.match(html, /hhQ\('#resetScale'\)\.onclick=/);
+  assert.match(html, /window\.HuahaiHostScale\.clampPanelScale/);
+});
+
+test('about page provides a clearly simulated and non-networked update journey', () => {
+  assert.equal(count('id="updateAutoToggle"'), 1);
+  assert.equal(count('id="checkUpdateButton"'), 1);
+  assert.equal(count('id="updateStatus"'), 1);
+  assert.equal(count('id="releaseButton"'), 1);
+  assert.match(html, /模拟更新体验/);
+  assert.match(html, /GitHub Release/);
+  assert.match(html, /检查中/);
+  assert.match(html, /发现新版本/);
+  assert.match(html, /当前已是最新版本/);
+  assert.doesNotMatch(html, /\bfetch\s*\(/);
+  assert.doesNotMatch(html, /XMLHttpRequest/);
+});
+
+test('every visible prototype control has an explicit interaction binding', () => {
+  for (const id of [
+    'updateAutoToggle',
+    'checkUpdateButton',
+    'releaseButton',
+    'scaleRange',
+    'resetScale'
+  ]) {
+    assert.match(html, new RegExp(`hhQ\\('#${id}'\\)\\.(?:onclick|oninput)=`), id);
+  }
+});
+
+test('web preview uses the same panel drag policy for a real movable interaction', () => {
+  assert.match(html, /function beginPanelDrag\(event\)/);
+  assert.match(html, /window\.HuahaiPanelDrag\.install\(hhQ\('#glassPanel'\),beginPanelDrag\)/);
+  assert.match(html, /window\.HuahaiPanelDrag\.previewPosition/);
+  assert.match(html, /panel\.style\.left=/);
+  assert.match(html, /panel\.style\.top=/);
+});
+
+test('localhost preview cannot be mistaken for the native WebView host', () => {
+  assert.match(html, /window\.HuahaiHostScale\.isNativeShellHost\(window\.location,window\.chrome\)/);
+  assert.doesNotMatch(html, /window\.chrome && window\.chrome\.webview \? window\.chrome\.webview : null/);
+});

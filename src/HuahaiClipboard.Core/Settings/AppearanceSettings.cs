@@ -5,4 +5,5 @@ public sealed record AppearanceSettings(
     double Opacity,
     double BlurAmount,
     double ReflectionStrength,
-    bool CompactMode);
+    bool CompactMode,
+    double PanelScale = 1d);

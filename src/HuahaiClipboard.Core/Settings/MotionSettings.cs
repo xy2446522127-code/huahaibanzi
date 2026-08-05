@@ -11,5 +11,5 @@ public enum PetalLevel
 public sealed record MotionSettings(
     PetalLevel PetalLevel,
     bool ReduceMotion,
-    int ClickDurationMs = 760,
+    int ClickDurationMs = 620,
     int ReducedClickDurationMs = 120);

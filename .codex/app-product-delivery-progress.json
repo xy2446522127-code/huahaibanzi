@@ -1,66 +1,74 @@
 {
   "blockers": [],
+  "change_scale": "micro",
   "core_percent": 100,
-  "current_milestone": "remote-sync",
+  "current_milestone": null,
+  "delivery_maturity": "release",
   "delivery_target": "release",
   "execution_mode": "autonomous_implementation",
   "milestones": [
     {
       "blocker": "",
       "core": true,
-      "evidence": "Core Release tests passed 62/62.",
-      "id": "core-product",
-      "label": "Current clipboard product behavior",
+      "evidence": "Release x64 build; installed WindowStartupSmoke passed; packaged HTML/CSS/JS resources present including App.xbf and HuahaiClipboard.App.pri.",
+      "id": "hybrid-shell",
+      "label": "Approved v6 prototype runs inside the EXE",
       "status": "verified",
-      "weight": 45
+      "weight": 30
     },
     {
       "blocker": "",
       "core": true,
-      "evidence": "Four P1 findings were fixed with regression tests; independent review found no remaining P0/P1.",
-      "id": "release-safety",
-      "label": "Privacy and release blocker closure",
+      "evidence": "Node 22/22 and Core 80/80 passed; installed WebView2 hide smoke passed with background toggle disabled, process alive and window hidden.",
+      "id": "native-bridge",
+      "label": "Clipboard, history, settings, shortcuts and tray are connected",
       "status": "verified",
-      "weight": 25
+      "weight": 35
     },
     {
       "blocker": "",
       "core": true,
-      "evidence": "Visual Studio Build Tools Release x64 build and 10-second startup smoke passed.",
-      "id": "release-build",
-      "label": "Release build and startup",
+      "evidence": "Prototype shell contract 9/9; full Node suite 22/22; interaction inventory needs_review=0; installed startup and hide smoke passed.",
+      "id": "visible-parity",
+      "label": "Panel and settings match the approved interactive prototype",
+      "status": "verified",
+      "weight": 20
+    },
+    {
+      "blocker": "",
+      "core": false,
+      "evidence": "Silent install/reinstall exit 0; required files 12/12; shortcuts and uninstall registry verified; uninstall exit 0 removes app/shortcuts/key/Run value while preserving 40 data files by SHA-256; final setup icon matches installed EXE icon; installer is unsigned.",
+      "id": "friend-package",
+      "label": "Windows x64 friend-ready package starts successfully",
       "status": "verified",
       "weight": 15
-    },
-    {
-      "blocker": "",
-      "core": false,
-      "evidence": "ZIP extracted to 48 files and the extracted executable passed a 10-second visible-window smoke test.",
-      "id": "portable-package",
-      "label": "Friend-ready portable ZIP",
-      "status": "verified",
-      "weight": 10
-    },
-    {
-      "blocker": "",
-      "core": false,
-      "evidence": "Private GitHub repository xy2446522127-code/huahaibanzi was created and commit 0f2e14b was pushed to origin/master.",
-      "id": "remote-sync",
-      "label": "GitHub repository sync",
-      "status": "verified",
-      "weight": 5
     }
   ],
   "overall_percent": 100,
+  "product_scale": "micro",
   "project_scale": "micro",
   "risk_level": "medium",
+  "runtime_topology": "undetermined",
+  "scale_evidence": {
+    "migration": "version-1-equal-scales"
+  },
   "scope_changes": [
     {
       "reason": "User froze the current product and requested a verified Git sync plus friend-ready package.",
       "revision": 3
+    },
+    {
+      "at": "2026-08-04T21:09:05.181239Z",
+      "previous_classification": {
+        "delivery_target": "release",
+        "project_scale": "micro",
+        "risk_level": "medium"
+      },
+      "previous_percent": 100,
+      "reason": "Replace the divergent native XAML reconstruction with the user-approved v6 HTML/CSS/JS as the actual production UI, then reconnect Windows capabilities and rebuild the friend-ready package."
     }
   ],
-  "scope_revision": 3,
-  "updated_at": "2026-08-04T20:18:00Z",
-  "version": 1
+  "scope_revision": 4,
+  "updated_at": "2026-08-05T02:30:18.521061Z",
+  "version": 2
 }

@@ -138,6 +138,27 @@ public sealed class PanelViewModel : ObservableObject
         CancellationToken cancellationToken = default) =>
         RunDeleteAsync(record, cancellationToken);
 
+    public async Task ClearAsync(CancellationToken cancellationToken = default)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        RecoveryMessage = null;
+        try
+        {
+            await historySource.ClearAsync(cancellationToken);
+            AllRecords = Array.Empty<ClipboardRecord>();
+            RefreshVisibleRecords();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     public void MoveSelection(int delta)
     {
         if (VisibleRecords.Count == 0)

@@ -27,6 +27,8 @@ public partial class PanelView : UserControl
 
     public event EventHandler? SettingsRequested;
 
+    public void FocusSearch() => SearchBox.Focus();
+
     private NativeUiSpikeViewModel? ViewModel => DataContext as NativeUiSpikeViewModel;
 
     private void FilterButton_Click(object sender, RoutedEventArgs e)
@@ -49,32 +51,69 @@ public partial class PanelView : UserControl
         }
     }
 
-    private void Record_CopyRequested(Guid id)
+    private async void Record_CopyRequested(Guid id)
     {
         var item = ViewModel?.AllItems.FirstOrDefault(candidate => candidate.Id == id);
         if (item is null) return;
-        ShowToast($"已模拟复制：{item.Title}");
-        if (AutoHideCheckBox.IsChecked == true) HideRequested?.Invoke(this, EventArgs.Empty);
+        try
+        {
+            if (await ViewModel!.CopyAsync(id) && AutoHideCheckBox.IsChecked == true)
+            {
+                HideRequested?.Invoke(this, EventArgs.Empty);
+            }
+            else
+            {
+                ShowToast("复制失败，请重试");
+            }
+        }
+        catch (Exception exception)
+        {
+            ShowToast($"复制失败：{exception.Message}");
+        }
     }
 
-    private void Record_PinRequested(Guid id)
+    private async void Record_PinRequested(Guid id)
     {
-        ViewModel?.TogglePinned(id);
-        var item = ViewModel?.AllItems.FirstOrDefault(candidate => candidate.Id == id);
-        ShowToast(item?.IsPinned == true ? "已置顶" : "已取消置顶");
+        try
+        {
+            if (ViewModel is null) return;
+            await ViewModel.TogglePinnedAsync(id);
+            var item = ViewModel.AllItems.FirstOrDefault(candidate => candidate.Id == id);
+            ShowToast(item?.IsPinned == true ? "已置顶" : "已取消置顶");
+        }
+        catch (Exception exception)
+        {
+            ShowToast($"置顶失败：{exception.Message}");
+        }
     }
 
-    private void Record_FavoriteRequested(Guid id)
+    private async void Record_FavoriteRequested(Guid id)
     {
-        ViewModel?.ToggleFavorite(id);
-        var item = ViewModel?.AllItems.FirstOrDefault(candidate => candidate.Id == id);
-        ShowToast(item?.IsFavorite == true ? "已收藏" : "已取消收藏");
+        try
+        {
+            if (ViewModel is null) return;
+            await ViewModel.ToggleFavoriteAsync(id);
+            var item = ViewModel.AllItems.FirstOrDefault(candidate => candidate.Id == id);
+            ShowToast(item?.IsFavorite == true ? "已收藏" : "已取消收藏");
+        }
+        catch (Exception exception)
+        {
+            ShowToast($"收藏失败：{exception.Message}");
+        }
     }
 
-    private void Record_DeleteRequested(Guid id)
+    private async void Record_DeleteRequested(Guid id)
     {
-        ViewModel?.Delete(id);
-        ShowToast("记录已删除");
+        try
+        {
+            if (ViewModel is null) return;
+            await ViewModel.DeleteAsync(id);
+            ShowToast("记录已删除");
+        }
+        catch (Exception exception)
+        {
+            ShowToast($"删除失败：{exception.Message}");
+        }
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e) =>

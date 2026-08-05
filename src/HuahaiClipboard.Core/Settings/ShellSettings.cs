@@ -5,10 +5,12 @@ public sealed record ShellSettings(
     MotionSettings Motion,
     InputSettings Input)
 {
+    public BehaviorSettings Behavior { get; init; } = BehaviorSettings.Default;
+
     public static ShellSettings Default => new(
         new AppearanceSettings(
             ThemeId: "rose-purple",
-            Opacity: 0.86,
+            Opacity: 0.74,
             BlurAmount: 32,
             ReflectionStrength: 0.72,
             CompactMode: false),
@@ -18,5 +20,8 @@ public sealed record ShellSettings(
         new InputSettings(
             RightDoubleClickEnabled: true,
             HotkeyEnabled: true,
-            ExcludedApplications: []));
+            ExcludedApplications: []))
+        {
+            Behavior = BehaviorSettings.Default
+        };
 }

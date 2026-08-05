@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using HuahaiClipboard.Core.Services;
 using HuahaiClipboard.Core.Settings;
 using HuahaiClipboard.Core.Visual;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -33,19 +34,19 @@ public sealed class ThemeCatalogTests
     {
         var expected = new Dictionary<string, (string Accent, string Reflection)>
         {
-            ["rose-purple"] = ("#FFE9A6D1", "#FFBC7CAF"),
-            ["cobalt-blue"] = ("#FF77B5FF", "#FF4277D4"),
-            ["emerald-cyan"] = ("#FF65DEC8", "#FF289B91"),
-            ["amber-orange"] = ("#FFFFC26D", "#FFD57942"),
-            ["aurora-cyan-purple"] = ("#FF7FE8E0", "#FF9B7DE3")
+            ["rose-purple"] = ("#FFD786BB", "#FF8F5BAA"),
+            ["cobalt-blue"] = ("#FF72AEF0", "#FF365FA8"),
+            ["emerald-cyan"] = ("#FF6CCBAD", "#FF287F77"),
+            ["amber-orange"] = ("#FFE5AD70", "#FFA36B56"),
+            ["aurora-cyan-purple"] = ("#FF78D7DF", "#FF8E72CF")
         };
 
         foreach (var theme in ThemeCatalog.All)
         {
             Assert.AreEqual(expected[theme.Id].Accent, theme.Accent, theme.Id);
             Assert.AreEqual(expected[theme.Id].Reflection, theme.Reflection, theme.Id);
-            Assert.AreEqual("#FFFFFFFF", theme.TextPrimary, theme.Id);
-            Assert.AreEqual("#CCFFFFFF", theme.TextSecondary, theme.Id);
+            Assert.AreEqual("#FFFFF5FC", theme.TextPrimary, theme.Id);
+            Assert.AreEqual("#FFC1B2C0", theme.TextSecondary, theme.Id);
         }
     }
 
@@ -92,10 +93,42 @@ public sealed class ThemeCatalogTests
     {
         Assert.AreEqual(
             new ShellSettings(
-                new AppearanceSettings("rose-purple", 0.86, 32, 0.72, false),
+                new AppearanceSettings("rose-purple", 0.74, 32, 0.72, false),
                 new MotionSettings(PetalLevel.Low, false),
                 new InputSettings(true, true, [])),
             ShellSettings.Default);
+    }
+
+    [TestMethod]
+    public async Task InputSettings_ExposeAndPersistAnOptionalCustomShortcut()
+    {
+        var property = typeof(InputSettings).GetProperty("CustomShortcut");
+
+        Assert.IsNotNull(property);
+        Assert.AreEqual(typeof(string), property.PropertyType);
+        Assert.IsNull(property.GetValue(ShellSettings.Default.Input));
+
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-shortcut-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "settings.json");
+        try
+        {
+            Directory.CreateDirectory(directory);
+            await File.WriteAllTextAsync(
+                path,
+                """
+                {"Appearance":{"ThemeId":"rose-purple","Opacity":0.88,"BlurAmount":32,"ReflectionStrength":0.72,"CompactMode":false},"Motion":{"PetalLevel":1,"ReduceMotion":false,"ClickDurationMs":760,"ReducedClickDurationMs":120},"Input":{"RightDoubleClickEnabled":true,"HotkeyEnabled":true,"ExcludedApplications":[],"CustomShortcut":"Ctrl + Alt + H"}}
+                """);
+
+            var loaded = await new JsonSettingsStore(path).LoadAsync(CancellationToken.None);
+            Assert.AreEqual("Ctrl + Alt + H", property.GetValue(loaded.Input));
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
     }
 
     private static double RelativeLuminance(string argb)

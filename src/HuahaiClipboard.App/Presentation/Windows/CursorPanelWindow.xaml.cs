@@ -1,28 +1,27 @@
-using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text.Json;
 using HuahaiClipboard.App.Infrastructure.Input;
+using HuahaiClipboard.App.Infrastructure.Startup;
 using HuahaiClipboard.App.Infrastructure.Tray;
 using HuahaiClipboard.Core.Models;
 using HuahaiClipboard.Core.Presentation;
 using HuahaiClipboard.Core.Services;
 using HuahaiClipboard.Core.Settings;
-using HuahaiClipboard.Core.Visual;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Shapes;
 using Windows.Graphics;
-using TimeSpan = global::System.TimeSpan;
-using Random = global::System.Random;
 
 namespace HuahaiClipboard.App.Presentation.Windows;
 
-public sealed partial class CursorPanelWindow : Window
+public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 {
+    private const int PanelWidth = 430;
+    private const int PanelHeight = 680;
+    private const int SettingsWidth = 820;
+    private const int SettingsHeight = 650;
     private const int PanelCornerRadius = 29;
     private const int DwmWindowCornerPreference = 33;
     private const int DwmBorderColor = 34;
@@ -35,46 +34,39 @@ public sealed partial class CursorPanelWindow : Window
     private const uint SetWindowNoMove = 0x0002;
     private const uint SetWindowNoZOrder = 0x0004;
     private const uint SetWindowNoActivate = 0x0010;
+    private const uint WmNonClientLeftButtonDown = 0x00A1;
+    private const int HitTestCaption = 2;
+    private static readonly IntPtr HwndTopmost = new(-1);
+    private static readonly IntPtr HwndNoTopmost = new(-2);
 
     private readonly CompositionRoot compositionRoot = new();
     private readonly WindowNavigator navigator = new();
-    private readonly List<(Ellipse Petal, double Speed)> petals = [];
     private readonly PanelViewModel panelViewModel;
     private readonly SettingsViewModel settingsViewModel;
-    private readonly ClickFeedbackController clickFeedbackController = new();
+    private readonly StartupRegistrationService startupRegistrationService = new();
+    private readonly JsonWindowPlacementStore windowPlacementStore;
+    private readonly TransientWindowVisibilityController visibilityController;
     private GlobalInputService? globalInputService;
     private TrayService? trayService;
     private InputSettingsSnapshot? inputSettingsSnapshot;
-    private CancellationTokenSource? pendingRecordClick;
     private AppWindow? appWindow;
     private bool allowClose;
-    private Microsoft.UI.Dispatching.DispatcherQueueTimer? petalTimer;
-    private bool isPanelVisible = true;
-    private bool applyingSettings = true;
-    private string? runtimeWarning;
-    private ThemeDefinition currentTheme = ThemeCatalog.All[0];
-    private double currentOpacity = ShellSettings.Default.Appearance.Opacity;
+    private bool shellReady;
+    private bool openSettingsWhenReady;
+    private int webContentActivityVersion;
 
     public CursorPanelWindow()
     {
         panelViewModel = compositionRoot.CreatePanel(navigator);
         settingsViewModel = compositionRoot.CreateSettings();
+        windowPlacementStore = new JsonWindowPlacementStore(
+            compositionRoot.DataLayout.WindowPositionsFile);
+        visibilityController = new TransientWindowVisibilityController(this);
         InitializeComponent();
-        applyingSettings = false;
-        navigator.SettingsAction = ShowSettingsPane;
+        SystemBackdrop = new DesktopAcrylicBackdrop();
         navigator.HideTransientPanelAction = HideTransientPanel;
-        panelViewModel.PropertyChanged += PanelViewModel_PropertyChanged;
+        navigator.SettingsAction = ShowSettingsPane;
         Closed += (_, _) => DisposeRuntime();
-        _ = InitializeAsync();
-
-        try
-        {
-            SystemBackdrop = new DesktopAcrylicBackdrop();
-        }
-        catch
-        {
-            // Static translucent layers remain usable on systems without acrylic support.
-        }
     }
 
     public async Task InitializeRuntimeAsync()
@@ -86,9 +78,13 @@ public sealed partial class CursorPanelWindow : Window
 
         var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
         var settings = await compositionRoot.SettingsStore.LoadAsync(CancellationToken.None);
+        await compositionRoot.HistorySource.PruneAsync(
+            DateTimeOffset.Now.AddDays(-settings.Behavior.AutoCleanupDays),
+            preserveProtected: true,
+            CancellationToken.None);
+        await panelViewModel.LoadAsync();
         await UnmanagedCallbackGuard.InvokeAsync(
-            () => compositionRoot.ImageStore.ProtectLegacyFilesAsync(CancellationToken.None),
-            _ => runtimeWarning = "部分旧图片缓存无法加密，请检查本机存储目录权限。");
+            () => compositionRoot.ImageStore.ProtectLegacyFilesAsync(CancellationToken.None));
         inputSettingsSnapshot = new InputSettingsSnapshot(settings.Input);
         compositionRoot.CaptureService.HistoryChanged += CaptureService_HistoryChanged;
         globalInputService = new GlobalInputService(
@@ -97,12 +93,6 @@ public sealed partial class CursorPanelWindow : Window
             inputSettingsSnapshot,
             compositionRoot.CaptureService,
             ShowAtCursor);
-        runtimeWarning = string.Join(
-            " ",
-            new[] { runtimeWarning }
-                .Concat(globalInputService.InitializationWarnings)
-                .Where(value => !string.IsNullOrWhiteSpace(value)));
-        UpdateRecoveryInfoBar();
         trayService = new TrayService(
             () => DispatcherQueue.TryEnqueue(ShowAtCurrentCursor),
             () => DispatcherQueue.TryEnqueue(() =>
@@ -111,43 +101,48 @@ public sealed partial class CursorPanelWindow : Window
                 ShowSettingsPane();
             }),
             () => DispatcherQueue.TryEnqueue(ExitApplication));
+        await PostShellStateAsync();
     }
 
     public void ShowFromShortcut() => ShowAtCurrentCursor();
 
-    private async Task InitializeAsync()
+    public void StartHidden()
     {
+        visibilityController.Hide();
+    }
+
+    public async Task InitializeShellAsync()
+    {
+        await WaitForWebViewLayoutAsync();
         ConfigureWindow();
+        await RestoreWindowPositionAsync();
+        await panelViewModel.LoadAsync();
         await settingsViewModel.LoadAsync();
-        currentOpacity = GlassOpacityPolicy.Normalize(settingsViewModel.Draft.Appearance.Opacity);
-        ApplyTheme(ThemeCatalog.All.FirstOrDefault(theme =>
-            theme.Id == settingsViewModel.Draft.Appearance.ThemeId) ?? currentTheme);
-        CreatePetals();
-        UpdateAmbientMotion();
-        await panelViewModel.LoadAsync();
-        RecordList.ItemsSource = panelViewModel.VisibleRecords;
-        HistorySummary.Text = $"最近 7 天 · {panelViewModel.AllRecords.Count} 条";
-        DataPathTextBox.Text = compositionRoot.DataLayout.DataDirectory;
+        await ProductWebView.EnsureCoreWebView2Async();
+        ProductWebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+            "app.huahai.local",
+            Path.Combine(AppContext.BaseDirectory, "Assets"),
+            Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow);
+        ProductWebView.CoreWebView2.WebMessageReceived += ProductWebView_WebMessageReceived;
+        ProductWebView.Source = new Uri("https://app.huahai.local/Web/product-shell.html");
     }
 
-    public async Task RefreshHistoryAsync()
+    private Task WaitForWebViewLayoutAsync()
     {
-        await panelViewModel.LoadAsync();
-        HistorySummary.Text = $"最近 7 天 · {panelViewModel.AllRecords.Count} 条";
-    }
+        if (ProductWebView.XamlRoot is not null)
+        {
+            return Task.CompletedTask;
+        }
 
-    private void HideTransientPanel()
-    {
-        isPanelVisible = false;
-        UpdateAmbientMotion();
-        GetAppWindow()?.Hide();
-    }
-
-    private AppWindow? GetAppWindow()
-    {
-        var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
-        var windowId = Win32Interop.GetWindowIdFromWindow(handle);
-        return AppWindow.GetFromWindowId(windowId);
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        RoutedEventHandler? loaded = null;
+        loaded = (_, _) =>
+        {
+            ProductWebView.Loaded -= loaded;
+            completion.TrySetResult();
+        };
+        ProductWebView.Loaded += loaded;
+        return completion.Task;
     }
 
     private void ConfigureWindow()
@@ -155,350 +150,334 @@ public sealed partial class CursorPanelWindow : Window
         var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
         var windowId = Win32Interop.GetWindowIdFromWindow(handle);
         appWindow = AppWindow.GetFromWindowId(windowId);
-        appWindow?.Resize(new SizeInt32(430, 680));
-        if (appWindow is not null)
-        {
-            appWindow.Closing += AppWindow_Closing;
-            if (appWindow.Presenter is OverlappedPresenter presenter)
-            {
-                presenter.IsResizable = false;
-                presenter.IsMaximizable = false;
-                presenter.SetBorderAndTitleBar(false, false);
-            }
-
-            ApplyNativeGlassChrome(handle, 430, 680);
-
-            var display = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
-            var workArea = display.WorkArea;
-            appWindow.Move(new PointInt32(workArea.X + workArea.Width - 446, workArea.Y + 24));
-        }
-    }
-
-    private void PanelViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName is nameof(PanelViewModel.VisibleRecords) or nameof(PanelViewModel.RecoveryMessage))
-        {
-            RecordList.ItemsSource = panelViewModel.VisibleRecords;
-            UpdateRecoveryInfoBar();
-        }
-    }
-
-    private void UpdateRecoveryInfoBar()
-    {
-        var messages = new[] { runtimeWarning, panelViewModel.RecoveryMessage }
-            .Where(message => !string.IsNullOrWhiteSpace(message));
-        RecoveryInfoBar.Message = string.Join(" ", messages);
-        RecoveryInfoBar.IsOpen = !string.IsNullOrWhiteSpace(RecoveryInfoBar.Message);
-    }
-
-    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) =>
-        panelViewModel.SearchText = SearchBox.Text;
-
-    private void FilterButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is ToggleButton { Tag: string tag } selected &&
-            Enum.TryParse<ClipboardFilter>(tag, out var filter))
-        {
-            panelViewModel.SelectedFilter = filter;
-            foreach (var toggle in FilterBar.Children.OfType<ToggleButton>())
-            {
-                toggle.IsChecked = ReferenceEquals(toggle, selected);
-            }
-        }
-    }
-
-    private async void RecordList_ItemClick(object sender, ItemClickEventArgs e)
-    {
-        if (e.ClickedItem is ClipboardRecord record)
-        {
-            panelViewModel.SelectRecord(record);
-            pendingRecordClick?.Cancel();
-            var click = new CancellationTokenSource();
-            pendingRecordClick = click;
-            var container = RecordList.ContainerFromItem(record) as DependencyObject;
-            var card = FindDescendant<Border>(container, "RecordCard");
-            try
-            {
-                await clickFeedbackController.RunAsync(
-                    settingsViewModel.Draft.Motion.ReduceMotion,
-                    (duration, token) => PlayClickFeedbackAsync(card, duration, token),
-                    token => panelViewModel.CopyAsync(record, token),
-                    click.Token);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            catch (Exception exception)
-            {
-                ShowRuntimeError($"复制失败：{exception.Message}");
-            }
-        }
-    }
-
-    private async void RecordRow_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
-    {
-        pendingRecordClick?.Cancel();
-        var click = new CancellationTokenSource();
-        pendingRecordClick = click;
-        if (sender is Border { DataContext: ClipboardRecord record } card)
-        {
-            try
-            {
-                await clickFeedbackController.RunAsync(
-                    settingsViewModel.Draft.Motion.ReduceMotion,
-                    (duration, token) => PlayClickFeedbackAsync(card, duration, token),
-                    token => panelViewModel.PasteAsync(record, token),
-                    click.Token);
-                e.Handled = true;
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            catch (Exception exception)
-            {
-                ShowRuntimeError($"粘贴失败：{exception.Message}");
-            }
-        }
-    }
-
-    private async void RecordList_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
-    {
-        switch (e.Key)
-        {
-            case global::Windows.System.VirtualKey.Up:
-                panelViewModel.MoveSelection(-1);
-                e.Handled = true;
-                break;
-            case global::Windows.System.VirtualKey.Down:
-                panelViewModel.MoveSelection(1);
-                e.Handled = true;
-                break;
-            case global::Windows.System.VirtualKey.Enter when panelViewModel.SelectedRecord is not null:
-                await panelViewModel.PasteAsync(panelViewModel.SelectedRecord);
-                e.Handled = true;
-                break;
-        }
-    }
-
-    private async void Favorite_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement { DataContext: ClipboardRecord record })
-        {
-            await RunRowMutationAsync(() => panelViewModel.ToggleFavoriteAsync(record));
-        }
-    }
-
-    private async void Pin_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement { DataContext: ClipboardRecord record })
-        {
-            await RunRowMutationAsync(() => panelViewModel.TogglePinnedAsync(record));
-        }
-    }
-
-    private async void Delete_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement { DataContext: ClipboardRecord record })
-        {
-            await RunRowMutationAsync(() => panelViewModel.DeleteAsync(record));
-        }
-    }
-
-    private void SettingsButton_Click(object sender, RoutedEventArgs e) => ShowSettingsPane();
-
-    private async void ShowSettingsPane()
-    {
-        applyingSettings = true;
-        try
-        {
-            await settingsViewModel.LoadAsync();
-            OpacitySlider.Value = settingsViewModel.Draft.Appearance.Opacity;
-            PetalCheckBox.IsChecked = settingsViewModel.Draft.Motion.PetalLevel != PetalLevel.Off;
-            ReduceMotionCheckBox.IsChecked = settingsViewModel.Draft.Motion.ReduceMotion;
-            RightDoubleClickCheckBox.IsChecked = settingsViewModel.Draft.Input.RightDoubleClickEnabled;
-            HotkeyCheckBox.IsChecked = settingsViewModel.Draft.Input.HotkeyEnabled;
-            ExcludedAppsTextBox.Text = string.Join(Environment.NewLine, settingsViewModel.Draft.Input.ExcludedApplications);
-            DataPathTextBox.Text = compositionRoot.DataLayout.DataDirectory;
-            currentOpacity = GlassOpacityPolicy.Normalize(settingsViewModel.Draft.Appearance.Opacity);
-            ApplyTheme(ThemeCatalog.All.FirstOrDefault(theme => theme.Id == settingsViewModel.Draft.Appearance.ThemeId) ?? currentTheme);
-            SaveStatusText.Text = settingsViewModel.SaveStatus;
-            SettingsNavigation.SelectedIndex = 0;
-            ShowSettingsCategory("Appearance");
-        }
-        finally
-        {
-            applyingSettings = false;
-            ResizeWindow(760, 620);
-            MainPane.Visibility = Visibility.Collapsed;
-            SettingsPane.Visibility = Visibility.Visible;
-        }
-    }
-
-    private void BackFromSettings_Click(object sender, RoutedEventArgs e)
-    {
-        SettingsPane.Visibility = Visibility.Collapsed;
-        MainPane.Visibility = Visibility.Visible;
-        ResizeWindow(430, 680);
-        SearchBox.Focus(FocusState.Programmatic);
-    }
-
-    private async void ThemeButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { Tag: string themeId })
+        appWindow?.Resize(new SizeInt32(PanelWidth, PanelHeight));
+        if (appWindow is null)
         {
             return;
         }
 
-        var theme = ThemeCatalog.All.FirstOrDefault(item => item.Id == themeId);
-        if (theme is null)
+        appWindow.Closing += AppWindow_Closing;
+        if (appWindow.Presenter is OverlappedPresenter presenter)
         {
-            return;
+            presenter.IsResizable = false;
+            presenter.IsMaximizable = false;
+            presenter.SetBorderAndTitleBar(false, false);
         }
 
-        ApplyTheme(theme);
-        await settingsViewModel.UpdateAppearanceAsync(
-            settingsViewModel.Draft.Appearance with { ThemeId = theme.Id });
-        SaveStatusText.Text = settingsViewModel.SaveStatus;
+        ApplyNativeGlassChrome(handle, PanelWidth, PanelHeight);
+        var display = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
+        var workArea = display.WorkArea;
+        appWindow.Move(new PointInt32(
+            workArea.X + workArea.Width - PanelWidth - 16,
+            workArea.Y + 24));
     }
 
-    private async void OpacitySlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
-    {
-        if (applyingSettings || settingsViewModel.Draft is null)
-        {
-            return;
-        }
-
-        ApplySurfaceOpacity(e.NewValue);
-        await settingsViewModel.UpdateAppearanceAsync(
-            settingsViewModel.Draft.Appearance with { Opacity = e.NewValue });
-        SaveStatusText.Text = settingsViewModel.SaveStatus;
-    }
-
-    private async void PetalCheckBox_Changed(object sender, RoutedEventArgs e)
-    {
-        if (applyingSettings)
-        {
-            return;
-        }
-
-        var level = PetalCheckBox.IsChecked == true ? PetalLevel.Low : PetalLevel.Off;
-        await settingsViewModel.UpdateMotionAsync(settingsViewModel.Draft.Motion with { PetalLevel = level });
-        CreatePetals();
-        UpdateAmbientMotion();
-        SaveStatusText.Text = settingsViewModel.SaveStatus;
-    }
-
-    private async void ReduceMotionCheckBox_Changed(object sender, RoutedEventArgs e)
-    {
-        if (applyingSettings)
-        {
-            return;
-        }
-
-        await settingsViewModel.UpdateMotionAsync(
-            settingsViewModel.Draft.Motion with { ReduceMotion = ReduceMotionCheckBox.IsChecked == true });
-        UpdateAmbientMotion();
-        SaveStatusText.Text = settingsViewModel.SaveStatus;
-    }
-
-    private async void InputCheckBox_Changed(object sender, RoutedEventArgs e)
-    {
-        if (applyingSettings)
-        {
-            return;
-        }
-
-        await SaveInputSettingsAsync();
-    }
-
-    private async void ExcludedAppsTextBox_LostFocus(object sender, RoutedEventArgs e) =>
-        await SaveInputSettingsAsync();
-
-    private async Task SaveInputSettingsAsync()
-    {
-        var excluded = ExcludedAppsTextBox.Text
-            .Split(['\r', '\n', ',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-        var inputSettings = new InputSettings(
-            RightDoubleClickCheckBox.IsChecked == true,
-            HotkeyCheckBox.IsChecked == true,
-            excluded);
-        await settingsViewModel.UpdateInputAsync(inputSettings);
-        if (globalInputService is not null)
-        {
-            globalInputService.UpdateInputSettings(inputSettings);
-        }
-        else
-        {
-            inputSettingsSnapshot?.Update(inputSettings);
-        }
-        runtimeWarning = globalInputService is null
-            ? runtimeWarning
-            : string.Join(" ", globalInputService.InitializationWarnings);
-        UpdateRecoveryInfoBar();
-        SaveStatusText.Text = settingsViewModel.SaveStatus;
-    }
-
-    private void CloseButton_Click(object sender, RoutedEventArgs e) => HideTransientPanel();
-
-    private void RootGrid_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
-    {
-        if (e.Key == global::Windows.System.VirtualKey.Escape)
-        {
-            if (SettingsPane.Visibility == Visibility.Visible)
-            {
-                BackFromSettings_Click(sender, e);
-            }
-            else
-            {
-                HideTransientPanel();
-            }
-
-            e.Handled = true;
-        }
-    }
-
-    private void CaptureService_HistoryChanged(object? sender, EventArgs e) =>
-        _ = RefreshHistoryAsync();
-
-    private void SettingsNavigation_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (AppearanceSettingsPage is null)
-        {
-            return;
-        }
-
-        if (SettingsNavigation.SelectedItem is ListViewItem { Tag: string category })
-        {
-            ShowSettingsCategory(category);
-        }
-    }
-
-    private void ShowSettingsCategory(string category)
-    {
-        AppearanceSettingsPage.Visibility = category == "Appearance" ? Visibility.Visible : Visibility.Collapsed;
-        MotionSettingsPage.Visibility = category == "Motion" ? Visibility.Visible : Visibility.Collapsed;
-        InputSettingsPage.Visibility = category == "Input" ? Visibility.Visible : Visibility.Collapsed;
-        StorageSettingsPage.Visibility = category == "Storage" ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void OpenDataDirectory_Click(object sender, RoutedEventArgs e)
+    private async void ProductWebView_WebMessageReceived(
+        Microsoft.Web.WebView2.Core.CoreWebView2 sender,
+        Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs args)
     {
         try
         {
-            Directory.CreateDirectory(compositionRoot.DataLayout.DataDirectory);
-            Process.Start(new ProcessStartInfo
+            if (!WebBridgeRequest.TryParse(args.WebMessageAsJson, out var request) ||
+                request is null ||
+                !WebBridgeProtocol.IsSupported(request.Action))
             {
-                FileName = compositionRoot.DataLayout.DataDirectory,
-                UseShellExecute = true
-            });
+                return;
+            }
+
+            switch (request.Action)
+            {
+                case "ready":
+                    shellReady = true;
+                    await PostShellStateAsync();
+                    if (openSettingsWhenReady)
+                    {
+                        await ExecuteShellScriptAsync("document.querySelector('#settingsButton')?.click()");
+                    }
+                    break;
+                case "hide":
+                    // 工具栏“隐藏”是显式后台动作，不受“关闭后退出”偏好影响。
+                    visibilityController.Hide();
+                    break;
+                case "resize":
+                    ResizeWindow(
+                        request.Mode == "settings" ? SettingsWidth : PanelWidth,
+                        request.Mode == "settings" ? SettingsHeight : PanelHeight);
+                    break;
+                default:
+                    await HandleShellActionAsync(request);
+                    break;
+            }
         }
         catch (Exception exception)
         {
-            ShowRuntimeError($"无法打开数据目录：{exception.Message}");
+            await PostShellToastAsync(
+                string.IsNullOrWhiteSpace(exception.Message) ? "操作失败，请重试" : exception.Message,
+                isError: true);
         }
     }
+
+    private async Task HandleShellActionAsync(WebBridgeRequest request)
+    {
+        switch (request.Action)
+        {
+            case "copy":
+                var copyRecord = FindRecord(request.Id);
+                var copyResult = await compositionRoot.ActionSink.CopyAsync(
+                    copyRecord.Id,
+                    CancellationToken.None);
+                if (!copyResult.Succeeded)
+                {
+                    await PostShellToastAsync(copyResult.RecoveryMessage ?? "复制失败", isError: true);
+                    return;
+                }
+
+                if (request.Enabled != false)
+                {
+                    HideTransientPanel();
+                }
+                return;
+            case "togglePin":
+                await panelViewModel.TogglePinnedAsync(FindRecord(request.Id));
+                break;
+            case "toggleFavorite":
+                await panelViewModel.ToggleFavoriteAsync(FindRecord(request.Id));
+                break;
+            case "delete":
+                await panelViewModel.DeleteAsync(FindRecord(request.Id));
+                break;
+            case "setRetentionDays":
+                var retentionDays = NormalizeRetentionDays(request.Number);
+                await settingsViewModel.UpdateBehaviorAsync(
+                    settingsViewModel.Draft.Behavior with { AutoCleanupDays = retentionDays });
+                await compositionRoot.HistorySource.PruneAsync(
+                    DateTimeOffset.Now.AddDays(-retentionDays),
+                    preserveProtected: true,
+                    CancellationToken.None);
+                await panelViewModel.LoadAsync();
+                break;
+            case "clearOrdinary":
+                await compositionRoot.HistorySource.ClearUnprotectedAsync(CancellationToken.None);
+                await panelViewModel.LoadAsync();
+                break;
+            case "clearAll":
+                await compositionRoot.HistorySource.ClearAsync(CancellationToken.None);
+                await panelViewModel.LoadAsync();
+                break;
+            case "setTheme":
+                await settingsViewModel.UpdateAppearanceAsync(
+                    settingsViewModel.Draft.Appearance with { ThemeId = NormalizeThemeId(request.Text) });
+                break;
+            case "setOpacity":
+                await settingsViewModel.UpdateAppearanceAsync(
+                    settingsViewModel.Draft.Appearance with
+                    {
+                        Opacity = Math.Clamp(request.Number ?? 0.88, 0.65, 0.96)
+                    });
+                break;
+            case "setPetals":
+                await settingsViewModel.UpdateMotionAsync(
+                    settingsViewModel.Draft.Motion with
+                    {
+                        PetalLevel = request.Enabled == false ? PetalLevel.Off : PetalLevel.Low
+                    });
+                break;
+            case "setReduceMotion":
+                await settingsViewModel.UpdateMotionAsync(
+                    settingsViewModel.Draft.Motion with { ReduceMotion = request.Enabled == true });
+                break;
+            case "setClickDuration":
+                await settingsViewModel.UpdateMotionAsync(
+                    settingsViewModel.Draft.Motion with
+                    {
+                        ClickDurationMs = Math.Clamp((int)(request.Number ?? 620), 180, 900)
+                    });
+                break;
+            case "setRightDoubleClick":
+                await SaveInputSettingsAsync(
+                    settingsViewModel.Draft.Input with { RightDoubleClickEnabled = request.Enabled == true });
+                break;
+            case "setShortcut":
+                if (!ShortcutGestureParser.TryParse(request.Text, out _))
+                {
+                    throw new InvalidOperationException("该按键组合不能用作全局快捷唤出");
+                }
+                await SaveInputSettingsAsync(
+                    settingsViewModel.Draft.Input with
+                    {
+                        HotkeyEnabled = true,
+                        CustomShortcut = request.Text
+                    });
+                break;
+            case "resetShortcut":
+                await SaveInputSettingsAsync(
+                    settingsViewModel.Draft.Input with
+                    {
+                        HotkeyEnabled = false,
+                        CustomShortcut = null
+                    });
+                break;
+            case "setExclusions":
+                await SaveInputSettingsAsync(
+                    settingsViewModel.Draft.Input with
+                    {
+                        ExcludedApplications = request.Values
+                            .Select(value => value.Trim())
+                            .Where(value => value.Length > 0)
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .ToArray()
+                    });
+                break;
+            case "openDataFolder":
+                Directory.CreateDirectory(compositionRoot.DataLayout.DataDirectory);
+                Process.Start(new ProcessStartInfo(compositionRoot.DataLayout.DataDirectory)
+                {
+                    UseShellExecute = true
+                });
+                return;
+            case "setStartup":
+                startupRegistrationService.SetEnabled(request.Enabled == true);
+                break;
+            case "setBackground":
+                await settingsViewModel.UpdateBehaviorAsync(
+                    settingsViewModel.Draft.Behavior with { BackgroundEnabled = request.Enabled == true });
+                break;
+            case "beginDrag":
+                await BeginWindowDragAsync();
+                return;
+        }
+
+        await PostShellStateAsync();
+    }
+
+    private ClipboardRecord FindRecord(string? id)
+    {
+        if (!Guid.TryParse(id, out var recordId))
+        {
+            throw new InvalidOperationException("记录标识无效");
+        }
+
+        return panelViewModel.AllRecords.FirstOrDefault(record => record.Id == recordId)
+            ?? throw new InvalidOperationException("记录不存在或已删除");
+    }
+
+    private async Task SaveInputSettingsAsync(InputSettings input)
+    {
+        await settingsViewModel.UpdateInputAsync(input);
+        globalInputService?.UpdateInputSettings(input);
+    }
+
+    private Task PostShellStateAsync()
+    {
+        if (!shellReady || ProductWebView.CoreWebView2 is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var settings = settingsViewModel.Draft;
+        var message = new
+        {
+            type = "state",
+            history = panelViewModel.AllRecords.Select(record => new
+            {
+                id = record.Id.ToString("D"),
+                kind = KindName(record.Kind),
+                text = record.PrimaryText,
+                meta = $"{FormatRelativeTime(record.LastCopiedAt)} · {record.SecondaryText}",
+                fav = record.IsFavorite,
+                pin = record.IsPinned,
+                available = record.IsAvailable
+            }),
+            settings = new
+            {
+                themeId = settings.Appearance.ThemeId,
+                opacity = settings.Appearance.Opacity,
+                petalsEnabled = settings.Motion.PetalLevel != PetalLevel.Off,
+                reduceMotion = settings.Motion.ReduceMotion,
+                clickDuration = settings.Motion.ClickDurationMs,
+                rightDoubleClick = settings.Input.RightDoubleClickEnabled,
+                customShortcut = settings.Input.HotkeyEnabled ? settings.Input.CustomShortcut : null,
+                exclusions = settings.Input.ExcludedApplications,
+                retentionDays = settings.Behavior.AutoCleanupDays,
+                backgroundEnabled = settings.Behavior.BackgroundEnabled,
+                startupEnabled = startupRegistrationService.IsEnabled(),
+                dataPath = compositionRoot.DataLayout.DataDirectory
+            },
+            warnings = globalInputService?.InitializationWarnings ?? []
+        };
+        ProductWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(message));
+        return Task.CompletedTask;
+    }
+
+    private Task PostShellToastAsync(string message, bool isError)
+    {
+        if (!shellReady || ProductWebView.CoreWebView2 is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        ProductWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new
+        {
+            type = "toast",
+            message,
+            isError
+        }));
+        return Task.CompletedTask;
+    }
+
+    private static int NormalizeRetentionDays(double? value) => (int?)value is 3 or 7 or 30
+        ? (int)value!.Value
+        : throw new InvalidOperationException("自动清理期限无效");
+
+    private static string NormalizeThemeId(string? value) => value switch
+    {
+        "rose-purple" or "cobalt-blue" or "emerald-cyan" or "amber-orange" or "aurora-cyan-purple" => value,
+        _ => throw new InvalidOperationException("主题不存在")
+    };
+
+    private static string KindName(ClipboardItemKind kind) => kind switch
+    {
+        ClipboardItemKind.Text => "文本",
+        ClipboardItemKind.Link => "链接",
+        ClipboardItemKind.Image => "图片",
+        ClipboardItemKind.File => "文件",
+        _ => "文本"
+    };
+
+    private static string FormatRelativeTime(DateTimeOffset value)
+    {
+        var elapsed = DateTimeOffset.Now - value;
+        if (elapsed.TotalMinutes < 1) return "刚刚";
+        if (elapsed.TotalHours < 1) return $"{Math.Max(1, (int)elapsed.TotalMinutes)} 分钟前";
+        if (elapsed.TotalDays < 1) return $"{Math.Max(1, (int)elapsed.TotalHours)} 小时前";
+        if (elapsed.TotalDays < 30) return $"{Math.Max(1, (int)elapsed.TotalDays)} 天前";
+        return value.ToLocalTime().ToString("yyyy-MM-dd");
+    }
+
+    private void ShowSettingsPane()
+    {
+        openSettingsWhenReady = true;
+        ResizeWindow(SettingsWidth, SettingsHeight);
+        _ = ExecuteShellScriptAsync("document.querySelector('#settingsButton')?.click()");
+    }
+
+    private void HideTransientPanel()
+    {
+        if (settingsViewModel.Draft.Behavior.BackgroundEnabled)
+        {
+            visibilityController.Hide();
+            return;
+        }
+
+        ExitApplication();
+    }
+
+    private void CaptureService_HistoryChanged(object? sender, EventArgs e) =>
+        _ = DispatcherQueue.TryEnqueue(async () =>
+        {
+            await panelViewModel.LoadAsync();
+            await PostShellStateAsync();
+        });
 
     private void ShowAtCurrentCursor()
     {
@@ -513,367 +492,34 @@ public sealed partial class CursorPanelWindow : Window
         compositionRoot.ClipboardPlatform.SetPasteTarget(targetWindow);
         var display = DisplayArea.GetFromPoint(cursor, DisplayAreaFallback.Primary);
         var workArea = display.WorkArea;
-        const int width = 430;
-        const int height = 680;
         var x = cursor.X + 14;
-        if (x + width > workArea.X + workArea.Width)
+        if (x + PanelWidth > workArea.X + workArea.Width)
         {
-            x = cursor.X - width - 14;
+            x = cursor.X - PanelWidth - 14;
         }
 
-        x = Math.Clamp(x, workArea.X, workArea.X + workArea.Width - width);
-        var y = Math.Clamp(cursor.Y - 48, workArea.Y, workArea.Y + workArea.Height - height);
-        appWindow?.MoveAndResize(new RectInt32(x, y, width, height));
-        MainPane.Visibility = Visibility.Visible;
-        SettingsPane.Visibility = Visibility.Collapsed;
-        appWindow?.Show();
-        isPanelVisible = true;
-        UpdateAmbientMotion();
+        x = Math.Clamp(x, workArea.X, Math.Max(workArea.X, workArea.X + workArea.Width - PanelWidth));
+        var y = Math.Clamp(cursor.Y - 48, workArea.Y, Math.Max(workArea.Y, workArea.Y + workArea.Height - PanelHeight));
+        appWindow?.MoveAndResize(new RectInt32(x, y, PanelWidth, PanelHeight));
+        ApplyNativeGlassChrome(
+            WinRT.Interop.WindowNative.GetWindowHandle(this),
+            PanelWidth,
+            PanelHeight);
+        visibilityController.Show();
         Activate();
-        SearchBox.Focus(FocusState.Programmatic);
+        _ = SetForegroundWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));
+        _ = ExecuteShellScriptAsync(
+            "document.querySelector('#glassPanel')?.classList.remove('hidden','settings-mode');document.querySelector('#petals')?.classList.remove('paused');document.querySelector('#searchInput')?.focus()");
     }
 
-    private void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args)
+    private async Task ExecuteShellScriptAsync(string script)
     {
-        if (allowClose)
+        if (!shellReady || ProductWebView.CoreWebView2 is null)
         {
             return;
         }
 
-        args.Cancel = true;
-        isPanelVisible = false;
-        UpdateAmbientMotion();
-        sender.Hide();
-    }
-
-    private void ExitApplication()
-    {
-        allowClose = true;
-        DisposeRuntime();
-        Close();
-        Application.Current.Exit();
-    }
-
-    private void DisposeRuntime()
-    {
-        pendingRecordClick?.Cancel();
-        StopPetalAnimations();
-        compositionRoot.CaptureService.HistoryChanged -= CaptureService_HistoryChanged;
-        globalInputService?.Dispose();
-        globalInputService = null;
-        trayService?.Dispose();
-        trayService = null;
-    }
-
-    private void ApplyTheme(ThemeDefinition theme)
-    {
-        currentTheme = theme;
-        var accent = ParseColor(theme.Accent);
-        var reflection = ParseColor(theme.Reflection);
-        var top = ParseColor(theme.GlassTop);
-        var bottom = ParseColor(theme.GlassBottom);
-        var focus = ParseColor(theme.FocusBorder);
-        var contentLens = ParseColor(theme.ContentLens);
-        GlassBorder.BorderBrush = new SolidColorBrush(focus);
-        GlassBorder.Background = new LinearGradientBrush
-        {
-            StartPoint = new global::Windows.Foundation.Point(0, 0),
-            EndPoint = new global::Windows.Foundation.Point(1, 1),
-            GradientStops =
-            {
-                new GradientStop { Color = top, Offset = 0 },
-                new GradientStop { Color = bottom, Offset = 1 }
-            }
-        };
-        MainPane.Background = new SolidColorBrush(contentLens);
-        ApplySurfaceOpacity(currentOpacity);
-        PrimaryReflectionStop.Color = WithAlpha(reflection, 194);
-        SecondaryReflectionStop.Color = WithAlpha(reflection, 167);
-        SurfaceHighlightStop.Color = WithAlpha(reflection, 181);
-        UpdateResourceBrush("HuahaiAccentBrush", accent);
-        UpdateResourceBrush("HuahaiFocusBrush", focus);
-    }
-
-    private void ApplySurfaceOpacity(double opacity)
-    {
-        currentOpacity = GlassOpacityPolicy.Normalize(opacity);
-        if (GlassBorder.Background is Brush glassBrush)
-        {
-            glassBrush.Opacity = currentOpacity;
-        }
-
-        if (MainPane.Background is Brush contentBrush)
-        {
-            contentBrush.Opacity = currentOpacity;
-        }
-    }
-
-    private void UpdateAmbientMotion()
-    {
-        var activity = PanelActivityPolicy.Resolve(
-            isPanelVisible,
-            settingsViewModel.Draft.Motion.ReduceMotion,
-            settingsViewModel.Draft.Motion.PetalLevel);
-
-        if (!activity.AnimateLiquidReflection)
-        {
-            LiquidFlowStoryboard.Stop();
-            PrimaryReflectionTransform.TranslateX = 0;
-            SecondaryReflectionTransform.TranslateX = 0;
-            SurfaceHighlightTransform.TranslateX = 0;
-        }
-        else
-        {
-            LiquidFlowStoryboard.Begin();
-        }
-
-        if (activity.AnimatePetals)
-        {
-            StartPetalAnimations();
-        }
-        else
-        {
-            StopPetalTimer();
-        }
-    }
-
-    private void CreatePetals()
-    {
-        StopPetalAnimations();
-        PetalCanvas.Children.Clear();
-        if (settingsViewModel.Draft.Motion.PetalLevel == PetalLevel.Off)
-        {
-            return;
-        }
-
-        var count = settingsViewModel.Draft.Motion.PetalLevel switch
-        {
-            PetalLevel.Medium => 9,
-            PetalLevel.High => 14,
-            _ => 5
-        };
-        var random = new Random(20260804);
-        var accent = ParseColor(currentTheme.Accent);
-        for (var index = 0; index < count; index++)
-        {
-            var petal = new Ellipse
-            {
-                Width = random.Next(5, 8),
-                Height = random.Next(3, 6),
-                Fill = new SolidColorBrush(accent),
-                Opacity = 0.18 + random.NextDouble() * 0.2,
-                RenderTransformOrigin = new global::Windows.Foundation.Point(0.5, 0.5),
-                RenderTransform = new RotateTransform { Angle = random.Next(-35, 36) }
-            };
-            Canvas.SetLeft(petal, 20 + random.Next(0, 360));
-            Canvas.SetTop(petal, random.Next(15, 620));
-            PetalCanvas.Children.Add(petal);
-
-            petals.Add((petal, 0.35 + random.NextDouble() * 0.45));
-        }
-    }
-
-    private void StopPetalAnimations()
-    {
-        StopPetalTimer();
-        petals.Clear();
-    }
-
-    private void StartPetalAnimations()
-    {
-        if (petalTimer is not null || petals.Count == 0)
-        {
-            return;
-        }
-
-        petalTimer = DispatcherQueue.CreateTimer();
-        petalTimer.Interval = TimeSpan.FromMilliseconds(50);
-        petalTimer.IsRepeating = true;
-        petalTimer.Tick += PetalTimer_Tick;
-        petalTimer.Start();
-    }
-
-    private void StopPetalTimer()
-    {
-        if (petalTimer is not null)
-        {
-            petalTimer.Stop();
-            petalTimer.Tick -= PetalTimer_Tick;
-            petalTimer = null;
-        }
-    }
-
-    private void PetalTimer_Tick(Microsoft.UI.Dispatching.DispatcherQueueTimer sender, object args)
-    {
-        foreach (var (petal, speed) in petals)
-        {
-            var top = Canvas.GetTop(petal) + speed;
-            if (top > PetalCanvas.ActualHeight + 12)
-            {
-                top = -12;
-            }
-
-            Canvas.SetTop(petal, top);
-        }
-    }
-
-    private async Task RunRowMutationAsync(Func<Task> mutation)
-    {
-        try
-        {
-            await mutation();
-            HistorySummary.Text = $"最近 7 天 · {panelViewModel.AllRecords.Count} 条";
-        }
-        catch (Exception exception)
-        {
-            ShowRuntimeError($"操作未保存：{exception.Message}");
-        }
-    }
-
-    private void ShowRuntimeError(string message)
-    {
-        runtimeWarning = message;
-        UpdateRecoveryInfoBar();
-    }
-
-    private async Task PlayClickFeedbackAsync(
-        Border? card,
-        TimeSpan duration,
-        CancellationToken cancellationToken)
-    {
-        if (card is null)
-        {
-            await Task.Delay(duration, cancellationToken);
-            return;
-        }
-
-        var cardTransform = card.RenderTransform as CompositeTransform ?? new CompositeTransform();
-        card.RenderTransform = cardTransform;
-        var icon = FindDescendant<Border>(card, "RecordTypeIcon");
-        var iconTransform = icon?.RenderTransform as CompositeTransform;
-        var ripple = FindDescendant<Ellipse>(card, "ClickRipple");
-        var rippleTransform = ripple?.RenderTransform as ScaleTransform;
-        var half = TimeSpan.FromTicks(duration.Ticks / 2);
-        var reduced = duration <= TimeSpan.FromMilliseconds(120);
-        var storyboard = new Storyboard();
-
-        AddAutoReverseAnimation(storyboard, cardTransform, "TranslateY", 0, reduced ? -2 : -6, half);
-        AddAutoReverseAnimation(storyboard, cardTransform, "ScaleX", 1, reduced ? 1.006 : 1.012, half);
-        AddAutoReverseAnimation(storyboard, cardTransform, "ScaleY", 1, reduced ? 1.006 : 1.012, half);
-
-        if (!reduced && iconTransform is not null)
-        {
-            AddAutoReverseAnimation(storyboard, iconTransform, "ScaleX", 1, 1.23, half);
-            AddAutoReverseAnimation(storyboard, iconTransform, "ScaleY", 1, 1.23, half);
-            AddAutoReverseAnimation(storyboard, iconTransform, "Rotation", 0, -5, half);
-        }
-
-        if (!reduced && ripple is not null && rippleTransform is not null)
-        {
-            ripple.Opacity = 0.82;
-            var rippleDuration = duration - TimeSpan.FromMilliseconds(55);
-            AddAnimation(storyboard, rippleTransform, "ScaleX", 0, 24, rippleDuration, TimeSpan.FromMilliseconds(55));
-            AddAnimation(storyboard, rippleTransform, "ScaleY", 0, 24, rippleDuration, TimeSpan.FromMilliseconds(55));
-            AddAnimation(storyboard, ripple, "Opacity", 0.82, 0, rippleDuration, TimeSpan.FromMilliseconds(55));
-        }
-
-        try
-        {
-            storyboard.Begin();
-            await Task.Delay(duration, cancellationToken);
-        }
-        finally
-        {
-            storyboard.Stop();
-            cardTransform.TranslateY = 0;
-            cardTransform.ScaleX = 1;
-            cardTransform.ScaleY = 1;
-            if (iconTransform is not null)
-            {
-                iconTransform.ScaleX = 1;
-                iconTransform.ScaleY = 1;
-                iconTransform.Rotation = 0;
-            }
-
-            if (ripple is not null && rippleTransform is not null)
-            {
-                ripple.Opacity = 0;
-                rippleTransform.ScaleX = 0;
-                rippleTransform.ScaleY = 0;
-            }
-        }
-    }
-
-    private static void AddAutoReverseAnimation(
-        Storyboard storyboard,
-        DependencyObject target,
-        string property,
-        double from,
-        double to,
-        TimeSpan halfDuration)
-    {
-        var animation = new DoubleAnimation
-        {
-            From = from,
-            To = to,
-            Duration = halfDuration,
-            AutoReverse = true,
-            EnableDependentAnimation = true,
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-        Storyboard.SetTarget(animation, target);
-        Storyboard.SetTargetProperty(animation, property);
-        storyboard.Children.Add(animation);
-    }
-
-    private static void AddAnimation(
-        Storyboard storyboard,
-        DependencyObject target,
-        string property,
-        double from,
-        double to,
-        TimeSpan duration,
-        TimeSpan beginTime)
-    {
-        var animation = new DoubleAnimation
-        {
-            From = from,
-            To = to,
-            Duration = duration,
-            BeginTime = beginTime,
-            EnableDependentAnimation = true,
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-        Storyboard.SetTarget(animation, target);
-        Storyboard.SetTargetProperty(animation, property);
-        storyboard.Children.Add(animation);
-    }
-
-    private static T? FindDescendant<T>(DependencyObject? root, string name)
-        where T : FrameworkElement
-    {
-        if (root is null)
-        {
-            return null;
-        }
-
-        var count = VisualTreeHelper.GetChildrenCount(root);
-        for (var index = 0; index < count; index++)
-        {
-            var child = VisualTreeHelper.GetChild(root, index);
-            if (child is T element && element.Name == name)
-            {
-                return element;
-            }
-
-            var nested = FindDescendant<T>(child, name);
-            if (nested is not null)
-            {
-                return nested;
-            }
-        }
-
-        return null;
+        await ProductWebView.CoreWebView2.ExecuteScriptAsync(script);
     }
 
     private void ResizeWindow(int width, int height)
@@ -883,12 +529,11 @@ public sealed partial class CursorPanelWindow : Window
             return;
         }
 
-        var windowId = appWindow.Id;
-        var display = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
+        var display = DisplayArea.GetFromWindowId(appWindow.Id, DisplayAreaFallback.Primary);
         var workArea = display.WorkArea;
         var current = appWindow.Position;
-        var x = Math.Clamp(current.X, workArea.X, workArea.X + workArea.Width - width);
-        var y = Math.Clamp(current.Y, workArea.Y, workArea.Y + workArea.Height - height);
+        var x = Math.Clamp(current.X, workArea.X, Math.Max(workArea.X, workArea.X + workArea.Width - width));
+        var y = Math.Clamp(current.Y, workArea.Y, Math.Max(workArea.Y, workArea.Y + workArea.Height - height));
         appWindow.MoveAndResize(new RectInt32(x, y, width, height));
         ApplyNativeGlassChrome(
             WinRT.Interop.WindowNative.GetWindowHandle(this),
@@ -896,17 +541,165 @@ public sealed partial class CursorPanelWindow : Window
             height);
     }
 
+    private async Task BeginWindowDragAsync()
+    {
+        if (appWindow is null)
+        {
+            return;
+        }
+
+        var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        _ = ReleaseCapture();
+        _ = SendMessage(
+            handle,
+            WmNonClientLeftButtonDown,
+            new IntPtr(HitTestCaption),
+            IntPtr.Zero);
+        var display = DisplayArea.GetFromWindowId(appWindow.Id, DisplayAreaFallback.Primary);
+        await windowPlacementStore.SaveAsync(new WindowPlacement(
+            DisplayKey(display),
+            appWindow.Position.X,
+            appWindow.Position.Y));
+    }
+
+    private async Task RestoreWindowPositionAsync()
+    {
+        if (appWindow is null)
+        {
+            return;
+        }
+
+        var placement = await windowPlacementStore.LoadLastAsync();
+        if (placement is null)
+        {
+            return;
+        }
+
+        var display = DisplayArea.GetFromPoint(
+            new PointInt32(placement.X + PanelWidth / 2, placement.Y + PanelHeight / 2),
+            DisplayAreaFallback.Nearest);
+        if (!string.Equals(DisplayKey(display), placement.DisplayId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var area = display.WorkArea;
+        appWindow.Move(new PointInt32(
+            Math.Clamp(placement.X, area.X, Math.Max(area.X, area.X + area.Width - PanelWidth)),
+            Math.Clamp(placement.Y, area.Y, Math.Max(area.Y, area.Y + area.Height - PanelHeight))));
+    }
+
+    private static string DisplayKey(DisplayArea display) =>
+        display.DisplayId.Value.ToString("X16");
+
+    private void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (allowClose)
+        {
+            return;
+        }
+
+        args.Cancel = true;
+        visibilityController.Hide();
+    }
+
+    private void ExitApplication()
+    {
+        allowClose = true;
+        ((ITransientWindowHost)this).SetTopmost(false);
+        DisposeRuntime();
+        Close();
+        Application.Current.Exit();
+    }
+
+    private void DisposeRuntime()
+    {
+        compositionRoot.CaptureService.HistoryChanged -= CaptureService_HistoryChanged;
+        globalInputService?.Dispose();
+        globalInputService = null;
+        trayService?.Dispose();
+        trayService = null;
+    }
+
+    void ITransientWindowHost.SetTopmost(bool enabled)
+    {
+        var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        _ = SetWindowPos(
+            handle,
+            enabled ? HwndTopmost : HwndNoTopmost,
+            0,
+            0,
+            0,
+            0,
+            SetWindowNoSize |
+            SetWindowNoMove |
+            (enabled ? 0u : SetWindowNoActivate));
+    }
+
+    void ITransientWindowHost.SetContentActive(bool active)
+    {
+        var version = Interlocked.Increment(ref webContentActivityVersion);
+        var coreWebView = ProductWebView.CoreWebView2;
+        if (coreWebView is null)
+        {
+            return;
+        }
+
+        if (active)
+        {
+            if (coreWebView.IsSuspended)
+            {
+                coreWebView.Resume();
+            }
+
+            return;
+        }
+
+        _ = SuspendWebContentAsync(version);
+    }
+
+    private async Task SuspendWebContentAsync(int version)
+    {
+        await Task.Yield();
+        var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        if (version != Volatile.Read(ref webContentActivityVersion) || IsWindowVisible(handle))
+        {
+            return;
+        }
+
+        var coreWebView = ProductWebView.CoreWebView2;
+        if (coreWebView is null || coreWebView.IsSuspended)
+        {
+            return;
+        }
+
+        try
+        {
+            _ = await coreWebView.TrySuspendAsync();
+            if (version != Volatile.Read(ref webContentActivityVersion) || IsWindowVisible(handle))
+            {
+                coreWebView.Resume();
+            }
+        }
+        catch (COMException)
+        {
+            // The window may become visible while WebView2 is processing the suspend request.
+        }
+    }
+
+    void ITransientWindowHost.Show() => appWindow?.Show();
+
+    void ITransientWindowHost.Hide() => appWindow?.Hide();
+
     private static void ApplyNativeGlassChrome(IntPtr windowHandle, int width, int height)
     {
         RemoveNativeWindowFrame(windowHandle);
-
         var cornerPreference = DwmRoundCornerPreference;
         _ = DwmSetWindowAttribute(
             windowHandle,
             DwmWindowCornerPreference,
             ref cornerPreference,
             sizeof(int));
-
         var borderColor = DwmColorNone;
         _ = DwmSetWindowAttribute(
             windowHandle,
@@ -926,12 +719,7 @@ public sealed partial class CursorPanelWindow : Window
             geometry.Height + 1,
             geometry.CornerDiameter,
             geometry.CornerDiameter);
-        if (region == IntPtr.Zero)
-        {
-            return;
-        }
-
-        if (SetWindowRgn(windowHandle, region, true) == 0)
+        if (region != IntPtr.Zero && SetWindowRgn(windowHandle, region, true) == 0)
         {
             _ = DeleteObject(region);
         }
@@ -958,67 +746,38 @@ public sealed partial class CursorPanelWindow : Window
             SetWindowNoActivate);
     }
 
-    private void DragRegion_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
-    {
-        if (sender is not UIElement element ||
-            !e.GetCurrentPoint(element).Properties.IsLeftButtonPressed)
-        {
-            return;
-        }
-
-        var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
-        _ = ReleaseCapture();
-        _ = SendMessage(handle, 0x00A1, new IntPtr(2), IntPtr.Zero);
-        e.Handled = true;
-    }
-
-    private static void UpdateResourceBrush(string key, global::Windows.UI.Color color)
-    {
-        if (Application.Current.Resources[key] is SolidColorBrush brush)
-        {
-            brush.Color = color;
-        }
-        else
-        {
-            Application.Current.Resources[key] = new SolidColorBrush(color);
-        }
-    }
-
-    private static global::Windows.UI.Color WithAlpha(global::Windows.UI.Color color, byte alpha) =>
-        ColorHelper.FromArgb(alpha, color.R, color.G, color.B);
-
-    private static global::Windows.UI.Color ParseColor(string hex)
-    {
-        var value = hex.TrimStart('#');
-        var alpha = byte.Parse(value[..2], global::System.Globalization.NumberStyles.HexNumber);
-        var red = byte.Parse(value[2..4], global::System.Globalization.NumberStyles.HexNumber);
-        var green = byte.Parse(value[4..6], global::System.Globalization.NumberStyles.HexNumber);
-        var blue = byte.Parse(value[6..8], global::System.Globalization.NumberStyles.HexNumber);
-        return ColorHelper.FromArgb(alpha, red, green, blue);
-    }
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    [DllImport("user32.dll")]
     private static extern bool GetCursorPos(out NativePoint point);
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr windowHandle);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsWindowVisible(IntPtr windowHandle);
+
+    [DllImport("user32.dll")]
     private static extern bool ReleaseCapture();
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern IntPtr SendMessage(IntPtr windowHandle, uint message, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern IntPtr SendMessage(
+        IntPtr windowHandle,
+        uint message,
+        IntPtr wParam,
+        IntPtr lParam);
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    [DllImport("user32.dll")]
     private static extern uint GetDpiForWindow(IntPtr windowHandle);
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    [DllImport("user32.dll")]
     private static extern int SetWindowRgn(IntPtr windowHandle, IntPtr regionHandle, bool redraw);
 
-    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     private static extern IntPtr GetWindowLongPtr(IntPtr windowHandle, int index);
 
-    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
+    [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
     private static extern IntPtr SetWindowLongPtr(IntPtr windowHandle, int index, IntPtr newValue);
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    [DllImport("user32.dll")]
     private static extern bool SetWindowPos(
         IntPtr windowHandle,
         IntPtr insertAfter,
@@ -1028,7 +787,7 @@ public sealed partial class CursorPanelWindow : Window
         int height,
         uint flags);
 
-    [System.Runtime.InteropServices.DllImport("gdi32.dll")]
+    [DllImport("gdi32.dll")]
     private static extern IntPtr CreateRoundRectRgn(
         int left,
         int top,
@@ -1037,17 +796,17 @@ public sealed partial class CursorPanelWindow : Window
         int widthEllipse,
         int heightEllipse);
 
-    [System.Runtime.InteropServices.DllImport("gdi32.dll")]
+    [DllImport("gdi32.dll")]
     private static extern bool DeleteObject(IntPtr objectHandle);
 
-    [System.Runtime.InteropServices.DllImport("dwmapi.dll")]
+    [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(
         IntPtr windowHandle,
         int attribute,
         ref int value,
         int valueSize);
 
-    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential)]
     private struct NativePoint
     {
         public int X;

@@ -68,8 +68,6 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
                 values.Add(record);
             }
 
-            var cutoff = DateTimeOffset.Now.AddDays(-7);
-            values.RemoveAll(value => !value.IsFavorite && !value.IsPinned && value.LastCopiedAt < cutoff);
             var overflow = values
                 .Where(value => !value.IsFavorite && !value.IsPinned)
                 .OrderByDescending(value => value.LastCopiedAt)
@@ -98,6 +96,21 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
 
     public Task ClearAsync(CancellationToken cancellationToken) =>
         MutateAsync(values => values.Clear(), cancellationToken);
+
+    public Task ClearUnprotectedAsync(CancellationToken cancellationToken) =>
+        MutateAsync(
+            values => values.RemoveAll(value => !value.IsFavorite && !value.IsPinned),
+            cancellationToken);
+
+    public Task PruneAsync(
+        DateTimeOffset cutoff,
+        bool preserveProtected,
+        CancellationToken cancellationToken) =>
+        MutateAsync(
+            values => values.RemoveAll(value =>
+                value.LastCopiedAt < cutoff &&
+                (!preserveProtected || !value.IsFavorite && !value.IsPinned)),
+            cancellationToken);
 
     private Task UpdateAsync(
         Guid recordId,

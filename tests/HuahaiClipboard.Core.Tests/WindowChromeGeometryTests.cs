@@ -23,4 +23,5 @@ public sealed class WindowChromeGeometryTests
         Assert.AreEqual(height, geometry.Height);
         Assert.AreEqual(expectedDiameter, geometry.CornerDiameter);
     }
+
 }
