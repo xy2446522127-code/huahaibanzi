@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "visualSourceVersion": "1.0.4",
+  "panel": { "width": 430, "height": 680, "cornerRadius": 29 },
+  "settings": { "width": 820, "height": 650 },
+  "typography": {
+    "family": "Segoe UI Variable Text",
+    "recordPrimary": 14,
+    "recordMetadata": 11,
+    "settingsLabel": 12,
+    "settingsDescription": 10
+  },
+  "motion": {
+    "clickDurationMs": 620,
+    "reducedClickDurationMs": 120,
+    "petalCountLow": 5,
+    "specularProximityPx": 10
+  },
+  "themes": [
+    { "id": "rose-purple", "accent": "#FFD786BB", "reflection": "#FF8F5BAA", "glassTop": "#8FA05697", "glassBottom": "#E026112D", "contentLens": "#6B230E29", "focus": "#A3D786BB", "text": "#FFFFF5FC", "muted": "#FFC1B2C0" },
+    { "id": "cobalt-blue", "accent": "#FF72AEF0", "reflection": "#FF365FA8", "glassTop": "#94436AA9", "glassBottom": "#E6111D3A", "contentLens": "#6B111D3A", "focus": "#A372AEF0", "text": "#FFFFF5FC", "muted": "#FFC1B2C0" },
+    { "id": "emerald-cyan", "accent": "#FF6CCBAD", "reflection": "#FF287F77", "glassTop": "#94318474", "glassBottom": "#E60D312F", "contentLens": "#6B0D312F", "focus": "#A36CCBAD", "text": "#FFFFF5FC", "muted": "#FFC1B2C0" },
+    { "id": "amber-orange", "accent": "#FFE5AD70", "reflection": "#FFA36B56", "glassTop": "#949D654B", "glassBottom": "#E63A1F1C", "contentLens": "#6B3A1F1C", "focus": "#A3E5AD70", "text": "#FFFFF5FC", "muted": "#FFC1B2C0" },
+    { "id": "aurora-cyan-purple", "accent": "#FF78D7DF", "reflection": "#FF8E72CF", "glassTop": "#94397B91", "glassBottom": "#E61A2246", "contentLens": "#6B1A2246", "focus": "#A378D7DF", "text": "#FFFFF5FC", "muted": "#FFC1B2C0" }
+  ]
+}
