@@ -1,10 +1,21 @@
 {
   "artifact_path": ".codex/artifacts/ui-qa/",
   "checkpoint_policy": "explicit-owned-paths",
+  "classification_path": ".codex/app-product-delivery-classification.json",
+  "compatibility_review_path": ".codex/app-product-delivery-compatibility-review.json",
+  "context_handoff": "cold_packet",
+  "default_resource_profile": "small",
   "enabled": true,
+  "execution_mode": "autonomous_implementation",
   "guidance_mode": "beginner_detailed_auto",
   "guidance_version": 1,
+  "interaction_contract_path": ".codex/app-product-delivery-interaction-contract.json",
+  "progress_path": ".codex/app-product-delivery-progress.json",
   "project_kind": "new",
-  "version": 2,
+  "resource_budget_path": ".codex/app-product-delivery-resource-budget.json",
+  "resource_governance_version": 1,
+  "token_budget_mode": "bounded_auto",
+  "ui_carrier_contract_path": ".codex/app-product-delivery-ui-carrier.json",
+  "version": 5,
   "visual_contract_path": ".codex/app-product-delivery-visual-contract.json"
 }
