@@ -37,6 +37,8 @@ public sealed class NativeUiSpikeViewModel : ObservableObject
         private set => SetProperty(ref visibleItems, value);
     }
 
+    public string HeaderSummary => $"最近 {RetentionDays} 天 · {VisibleItems.Count} 条";
+
     public ClipboardFilter SelectedFilter
     {
         get => selectedFilter;
@@ -131,7 +133,9 @@ public sealed class NativeUiSpikeViewModel : ObservableObject
     public bool SetRetentionDays(int days)
     {
         if (days is not (3 or 7 or 30)) return false;
+        if (RetentionDays == days) return true;
         RetentionDays = days;
+        OnPropertyChanged(nameof(HeaderSummary));
         return true;
     }
 
@@ -182,5 +186,6 @@ public sealed class NativeUiSpikeViewModel : ObservableObject
             .OrderByDescending(item => item.IsPinned)
             .ThenBy(item => item.StableId, StringComparer.Ordinal)
             .ToArray();
+        OnPropertyChanged(nameof(HeaderSummary));
     }
 }

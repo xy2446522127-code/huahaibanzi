@@ -111,4 +111,27 @@ public sealed class NativeUiSpikeViewModelTests
         Assert.IsFalse(model.SetRetentionDays(14));
         Assert.AreEqual(30, model.RetentionDays);
     }
+
+    [TestMethod]
+    public void HeaderSummary_TracksVisibleRecordsAndRetentionPeriodInRealTime()
+    {
+        var model = NativeUiSpikeViewModel.CreateFixture(12);
+        var changedProperties = new List<string?>();
+        model.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        Assert.AreEqual("最近 7 天 · 12 条", model.HeaderSummary);
+
+        model.SelectFilter(ClipboardFilter.Text);
+        Assert.AreEqual("最近 7 天 · 3 条", model.HeaderSummary);
+
+        model.SearchText = "示例文本 0001";
+        Assert.AreEqual("最近 7 天 · 1 条", model.HeaderSummary);
+
+        model.Delete(model.VisibleItems.Single().Id);
+        Assert.AreEqual("最近 7 天 · 0 条", model.HeaderSummary);
+
+        Assert.IsTrue(model.SetRetentionDays(30));
+        Assert.AreEqual("最近 30 天 · 0 条", model.HeaderSummary);
+        Assert.IsTrue(changedProperties.Count(name => name == nameof(model.HeaderSummary)) >= 4);
+    }
 }
