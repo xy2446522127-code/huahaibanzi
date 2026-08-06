@@ -32,6 +32,7 @@ public static class WebBridgeProtocol
         "setPanelScale",
         "setCheckUpdatesOnStartup",
         "checkUpdate",
+        "installUpdate",
         "openRelease"
     };
 

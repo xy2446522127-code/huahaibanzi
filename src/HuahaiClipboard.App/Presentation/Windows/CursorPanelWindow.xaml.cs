@@ -57,6 +57,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private bool settingsSurfaceVisible;
     private double panelScale = 1d;
     private int webContentActivityVersion;
+    private UpdateCheckResult? availableUpdate;
+    private bool updateInstallationInProgress;
     private PointInt32? dragPointerOrigin;
     private PointInt32? dragWindowOrigin;
 
@@ -369,6 +371,9 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             case "checkUpdate":
                 await CheckForUpdatesAsync();
                 return;
+            case "installUpdate":
+                await InstallUpdateAsync();
+                return;
             case "openRelease":
                 Process.Start(new ProcessStartInfo(GitHubUpdateCheckService.ReleasesPage)
                 {
@@ -471,15 +476,18 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         try
         {
             var result = await updateCheckService.CheckAsync(CancellationToken.None);
+            availableUpdate = result.UpdateAvailable ? result : null;
             await PostUpdateStatusAsync(
                 result.UpdateAvailable ? "available" : "current",
                 result.UpdateAvailable
-                    ? $"发现新版本 {result.LatestVersion}，可前往 GitHub Release 下载。"
+                    ? $"发现新版本 {result.LatestVersion}，可以安全下载并更新。"
                     : $"当前已是最新版本 {result.CurrentVersion}。",
-                result.ReleaseUrl);
+                result.ReleaseUrl,
+                canInstall: result.UpdateAvailable);
         }
         catch (Exception exception)
         {
+            availableUpdate = null;
             await PostUpdateStatusAsync(
                 "error",
                 $"暂时无法检查更新：{exception.Message}",
@@ -487,7 +495,71 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         }
     }
 
-    private Task PostUpdateStatusAsync(string status, string message, string releaseUrl)
+    private async Task InstallUpdateAsync()
+    {
+        if (updateInstallationInProgress)
+        {
+            return;
+        }
+
+        var release = availableUpdate
+            ?? throw new InvalidOperationException("请先检查并确认存在新版本。");
+        updateInstallationInProgress = true;
+        try
+        {
+            await PostUpdateStatusAsync(
+                "downloading",
+                "正在安全下载更新包… 0%",
+                release.ReleaseUrl,
+                progress: 0);
+            var progress = new Progress<int>(value =>
+            {
+                _ = PostUpdateStatusAsync(
+                    "downloading",
+                    $"正在安全下载更新包… {value}%",
+                    release.ReleaseUrl,
+                    progress: value);
+            });
+            var updateDirectory = Path.Combine(
+                compositionRoot.DataLayout.DataDirectory,
+                "Updates",
+                "Pending");
+            var installerPath = await updateCheckService.DownloadInstallerAsync(
+                release,
+                updateDirectory,
+                progress,
+                CancellationToken.None);
+            await PostUpdateStatusAsync(
+                "installing",
+                "下载与 SHA-256 校验完成，正在启动安装器…",
+                release.ReleaseUrl,
+                progress: 100);
+
+            using var installerProcess = UpdateInstallerLauncher.Start(
+                installerPath,
+                AppContext.BaseDirectory);
+            ExitApplication();
+        }
+        catch (Exception exception)
+        {
+            await PostUpdateStatusAsync(
+                "error",
+                $"更新失败，旧版本未被替换：{exception.Message}",
+                release.ReleaseUrl,
+                canInstall: true);
+        }
+        finally
+        {
+            updateInstallationInProgress = false;
+        }
+    }
+
+    private Task PostUpdateStatusAsync(
+        string status,
+        string message,
+        string releaseUrl,
+        bool canInstall = false,
+        int? progress = null)
     {
         if (!shellReady || ProductWebView.CoreWebView2 is null)
         {
@@ -499,7 +571,9 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             type = "updateStatus",
             status,
             message,
-            releaseUrl
+            releaseUrl,
+            canInstall,
+            progress
         }));
         return Task.CompletedTask;
     }
