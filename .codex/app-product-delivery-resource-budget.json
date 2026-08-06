@@ -26,7 +26,8 @@
     "worktrees": 0
   },
   "profile": "micro",
+  "result": "Verified WebView 1.1.1 installed, interaction-tested, checkpointed, pushed, and left running hidden in the background.",
   "stage_id": "webview-v6-exe",
-  "status": "active",
+  "status": "closed",
   "version": 2
 }
