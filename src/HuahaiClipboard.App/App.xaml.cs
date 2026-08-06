@@ -7,6 +7,7 @@ public partial class App : Microsoft.UI.Xaml.Application
 {
     private Presentation.Windows.CursorPanelWindow? window;
     private AppInstance? mainInstance;
+    private readonly DeferredActivationGate activationGate = new();
 
     public App() => InitializeComponent();
 
@@ -44,8 +45,19 @@ public partial class App : Microsoft.UI.Xaml.Application
         {
             window.StartHidden();
         }
+        if (activationGate.MarkReady())
+        {
+            window.ShowFromShortcut();
+        }
     }
 
-    private void MainInstance_Activated(object? sender, AppActivationArguments e) =>
+    private void MainInstance_Activated(object? sender, AppActivationArguments e)
+    {
+        if (!activationGate.RequestActivation())
+        {
+            return;
+        }
+
         window?.DispatcherQueue.TryEnqueue(window.ShowFromShortcut);
+    }
 }
