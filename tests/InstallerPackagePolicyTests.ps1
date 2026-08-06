@@ -1,7 +1,8 @@
 ﻿$ErrorActionPreference = 'Stop'
 
 $projectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$fixtureRoot = Join-Path $projectRoot ('dist\installer-policy-fixture-' + [guid]::NewGuid().ToString('N'))
+$fixtureParent = [System.IO.Path]::GetFullPath((Join-Path ([System.IO.Path]::GetTempPath()) 'HuahaiClipboard.Tests'))
+$fixtureRoot = Join-Path $fixtureParent ('installer-policy-fixture-' + [guid]::NewGuid().ToString('N'))
 $missingWebViewEntryRoot = Join-Path $fixtureRoot 'missing-webview-entry'
 $missingShellRoot = Join-Path $fixtureRoot 'missing-web-shell'
 $missingXbfRoot = Join-Path $fixtureRoot 'missing-xbf'
@@ -28,6 +29,7 @@ $requiredPaths = @(
     'Microsoft.WindowsAppRuntime.Bootstrap.dll'
 )
 
+try {
 # 创建最小合成 Release 目录，使测试不依赖历史 dist 产物。
 foreach ($fixture in @(
     [pscustomobject]@{ Root = $missingWebViewEntryRoot; Omitted = 'HuahaiClipboard.App.exe' },
@@ -90,3 +92,21 @@ if ($missingRuntimeBridgeFailure -notmatch 'Release directory is incomplete: Web
     MissingXbf = $missingXbfFailure
     MissingRuntimeBridge = $missingRuntimeBridgeFailure
 } | ConvertTo-Json -Compress
+}
+finally {
+    if (Test-Path -LiteralPath $fixtureRoot) {
+        $resolvedFixtureRoot = [System.IO.Path]::GetFullPath($fixtureRoot)
+        $resolvedParent = [System.IO.Path]::GetDirectoryName($resolvedFixtureRoot)
+        $leaf = Split-Path -Leaf $resolvedFixtureRoot
+        $isOwnedParent = $resolvedParent.Equals(
+            $fixtureParent,
+            [System.StringComparison]::OrdinalIgnoreCase
+        )
+
+        if (-not $isOwnedParent -or $leaf -notmatch '^installer-policy-fixture-[0-9a-f]{32}$') {
+            throw "Refusing to clean unexpected installer policy fixture path: $resolvedFixtureRoot"
+        }
+
+        Remove-Item -LiteralPath $resolvedFixtureRoot -Recurse -Force
+    }
+}

@@ -1,21 +1,43 @@
 [CmdletBinding(SupportsShouldProcess)]
-param()
+param(
+    [string]$DistRoot
+)
 
 $ErrorActionPreference = 'Stop'
 
 $projectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$distRoot = [System.IO.Path]::GetFullPath((Join-Path $projectRoot 'dist'))
+$projectDistRoot = [System.IO.Path]::GetFullPath((Join-Path $projectRoot 'dist'))
+$tempFixtureRoot = [System.IO.Path]::GetFullPath((Join-Path ([System.IO.Path]::GetTempPath()) 'HuahaiClipboard.Tests'))
+$distRoot = if ([string]::IsNullOrWhiteSpace($DistRoot)) {
+    $projectDistRoot
+}
+else {
+    [System.IO.Path]::GetFullPath($DistRoot)
+}
+
+$distLeaf = [System.IO.Path]::GetFileName($distRoot)
+$distParent = [System.IO.Path]::GetDirectoryName($distRoot)
+$isProjectDist = $distRoot.Equals($projectDistRoot, [System.StringComparison]::OrdinalIgnoreCase)
+$isTestProbe = $distParent.Equals($tempFixtureRoot, [System.StringComparison]::OrdinalIgnoreCase) -and
+    $distLeaf -match '^fixture-cleanup-probe-[0-9a-f]{32}$'
+if (-not $isProjectDist -and -not $isTestProbe) {
+    throw "Refusing fixture cleanup outside the project dist directory or an owned test probe: $distRoot"
+}
 
 if (-not (Test-Path -LiteralPath $distRoot -PathType Container)) {
     [pscustomobject]@{ Removed = 0; Remaining = 0 } | ConvertTo-Json -Compress
     return
 }
 
-$targets = @([System.IO.Directory]::EnumerateDirectories(
-    $distRoot,
-    'installer-integrity-fixture-*',
-    [System.IO.SearchOption]::TopDirectoryOnly
-))
+$targets = @(
+    foreach ($pattern in @('installer-integrity-fixture-*', 'installer-policy-fixture-*')) {
+        [System.IO.Directory]::EnumerateDirectories(
+            $distRoot,
+            $pattern,
+            [System.IO.SearchOption]::TopDirectoryOnly
+        )
+    }
+)
 
 foreach ($target in $targets) {
     $resolved = [System.IO.Path]::GetFullPath($target)
@@ -25,7 +47,7 @@ foreach ($target in $targets) {
     if (-not $parent.Equals($distRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
         throw "Refusing fixture outside the project dist directory: $resolved"
     }
-    if ($leaf -notmatch '^installer-integrity-fixture-[0-9a-f]{32}$') {
+    if ($leaf -notmatch '^installer-(?:integrity|policy)-fixture-[0-9a-f]{32}$') {
         throw "Refusing unexpected fixture directory name: $resolved"
     }
 
@@ -40,17 +62,21 @@ foreach ($target in $targets) {
 $removed = 0
 foreach ($target in $targets) {
     $resolved = [System.IO.Path]::GetFullPath($target)
-    if ($PSCmdlet.ShouldProcess($resolved, 'Remove generated installer integrity fixture')) {
+    if ($PSCmdlet.ShouldProcess($resolved, 'Remove generated installer fixture')) {
         Remove-Item -LiteralPath $resolved -Recurse -Force
         $removed++
     }
 }
 
-$remaining = @([System.IO.Directory]::EnumerateDirectories(
-    $distRoot,
-    'installer-integrity-fixture-*',
-    [System.IO.SearchOption]::TopDirectoryOnly
-)).Count
+$remaining = @(
+    foreach ($pattern in @('installer-integrity-fixture-*', 'installer-policy-fixture-*')) {
+        [System.IO.Directory]::EnumerateDirectories(
+            $distRoot,
+            $pattern,
+            [System.IO.SearchOption]::TopDirectoryOnly
+        )
+    }
+).Count
 
 [pscustomobject]@{
     Removed = $removed
