@@ -24,4 +24,20 @@ public sealed class WindowChromeGeometryTests
         Assert.AreEqual(expectedDiameter, geometry.CornerDiameter);
     }
 
+    [DataTestMethod]
+    [DataRow(430, 680, 29, 96u, 0.8, 46)]
+    [DataRow(688, 1088, 29, 96u, 1.6, 93)]
+    public void RoundedRegion_ScalesWithTheWholePanel(
+        int width,
+        int height,
+        int cornerRadius,
+        uint dpi,
+        double panelScale,
+        int expectedDiameter)
+    {
+        var geometry = WindowChromeGeometry.Create(width, height, cornerRadius, dpi, panelScale);
+
+        Assert.AreEqual(expectedDiameter, geometry.CornerDiameter);
+    }
+
 }

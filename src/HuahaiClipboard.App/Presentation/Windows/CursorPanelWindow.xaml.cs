@@ -901,7 +901,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         _ = ShowWindow(WinRT.Interop.WindowNative.GetWindowHandle(this), ShowWindowHide);
     }
 
-    private static void ApplyNativeGlassChrome(IntPtr windowHandle, int width, int height)
+    private void ApplyNativeGlassChrome(IntPtr windowHandle, int width, int height)
     {
         RemoveNativeWindowFrame(windowHandle);
         var cornerPreference = DwmRoundCornerPreference;
@@ -921,7 +921,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             width,
             height,
             PanelCornerRadius,
-            GetDpiForWindow(windowHandle));
+            GetDpiForWindow(windowHandle),
+            panelScale);
         var region = CreateRoundRectRgn(
             0,
             0,
