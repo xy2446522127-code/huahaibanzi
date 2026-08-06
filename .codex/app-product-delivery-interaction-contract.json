@@ -1,5 +1,5 @@
 {
-  "contract_revision": "huahai-native-1.1.0-interactions-v1",
+  "contract_revision": "huahai-webview-1.1.1-interactions-v1",
   "controls": [
     {
       "allowed_side_effects": [
@@ -15,7 +15,7 @@
         "type": "visible-items-filtered"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -35,11 +35,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.panel.search",
+      "test_id": "webview.panel.search",
       "trigger": {
         "type": "text-input"
       },
@@ -59,7 +59,7 @@
         "type": "window-hidden-process-alive"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -79,11 +79,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.panel.minimize",
+      "test_id": "webview.panel.minimize",
       "trigger": {
         "type": "click"
       },
@@ -104,7 +104,7 @@
         "type": "settings-visible"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -124,11 +124,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.panel.settings",
+      "test_id": "webview.panel.settings",
       "trigger": {
         "type": "click"
       },
@@ -148,7 +148,7 @@
         "type": "list-filtered"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -168,11 +168,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.filter.all",
+      "test_id": "webview.filter.all",
       "trigger": {
         "type": "click"
       },
@@ -192,7 +192,7 @@
         "type": "list-filtered"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -212,11 +212,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.filter.text",
+      "test_id": "webview.filter.text",
       "trigger": {
         "type": "click"
       },
@@ -236,7 +236,7 @@
         "type": "list-filtered"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -256,11 +256,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.filter.link",
+      "test_id": "webview.filter.link",
       "trigger": {
         "type": "click"
       },
@@ -280,7 +280,7 @@
         "type": "list-filtered"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -300,11 +300,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.filter.image",
+      "test_id": "webview.filter.image",
       "trigger": {
         "type": "click"
       },
@@ -324,7 +324,7 @@
         "type": "list-filtered"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -344,11 +344,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.filter.file",
+      "test_id": "webview.filter.file",
       "trigger": {
         "type": "click"
       },
@@ -368,7 +368,7 @@
         "type": "list-filtered"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -388,11 +388,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.filter.favorites",
+      "test_id": "webview.filter.favorites",
       "trigger": {
         "type": "click"
       },
@@ -412,7 +412,7 @@
         "type": "virtualized-list-scrolls"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -432,11 +432,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.records.scroll",
+      "test_id": "webview.records.scroll",
       "trigger": {
         "type": "mouse-wheel"
       },
@@ -456,7 +456,7 @@
         "type": "clipboard-updated-window-hidden"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -476,11 +476,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.record.copy",
+      "test_id": "webview.record.copy",
       "trigger": {
         "type": "click"
       },
@@ -500,7 +500,7 @@
         "type": "pin-state-persisted"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -520,11 +520,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.record.pin",
+      "test_id": "webview.record.pin",
       "trigger": {
         "type": "click"
       },
@@ -544,7 +544,7 @@
         "type": "favorite-state-persisted"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -564,11 +564,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.record.favorite",
+      "test_id": "webview.record.favorite",
       "trigger": {
         "type": "click"
       },
@@ -588,7 +588,7 @@
         "type": "record-removed"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -608,11 +608,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.record.delete",
+      "test_id": "webview.record.delete",
       "trigger": {
         "type": "click"
       },
@@ -632,7 +632,7 @@
         "type": "autohide-state-updated"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -652,11 +652,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.panel.autohide",
+      "test_id": "webview.panel.autohide",
       "trigger": {
         "type": "toggle"
       },
@@ -676,7 +676,7 @@
         "type": "window-position-updated"
       },
       "fixture": {
-        "route": "native://panel",
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -696,11 +696,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.panel.drag",
+      "test_id": "webview.panel.drag",
       "trigger": {
         "type": "pointer-drag"
       },
@@ -740,11 +740,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.settings.nav.appearance",
+      "test_id": "webview.settings.nav.appearance",
       "trigger": {
         "type": "click"
       },
@@ -784,11 +784,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.settings.nav.motion",
+      "test_id": "webview.settings.nav.motion",
       "trigger": {
         "type": "click"
       },
@@ -828,11 +828,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.settings.nav.input",
+      "test_id": "webview.settings.nav.input",
       "trigger": {
         "type": "click"
       },
@@ -872,11 +872,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.settings.nav.storage",
+      "test_id": "webview.settings.nav.storage",
       "trigger": {
         "type": "click"
       },
@@ -916,11 +916,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.settings.nav.system",
+      "test_id": "webview.settings.nav.system",
       "trigger": {
         "type": "click"
       },
@@ -960,11 +960,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.settings.nav.about",
+      "test_id": "webview.settings.nav.about",
       "trigger": {
         "type": "click"
       },
@@ -1004,11 +1004,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.settings.back",
+      "test_id": "webview.settings.back",
       "trigger": {
         "type": "click"
       },
@@ -1028,7 +1028,7 @@
         "type": "theme-applied"
       },
       "fixture": {
-        "route": "native://settings/appearance",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1048,11 +1048,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.theme.rose",
+      "test_id": "webview.theme.rose",
       "trigger": {
         "type": "click"
       },
@@ -1072,7 +1072,7 @@
         "type": "theme-applied"
       },
       "fixture": {
-        "route": "native://settings/appearance",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1092,11 +1092,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.theme.cobalt",
+      "test_id": "webview.theme.cobalt",
       "trigger": {
         "type": "click"
       },
@@ -1116,7 +1116,7 @@
         "type": "theme-applied"
       },
       "fixture": {
-        "route": "native://settings/appearance",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1136,11 +1136,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.theme.emerald",
+      "test_id": "webview.theme.emerald",
       "trigger": {
         "type": "click"
       },
@@ -1160,7 +1160,7 @@
         "type": "theme-applied"
       },
       "fixture": {
-        "route": "native://settings/appearance",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1180,11 +1180,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.theme.amber",
+      "test_id": "webview.theme.amber",
       "trigger": {
         "type": "click"
       },
@@ -1204,7 +1204,7 @@
         "type": "theme-applied"
       },
       "fixture": {
-        "route": "native://settings/appearance",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1224,11 +1224,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.theme.aurora",
+      "test_id": "webview.theme.aurora",
       "trigger": {
         "type": "click"
       },
@@ -1248,7 +1248,7 @@
         "type": "material-opacity-updated"
       },
       "fixture": {
-        "route": "native://settings/appearance",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1268,11 +1268,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.appearance.opacity",
+      "test_id": "webview.appearance.opacity",
       "trigger": {
         "type": "slider"
       },
@@ -1292,7 +1292,7 @@
         "type": "panel-scale-updated"
       },
       "fixture": {
-        "route": "native://settings/appearance",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1312,11 +1312,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.appearance.scale",
+      "test_id": "webview.appearance.scale",
       "trigger": {
         "type": "slider"
       },
@@ -1336,7 +1336,7 @@
         "type": "panel-scale-reset"
       },
       "fixture": {
-        "route": "native://settings/appearance",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1356,11 +1356,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.appearance.reset-scale",
+      "test_id": "webview.appearance.reset-scale",
       "trigger": {
         "type": "click"
       },
@@ -1380,7 +1380,7 @@
         "type": "petal-state-updated"
       },
       "fixture": {
-        "route": "native://settings/motion",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/motion",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1400,11 +1400,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.motion.petals",
+      "test_id": "webview.motion.petals",
       "trigger": {
         "type": "toggle"
       },
@@ -1424,7 +1424,7 @@
         "type": "motion-reduced"
       },
       "fixture": {
-        "route": "native://settings/motion",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/motion",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1444,11 +1444,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.motion.reduced",
+      "test_id": "webview.motion.reduced",
       "trigger": {
         "type": "toggle"
       },
@@ -1468,7 +1468,7 @@
         "type": "duration-updated"
       },
       "fixture": {
-        "route": "native://settings/motion",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/motion",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1488,11 +1488,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.motion.duration",
+      "test_id": "webview.motion.duration",
       "trigger": {
         "type": "slider"
       },
@@ -1512,7 +1512,7 @@
         "type": "gesture-state-updated"
       },
       "fixture": {
-        "route": "native://settings/input",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1532,11 +1532,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.input.right-double",
+      "test_id": "webview.input.right-double",
       "trigger": {
         "type": "toggle"
       },
@@ -1556,7 +1556,7 @@
         "type": "shortcut-saved"
       },
       "fixture": {
-        "route": "native://settings/input",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1576,11 +1576,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.input.capture-shortcut",
+      "test_id": "webview.input.capture-shortcut",
       "trigger": {
         "type": "capture-input"
       },
@@ -1600,7 +1600,7 @@
         "type": "shortcut-reset"
       },
       "fixture": {
-        "route": "native://settings/input",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1620,11 +1620,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.input.reset-shortcut",
+      "test_id": "webview.input.reset-shortcut",
       "trigger": {
         "type": "click"
       },
@@ -1644,7 +1644,7 @@
         "type": "draft-updated"
       },
       "fixture": {
-        "route": "native://settings/input",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1664,11 +1664,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.input.exclusions",
+      "test_id": "webview.input.exclusions",
       "trigger": {
         "type": "text-input"
       },
@@ -1688,7 +1688,7 @@
         "type": "exclusions-saved"
       },
       "fixture": {
-        "route": "native://settings/input",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1708,11 +1708,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.input.save-exclusions",
+      "test_id": "webview.input.save-exclusions",
       "trigger": {
         "type": "click"
       },
@@ -1732,7 +1732,7 @@
         "type": "folder-opened"
       },
       "fixture": {
-        "route": "native://settings/storage",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1752,11 +1752,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.storage.open-folder",
+      "test_id": "webview.storage.open-folder",
       "trigger": {
         "type": "click"
       },
@@ -1776,7 +1776,7 @@
         "type": "retention-saved"
       },
       "fixture": {
-        "route": "native://settings/storage",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1796,11 +1796,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.storage.retention-3",
+      "test_id": "webview.storage.retention-3",
       "trigger": {
         "type": "click"
       },
@@ -1820,7 +1820,7 @@
         "type": "retention-saved"
       },
       "fixture": {
-        "route": "native://settings/storage",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1840,11 +1840,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.storage.retention-7",
+      "test_id": "webview.storage.retention-7",
       "trigger": {
         "type": "click"
       },
@@ -1864,7 +1864,7 @@
         "type": "retention-saved"
       },
       "fixture": {
-        "route": "native://settings/storage",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1884,11 +1884,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.storage.retention-30",
+      "test_id": "webview.storage.retention-30",
       "trigger": {
         "type": "click"
       },
@@ -1908,7 +1908,7 @@
         "type": "ordinary-history-removed"
       },
       "fixture": {
-        "route": "native://settings/storage",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1928,11 +1928,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.storage.clear-ordinary",
+      "test_id": "webview.storage.clear-ordinary",
       "trigger": {
         "type": "click"
       },
@@ -1952,7 +1952,7 @@
         "type": "all-history-removed"
       },
       "fixture": {
-        "route": "native://settings/storage",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -1972,11 +1972,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.storage.clear-all",
+      "test_id": "webview.storage.clear-all",
       "trigger": {
         "type": "double-click-confirm"
       },
@@ -1996,7 +1996,7 @@
         "type": "startup-updated"
       },
       "fixture": {
-        "route": "native://settings/system",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/system",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -2016,11 +2016,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.system.startup",
+      "test_id": "webview.system.startup",
       "trigger": {
         "type": "toggle"
       },
@@ -2040,7 +2040,7 @@
         "type": "background-updated"
       },
       "fixture": {
-        "route": "native://settings/system",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/system",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -2060,11 +2060,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.system.background",
+      "test_id": "webview.system.background",
       "trigger": {
         "type": "toggle"
       },
@@ -2084,7 +2084,7 @@
         "type": "update-setting-saved"
       },
       "fixture": {
-        "route": "native://settings/about",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/about",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -2104,11 +2104,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.about.update-toggle",
+      "test_id": "webview.about.update-toggle",
       "trigger": {
         "type": "toggle"
       },
@@ -2128,7 +2128,7 @@
         "type": "update-status-visible"
       },
       "fixture": {
-        "route": "native://settings/about",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/about",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -2148,11 +2148,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.about.check-update",
+      "test_id": "webview.about.check-update",
       "trigger": {
         "type": "click"
       },
@@ -2172,7 +2172,7 @@
         "type": "browser-opened"
       },
       "fixture": {
-        "route": "native://settings/about",
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/about",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -2192,11 +2192,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.about.open-release",
+      "test_id": "webview.about.open-release",
       "trigger": {
         "type": "click"
       },
@@ -2216,7 +2216,7 @@
         "type": "topmost-panel-visible"
       },
       "fixture": {
-        "route": "native://background",
+        "route": "huahai://background",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -2236,11 +2236,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.global.custom-shortcut",
+      "test_id": "webview.global.custom-shortcut",
       "trigger": {
         "type": "global-input"
       },
@@ -2260,7 +2260,7 @@
         "type": "topmost-panel-visible"
       },
       "fixture": {
-        "route": "native://background",
+        "route": "huahai://background",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -2280,11 +2280,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.global.right-double-click",
+      "test_id": "webview.global.right-double-click",
       "trigger": {
         "type": "global-input"
       },
@@ -2304,7 +2304,7 @@
         "type": "panel-visible"
       },
       "fixture": {
-        "route": "native://tray",
+        "route": "huahai://tray",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -2324,11 +2324,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.tray.open-panel",
+      "test_id": "webview.tray.open-panel",
       "trigger": {
         "type": "click"
       },
@@ -2349,7 +2349,7 @@
         "type": "settings-visible"
       },
       "fixture": {
-        "route": "native://tray",
+        "route": "huahai://tray",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -2369,11 +2369,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.tray.open-settings",
+      "test_id": "webview.tray.open-settings",
       "trigger": {
         "type": "menu-click"
       },
@@ -2393,7 +2393,7 @@
         "type": "process-exited"
       },
       "fixture": {
-        "route": "native://tray",
+        "route": "huahai://tray",
         "state": "production-data",
         "viewport": {
           "height": 680,
@@ -2413,11 +2413,11 @@
       },
       "targets": {
         "desktop": {
-          "adapter": "WPF event and production service",
+          "adapter": "WebView DOM event, C# bridge, and production service",
           "behavior": "native"
         }
       },
-      "test_id": "native.tray.exit",
+      "test_id": "webview.tray.exit",
       "trigger": {
         "type": "menu-click"
       },

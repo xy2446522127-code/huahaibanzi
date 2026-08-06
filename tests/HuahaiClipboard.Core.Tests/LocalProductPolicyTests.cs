@@ -26,6 +26,22 @@ public sealed class LocalProductPolicyTests
     }
 
     [TestMethod]
+    public void LocalDataLayout_UsesAnExplicitIsolationRootWhenPresent()
+    {
+        var previous = Environment.GetEnvironmentVariable("HUAHAI_CLIPBOARD_LOCALAPPDATA");
+        try
+        {
+            Environment.SetEnvironmentVariable("HUAHAI_CLIPBOARD_LOCALAPPDATA", @"F:\Huahai-Isolated");
+
+            Assert.AreEqual(@"F:\Huahai-Isolated", LocalDataLayout.ResolveBaseDirectory());
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("HUAHAI_CLIPBOARD_LOCALAPPDATA", previous);
+        }
+    }
+
+    [TestMethod]
     public void ImageDisplayName_UsesAReadableTimestampInsteadOfDimensionsOrAnId()
     {
         var actual = ClipboardDisplayName.CreateImageFileName(

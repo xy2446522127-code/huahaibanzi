@@ -1,0 +1,36 @@
+{
+  "product_scale": "medium",
+  "change_scale": "small",
+  "risk_level": "medium",
+  "delivery_maturity": "release",
+  "runtime_topology": "desktop-first",
+  "scale_evidence": {
+    "product": {
+      "scale": "medium",
+      "score": 10,
+      "dimensions": {
+        "workflows": 2,
+        "surfaces": 2,
+        "boundaries": 2,
+        "integrations": 2,
+        "slices": 2
+      },
+      "overrides": []
+    },
+    "change": {
+      "scale": "small",
+      "score": 6,
+      "dimensions": {
+        "workflows": 1,
+        "surfaces": 1,
+        "boundaries": 2,
+        "integrations": 1,
+        "slices": 1
+      },
+      "overrides": []
+    },
+    "repositories": 1,
+    "release_targets": 1,
+    "shared_contracts_frozen": true
+  }
+}

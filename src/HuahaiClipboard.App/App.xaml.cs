@@ -12,12 +12,17 @@ public partial class App : Microsoft.UI.Xaml.Application
 
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
-        var startHidden = StartupLaunchPolicy.ShouldStartHidden(args.Arguments);
+        var commandLineArguments = string.Join(' ', Environment.GetCommandLineArgs().Skip(1));
+        var startHidden = StartupLaunchPolicy.ShouldStartHidden(args.Arguments) ||
+            StartupLaunchPolicy.ShouldStartHidden(commandLineArguments);
         var activation = AppInstance.GetCurrent().GetActivatedEventArgs();
         mainInstance = AppInstance.FindOrRegisterForKey("HuahaiClipboard.Main");
         if (!mainInstance.IsCurrent)
         {
-            await mainInstance.RedirectActivationToAsync(activation);
+            if (!startHidden)
+            {
+                await mainInstance.RedirectActivationToAsync(activation);
+            }
             Exit();
             return;
         }
@@ -25,6 +30,10 @@ public partial class App : Microsoft.UI.Xaml.Application
         mainInstance.Activated += MainInstance_Activated;
         window = new Presentation.Windows.CursorPanelWindow();
         window.Activate();
+        if (startHidden)
+        {
+            window.StartHidden();
+        }
         await window.InitializeShellAsync();
         if (startHidden)
         {

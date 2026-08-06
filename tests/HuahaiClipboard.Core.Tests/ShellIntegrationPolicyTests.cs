@@ -91,6 +91,7 @@ public sealed class ShellIntegrationPolicyTests
             "setPetals", "setReduceMotion", "setClickDuration", "setRightDoubleClick",
             "setShortcut", "resetShortcut", "setExclusions", "openDataFolder", "setStartup",
             "setBackground", "beginDrag"
+            , "setPanelScale", "setCheckUpdatesOnStartup", "checkUpdate", "openRelease"
         ];
 
         foreach (var action in actions)

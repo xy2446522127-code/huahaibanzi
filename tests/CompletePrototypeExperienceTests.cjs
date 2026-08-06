@@ -34,14 +34,19 @@ test('appearance page exposes proportional panel scaling and a one-click reset',
   assert.match(html, /hhQ\('#scaleRange'\)\.oninput=/);
   assert.match(html, /hhQ\('#resetScale'\)\.onclick=/);
   assert.match(html, /window\.HuahaiHostScale\.clampPanelScale/);
+  assert.match(html, /postNative\('setPanelScale'/);
 });
 
-test('about page provides a clearly simulated and non-networked update journey', () => {
+test('about page uses the production update bridge while keeping preview simulation offline', () => {
   assert.equal(count('id="updateAutoToggle"'), 1);
   assert.equal(count('id="checkUpdateButton"'), 1);
   assert.equal(count('id="updateStatus"'), 1);
   assert.equal(count('id="releaseButton"'), 1);
-  assert.match(html, /模拟更新体验/);
+  assert.match(html, /版本 1\.1\.1/);
+  assert.match(html, /postNative\('setCheckUpdatesOnStartup'/);
+  assert.match(html, /postNative\('checkUpdate'/);
+  assert.match(html, /postNative\('openRelease'/);
+  assert.match(html, /data\.type==='updateStatus'/);
   assert.match(html, /GitHub Release/);
   assert.match(html, /检查中/);
   assert.match(html, /发现新版本/);

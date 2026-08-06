@@ -36,8 +36,10 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private const uint SetWindowNoActivate = 0x0010;
     private const uint WmNonClientLeftButtonDown = 0x00A1;
     private const int HitTestCaption = 2;
+    private const int ShowWindowHide = 0;
     private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly IntPtr HwndNoTopmost = new(-2);
+    private static readonly Version CurrentVersion = new(1, 1, 1);
 
     private readonly CompositionRoot compositionRoot = new();
     private readonly WindowNavigator navigator = new();
@@ -46,6 +48,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private readonly StartupRegistrationService startupRegistrationService = new();
     private readonly JsonWindowPlacementStore windowPlacementStore;
     private readonly TransientWindowVisibilityController visibilityController;
+    private readonly GitHubUpdateCheckService updateCheckService = GitHubUpdateCheckService.CreateDefault(CurrentVersion);
     private GlobalInputService? globalInputService;
     private TrayService? trayService;
     private InputSettingsSnapshot? inputSettingsSnapshot;
@@ -53,6 +56,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private bool allowClose;
     private bool shellReady;
     private bool openSettingsWhenReady;
+    private bool settingsSurfaceVisible;
+    private double panelScale = 1d;
     private int webContentActivityVersion;
 
     public CursorPanelWindow()
@@ -118,6 +123,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         await RestoreWindowPositionAsync();
         await panelViewModel.LoadAsync();
         await settingsViewModel.LoadAsync();
+        panelScale = Math.Clamp(settingsViewModel.Draft.Appearance.PanelScale, 0.8, 1.6);
+        ResizeWindow(PanelWidth, PanelHeight);
         await ProductWebView.EnsureCoreWebView2Async();
         ProductWebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
             "app.huahai.local",
@@ -194,15 +201,20 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                     {
                         await ExecuteShellScriptAsync("document.querySelector('#settingsButton')?.click()");
                     }
+                    if (settingsViewModel.Draft.Behavior.CheckUpdatesOnStartup)
+                    {
+                        _ = CheckForUpdatesAsync();
+                    }
                     break;
                 case "hide":
                     // 工具栏“隐藏”是显式后台动作，不受“关闭后退出”偏好影响。
                     visibilityController.Hide();
                     break;
                 case "resize":
+                    settingsSurfaceVisible = request.Mode == "settings";
                     ResizeWindow(
-                        request.Mode == "settings" ? SettingsWidth : PanelWidth,
-                        request.Mode == "settings" ? SettingsHeight : PanelHeight);
+                        settingsSurfaceVisible ? SettingsWidth : PanelWidth,
+                        settingsSurfaceVisible ? SettingsHeight : PanelHeight);
                     break;
                 default:
                     await HandleShellActionAsync(request);
@@ -342,6 +354,27 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                 await settingsViewModel.UpdateBehaviorAsync(
                     settingsViewModel.Draft.Behavior with { BackgroundEnabled = request.Enabled == true });
                 break;
+            case "setPanelScale":
+                panelScale = Math.Clamp(request.Number ?? 1d, 0.8, 1.6);
+                await settingsViewModel.UpdateAppearanceAsync(
+                    settingsViewModel.Draft.Appearance with { PanelScale = panelScale });
+                ResizeWindow(
+                    settingsSurfaceVisible ? SettingsWidth : PanelWidth,
+                    settingsSurfaceVisible ? SettingsHeight : PanelHeight);
+                break;
+            case "setCheckUpdatesOnStartup":
+                await settingsViewModel.UpdateBehaviorAsync(
+                    settingsViewModel.Draft.Behavior with { CheckUpdatesOnStartup = request.Enabled == true });
+                break;
+            case "checkUpdate":
+                await CheckForUpdatesAsync();
+                return;
+            case "openRelease":
+                Process.Start(new ProcessStartInfo(GitHubUpdateCheckService.ReleasesPage)
+                {
+                    UseShellExecute = true
+                });
+                return;
             case "beginDrag":
                 await BeginWindowDragAsync();
                 return;
@@ -392,6 +425,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             {
                 themeId = settings.Appearance.ThemeId,
                 opacity = settings.Appearance.Opacity,
+                panelScale = settings.Appearance.PanelScale,
                 petalsEnabled = settings.Motion.PetalLevel != PetalLevel.Off,
                 reduceMotion = settings.Motion.ReduceMotion,
                 clickDuration = settings.Motion.ClickDurationMs,
@@ -400,6 +434,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                 exclusions = settings.Input.ExcludedApplications,
                 retentionDays = settings.Behavior.AutoCleanupDays,
                 backgroundEnabled = settings.Behavior.BackgroundEnabled,
+                checkUpdatesOnStartup = settings.Behavior.CheckUpdatesOnStartup,
                 startupEnabled = startupRegistrationService.IsEnabled(),
                 dataPath = compositionRoot.DataLayout.DataDirectory
             },
@@ -421,6 +456,44 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             type = "toast",
             message,
             isError
+        }));
+        return Task.CompletedTask;
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        try
+        {
+            var result = await updateCheckService.CheckAsync(CancellationToken.None);
+            await PostUpdateStatusAsync(
+                result.UpdateAvailable ? "available" : "current",
+                result.UpdateAvailable
+                    ? $"发现新版本 {result.LatestVersion}，可前往 GitHub Release 下载。"
+                    : $"当前已是最新版本 {result.CurrentVersion}。",
+                result.ReleaseUrl);
+        }
+        catch (Exception exception)
+        {
+            await PostUpdateStatusAsync(
+                "error",
+                $"暂时无法检查更新：{exception.Message}",
+                GitHubUpdateCheckService.ReleasesPage);
+        }
+    }
+
+    private Task PostUpdateStatusAsync(string status, string message, string releaseUrl)
+    {
+        if (!shellReady || ProductWebView.CoreWebView2 is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        ProductWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new
+        {
+            type = "updateStatus",
+            status,
+            message,
+            releaseUrl
         }));
         return Task.CompletedTask;
     }
@@ -457,6 +530,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private void ShowSettingsPane()
     {
         openSettingsWhenReady = true;
+        settingsSurfaceVisible = true;
         ResizeWindow(SettingsWidth, SettingsHeight);
         _ = ExecuteShellScriptAsync("document.querySelector('#settingsButton')?.click()");
     }
@@ -489,22 +563,25 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     private void ShowAtCursor(IntPtr targetWindow, PointInt32 cursor)
     {
+        settingsSurfaceVisible = false;
         compositionRoot.ClipboardPlatform.SetPasteTarget(targetWindow);
         var display = DisplayArea.GetFromPoint(cursor, DisplayAreaFallback.Primary);
         var workArea = display.WorkArea;
+        var width = ScaleDimension(PanelWidth);
+        var height = ScaleDimension(PanelHeight);
         var x = cursor.X + 14;
-        if (x + PanelWidth > workArea.X + workArea.Width)
+        if (x + width > workArea.X + workArea.Width)
         {
-            x = cursor.X - PanelWidth - 14;
+            x = cursor.X - width - 14;
         }
 
-        x = Math.Clamp(x, workArea.X, Math.Max(workArea.X, workArea.X + workArea.Width - PanelWidth));
-        var y = Math.Clamp(cursor.Y - 48, workArea.Y, Math.Max(workArea.Y, workArea.Y + workArea.Height - PanelHeight));
-        appWindow?.MoveAndResize(new RectInt32(x, y, PanelWidth, PanelHeight));
+        x = Math.Clamp(x, workArea.X, Math.Max(workArea.X, workArea.X + workArea.Width - width));
+        var y = Math.Clamp(cursor.Y - 48, workArea.Y, Math.Max(workArea.Y, workArea.Y + workArea.Height - height));
+        appWindow?.MoveAndResize(new RectInt32(x, y, width, height));
         ApplyNativeGlassChrome(
             WinRT.Interop.WindowNative.GetWindowHandle(this),
-            PanelWidth,
-            PanelHeight);
+            width,
+            height);
         visibilityController.Show();
         Activate();
         _ = SetForegroundWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));
@@ -529,6 +606,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             return;
         }
 
+        width = ScaleDimension(width);
+        height = ScaleDimension(height);
         var display = DisplayArea.GetFromWindowId(appWindow.Id, DisplayAreaFallback.Primary);
         var workArea = display.WorkArea;
         var current = appWindow.Position;
@@ -540,6 +619,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             width,
             height);
     }
+
+    private int ScaleDimension(int value) => Math.Max(1, (int)Math.Round(value * panelScale));
 
     private async Task BeginWindowDragAsync()
     {
@@ -575,8 +656,10 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             return;
         }
 
+        var width = ScaleDimension(PanelWidth);
+        var height = ScaleDimension(PanelHeight);
         var display = DisplayArea.GetFromPoint(
-            new PointInt32(placement.X + PanelWidth / 2, placement.Y + PanelHeight / 2),
+            new PointInt32(placement.X + width / 2, placement.Y + height / 2),
             DisplayAreaFallback.Nearest);
         if (!string.Equals(DisplayKey(display), placement.DisplayId, StringComparison.Ordinal))
         {
@@ -585,8 +668,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
         var area = display.WorkArea;
         appWindow.Move(new PointInt32(
-            Math.Clamp(placement.X, area.X, Math.Max(area.X, area.X + area.Width - PanelWidth)),
-            Math.Clamp(placement.Y, area.Y, Math.Max(area.Y, area.Y + area.Height - PanelHeight))));
+            Math.Clamp(placement.X, area.X, Math.Max(area.X, area.X + area.Width - width)),
+            Math.Clamp(placement.Y, area.Y, Math.Max(area.Y, area.Y + area.Height - height))));
     }
 
     private static string DisplayKey(DisplayArea display) =>
@@ -623,6 +706,11 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     void ITransientWindowHost.SetTopmost(bool enabled)
     {
+        if (appWindow?.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.IsAlwaysOnTop = enabled;
+        }
+
         var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
         _ = SetWindowPos(
             handle,
@@ -689,7 +777,16 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     void ITransientWindowHost.Show() => appWindow?.Show();
 
-    void ITransientWindowHost.Hide() => appWindow?.Hide();
+    void ITransientWindowHost.Hide()
+    {
+        if (appWindow is not null)
+        {
+            appWindow.Hide();
+            return;
+        }
+
+        _ = ShowWindow(WinRT.Interop.WindowNative.GetWindowHandle(this), ShowWindowHide);
+    }
 
     private static void ApplyNativeGlassChrome(IntPtr windowHandle, int width, int height)
     {
@@ -754,6 +851,9 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     [DllImport("user32.dll")]
     private static extern bool IsWindowVisible(IntPtr windowHandle);
+
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindow(IntPtr windowHandle, int command);
 
     [DllImport("user32.dll")]
     private static extern bool ReleaseCapture();

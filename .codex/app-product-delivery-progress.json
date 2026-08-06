@@ -1,74 +1,60 @@
 {
-  "blockers": [],
-  "change_scale": "micro",
-  "core_percent": 100,
-  "current_milestone": null,
+  "version": 2,
+  "scope_revision": 5,
+  "product_scale": "medium",
+  "change_scale": "small",
+  "risk_level": "medium",
+  "runtime_topology": "desktop-first",
   "delivery_maturity": "release",
   "delivery_target": "release",
   "execution_mode": "autonomous_implementation",
+  "core_percent": 100,
+  "overall_percent": 98,
+  "current_milestone": "release-sync",
+  "blockers": [],
   "milestones": [
     {
-      "blocker": "",
+      "id": "webview-carrier",
+      "label": "Approved WebView UI is the formal desktop carrier",
+      "weight": 30,
       "core": true,
-      "evidence": "Release x64 build; installed WindowStartupSmoke passed; packaged HTML/CSS/JS resources present including App.xbf and HuahaiClipboard.App.pri.",
-      "id": "hybrid-shell",
-      "label": "Approved v6 prototype runs inside the EXE",
       "status": "verified",
-      "weight": 30
+      "blocker": "",
+      "evidence": "WinUI x64 Release build completed with 0 warnings and 0 errors; installed CDP captures show the approved panel and settings shell."
     },
     {
-      "blocker": "",
+      "id": "production-bridge",
+      "label": "Clipboard, history, settings, shortcuts and lifecycle remain connected",
+      "weight": 35,
       "core": true,
-      "evidence": "Node 22/22 and Core 80/80 passed; installed WebView2 hide smoke passed with background toggle disabled, process alive and window hidden.",
-      "id": "native-bridge",
-      "label": "Clipboard, history, settings, shortcuts and tray are connected",
       "status": "verified",
-      "weight": 35
+      "blocker": "",
+      "evidence": "Node 42/42, Core 82/82, and installed live-count/copy/pin/favorite/delete/topmost/hide smoke passed."
     },
     {
-      "blocker": "",
-      "core": true,
-      "evidence": "Prototype shell contract 9/9; full Node suite 22/22; interaction inventory needs_review=0; installed startup and hide smoke passed.",
-      "id": "visible-parity",
-      "label": "Panel and settings match the approved interactive prototype",
-      "status": "verified",
-      "weight": 20
-    },
-    {
-      "blocker": "",
-      "core": false,
-      "evidence": "Silent install/reinstall exit 0; required files 12/12; shortcuts and uninstall registry verified; uninstall exit 0 removes app/shortcuts/key/Run value while preserving 40 data files by SHA-256; final setup icon matches installed EXE icon; installer is unsigned.",
       "id": "friend-package",
-      "label": "Windows x64 friend-ready package starts successfully",
+      "label": "Version 1.1.1 installer preserves local data",
+      "weight": 20,
+      "core": true,
       "status": "verified",
-      "weight": 15
+      "blocker": "",
+      "evidence": "Installer exit 0 at F:\\HuahaiClipboard; 64/64 user-data files remained byte-identical; PRI, XBF, Web shell and uninstaller are present."
+    },
+    {
+      "id": "release-sync",
+      "label": "Release gates, Git checkpoint and remote synchronization",
+      "weight": 15,
+      "core": false,
+      "status": "in_progress",
+      "blocker": "",
+      "evidence": "Core 85/85, Native rollback 39/39, Web 42/42, installer 8/8, installed Windows smokes, UI carrier release gate and independent review passed; checkpoint and authorized push remain."
     }
   ],
-  "overall_percent": 100,
-  "product_scale": "micro",
-  "project_scale": "micro",
-  "risk_level": "medium",
-  "runtime_topology": "undetermined",
-  "scale_evidence": {
-    "migration": "version-1-equal-scales"
-  },
   "scope_changes": [
     {
-      "reason": "User froze the current product and requested a verified Git sync plus friend-ready package.",
-      "revision": 3
-    },
-    {
-      "at": "2026-08-04T21:09:05.181239Z",
-      "previous_classification": {
-        "delivery_target": "release",
-        "project_scale": "micro",
-        "risk_level": "medium"
-      },
-      "previous_percent": 100,
-      "reason": "Replace the divergent native XAML reconstruction with the user-approved v6 HTML/CSS/JS as the actual production UI, then reconnect Windows capabilities and rebuild the friend-ready package."
+      "revision": 5,
+      "reason": "User approved restoring the previous WebView UI and accepting its higher memory usage while preserving all production behavior and local data."
     }
   ],
-  "scope_revision": 4,
-  "updated_at": "2026-08-05T02:30:18.521061Z",
-  "version": 2
+  "updated_at": "2026-08-07T00:18:00+08:00"
 }

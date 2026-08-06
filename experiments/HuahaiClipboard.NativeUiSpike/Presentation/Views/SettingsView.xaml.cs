@@ -8,6 +8,7 @@ using System.Diagnostics;
 using HuahaiClipboard.Core.Settings;
 using HuahaiClipboard.Core.Services;
 using HuahaiClipboard.NativeUiSpike.Services;
+using NativeGitHubUpdateCheckService = HuahaiClipboard.NativeUiSpike.Services.GitHubUpdateCheckService;
 
 namespace HuahaiClipboard.NativeUiSpike.Presentation.Views;
 
@@ -17,7 +18,7 @@ public partial class SettingsView : UserControl
     private readonly DispatcherTimer appearanceSaveTimer;
     private readonly DispatcherTimer motionSaveTimer;
     private readonly DispatcherTimer toastTimer;
-    private readonly GitHubUpdateCheckService updateService = GitHubUpdateCheckService.CreateDefault();
+    private readonly NativeGitHubUpdateCheckService updateService = NativeGitHubUpdateCheckService.CreateDefault();
     private bool applyingSettings;
     private bool clearAllPending;
     private string? currentShortcut;
@@ -310,7 +311,7 @@ public partial class SettingsView : UserControl
         await CheckForUpdatesAsync(showToast: true);
 
     private void Release_Click(object sender, RoutedEventArgs e) =>
-        Process.Start(new ProcessStartInfo(GitHubUpdateCheckService.ReleasesPage) { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo(NativeGitHubUpdateCheckService.ReleasesPage) { UseShellExecute = true });
 
     private async Task CheckForUpdatesAsync(bool showToast)
     {

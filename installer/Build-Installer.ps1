@@ -19,13 +19,22 @@ $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 $referenceRoot = Join-Path ${env:ProgramFiles(x86)} 'Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8'
 
 $requiredReleaseFiles = @(
-    'HuahaiClipboard.NativeUiSpike.exe',
-    'HuahaiClipboard.NativeUiSpike.dll',
-    'HuahaiClipboard.NativeUiSpike.deps.json',
-    'HuahaiClipboard.NativeUiSpike.runtimeconfig.json',
+    'HuahaiClipboard.App.exe',
+    'HuahaiClipboard.App.dll',
+    'HuahaiClipboard.App.deps.json',
+    'HuahaiClipboard.App.runtimeconfig.json',
+    'HuahaiClipboard.App.pri',
     'HuahaiClipboard.Core.dll',
+    'Microsoft.WinUI.dll',
+    'Microsoft.Web.WebView2.Core.dll',
+    'Microsoft.WindowsAppRuntime.Bootstrap.Net.dll',
     'Microsoft.Windows.SDK.NET.dll',
-    'WinRT.Runtime.dll'
+    'WinRT.Runtime.dll',
+    'App.xbf',
+    'Presentation\Windows\CursorPanelWindow.xbf',
+    'Assets\Web\product-shell.html',
+    'WebView2Loader.dll',
+    'Microsoft.WindowsAppRuntime.Bootstrap.dll'
 )
 foreach ($relativePath in $requiredReleaseFiles) {
     if (-not (Test-Path -LiteralPath (Join-Path $publishRoot $relativePath))) {
@@ -35,8 +44,12 @@ foreach ($relativePath in $requiredReleaseFiles) {
 if (-not (Test-Path -LiteralPath $csc)) { throw "C# compiler was not found: $csc" }
 if (-not (Test-Path -LiteralPath $referenceRoot)) { throw ".NET Framework 4.8 reference assemblies were not found: $referenceRoot" }
 $dotNetInstallers = @(Get-ChildItem -LiteralPath $prerequisiteRoot -Filter 'windowsdesktop-runtime-8.*-win-x64.exe' -File -ErrorAction SilentlyContinue)
+$windowsAppRuntimeInstallers = @(Get-ChildItem -LiteralPath $prerequisiteRoot -Filter 'WindowsAppRuntimeInstall-x64.exe' -File -ErrorAction SilentlyContinue)
+$webView2RuntimeInstallers = @(Get-ChildItem -LiteralPath $prerequisiteRoot -Filter 'MicrosoftEdgeWebView2RuntimeInstallerX64.exe' -File -ErrorAction SilentlyContinue)
 $prerequisiteManifestPath = Join-Path $prerequisiteRoot 'prerequisites.json'
 if ($dotNetInstallers.Count -ne 1) { throw 'Prerequisite directory must contain exactly one .NET 8 x64 Windows Desktop Runtime installer.' }
+if ($windowsAppRuntimeInstallers.Count -ne 1) { throw 'Prerequisite directory must contain exactly one Windows App Runtime 1.7 x64 installer.' }
+if ($webView2RuntimeInstallers.Count -ne 1) { throw 'Prerequisite directory must contain exactly one Evergreen WebView2 Runtime x64 installer.' }
 if (-not (Test-Path -LiteralPath $prerequisiteManifestPath)) { throw 'Prerequisite directory is missing prerequisites.json.' }
 
 # 构建前重新验证下载物，避免仅凭文件名接受被替换的安装器。
@@ -48,6 +61,20 @@ $dotNetHash = (Get-FileHash -Algorithm SHA512 -LiteralPath $dotNetInstallers[0].
 if ($dotNetHash -ne ([string]$prerequisiteManifest.DotNet.Sha512).ToLowerInvariant()) {
     throw 'The .NET prerequisite SHA-512 does not match prerequisites.json.'
 }
+if ($prerequisiteManifest.WindowsAppRuntime.FileName -ne $windowsAppRuntimeInstallers[0].Name) {
+    throw 'The Windows App Runtime prerequisite file name does not match prerequisites.json.'
+}
+$windowsAppRuntimeHash = (Get-FileHash -Algorithm SHA512 -LiteralPath $windowsAppRuntimeInstallers[0].FullName).Hash.ToLowerInvariant()
+if ($windowsAppRuntimeHash -ne ([string]$prerequisiteManifest.WindowsAppRuntime.Sha512).ToLowerInvariant()) {
+    throw 'The Windows App Runtime prerequisite SHA-512 does not match prerequisites.json.'
+}
+if ($prerequisiteManifest.WebView2Runtime.FileName -ne $webView2RuntimeInstallers[0].Name) {
+    throw 'The Evergreen WebView2 Runtime prerequisite file name does not match prerequisites.json.'
+}
+$webView2RuntimeHash = (Get-FileHash -Algorithm SHA512 -LiteralPath $webView2RuntimeInstallers[0].FullName).Hash.ToLowerInvariant()
+if ($webView2RuntimeHash -ne ([string]$prerequisiteManifest.WebView2Runtime.Sha512).ToLowerInvariant()) {
+    throw 'The Evergreen WebView2 Runtime prerequisite SHA-512 does not match prerequisites.json.'
+}
 
 try {
     New-Item -ItemType Directory -Path $payloadRoot -Force | Out-Null
@@ -55,12 +82,14 @@ try {
         Copy-Item -LiteralPath $_.FullName -Destination $payloadRoot -Recurse -Force
     }
 
-    Rename-Item -LiteralPath (Join-Path $payloadRoot 'HuahaiClipboard.NativeUiSpike.exe') -NewName 'HuahaiClipboard.exe'
+    Rename-Item -LiteralPath (Join-Path $payloadRoot 'HuahaiClipboard.App.exe') -NewName 'HuahaiClipboard.exe'
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Uninstall.ps1') -Destination (Join-Path $payloadRoot 'Uninstall.ps1') -Force
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'UninstallPolicy.ps1') -Destination (Join-Path $payloadRoot 'UninstallPolicy.ps1') -Force
     $payloadPrerequisites = Join-Path $payloadRoot 'prerequisites'
     New-Item -ItemType Directory -Path $payloadPrerequisites -Force | Out-Null
     Copy-Item -LiteralPath $dotNetInstallers[0].FullName -Destination $payloadPrerequisites -Force
+    Copy-Item -LiteralPath $windowsAppRuntimeInstallers[0].FullName -Destination $payloadPrerequisites -Force
+    Copy-Item -LiteralPath $webView2RuntimeInstallers[0].FullName -Destination $payloadPrerequisites -Force
 
     Compress-Archive -Path (Join-Path $payloadRoot '*') -DestinationPath $payloadZip -CompressionLevel Optimal
     $outputDirectory = Split-Path -Parent $outputPath

@@ -19,6 +19,38 @@ internal static class PrerequisitePolicy
         return true;
     }
 
+    internal static bool NeedsWindowsAppRuntime(IEnumerable<string> installedVersions)
+    {
+        if (installedVersions == null)
+            return true;
+
+        foreach (string value in installedVersions)
+        {
+            Version version;
+            // Bootstrapper 已按精确的 Microsoft.WindowsAppRuntime.1.7 包名和 x64/Neutral
+            // 架构过滤；这里接收 Appx 返回的 7000.* MSIX 版本，而不是营销版本 1.7。
+            if (Version.TryParse(value, out version))
+                return false;
+        }
+
+        return true;
+    }
+
+    internal static bool NeedsWebView2Runtime(IEnumerable<string> installedVersions)
+    {
+        if (installedVersions == null)
+            return true;
+
+        foreach (string value in installedVersions)
+        {
+            Version version;
+            if (Version.TryParse(value, out version) && version.Major >= 109)
+                return false;
+        }
+
+        return true;
+    }
+
     // 0 为成功，1638 为同版本已安装，3010 为成功但建议重启。
     internal static bool IsAcceptedInstallerExitCode(int exitCode)
     {

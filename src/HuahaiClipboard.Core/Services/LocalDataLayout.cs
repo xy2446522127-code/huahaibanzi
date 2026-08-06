@@ -2,6 +2,10 @@ namespace HuahaiClipboard.Core.Services;
 
 public sealed class LocalDataLayout
 {
+    public static string ResolveBaseDirectory() =>
+        Environment.GetEnvironmentVariable("HUAHAI_CLIPBOARD_LOCALAPPDATA") ??
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
     public LocalDataLayout(string localApplicationData)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(localApplicationData);

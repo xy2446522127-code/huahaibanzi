@@ -14,8 +14,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("HuahaiClipboard")]
 [assembly: AssemblyProduct("花海剪贴板")]
 [assembly: AssemblyCopyright("Copyright © 2026")]
-[assembly: AssemblyVersion("1.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.0.0")]
+[assembly: AssemblyVersion("1.1.1.0")]
+[assembly: AssemblyFileVersion("1.1.1.0")]
 
 internal static class Bootstrapper
 {
@@ -256,12 +256,23 @@ internal static class Bootstrapper
         string[] requiredPaths =
         {
             AppFileName,
-            "HuahaiClipboard.NativeUiSpike.dll",
-            "HuahaiClipboard.NativeUiSpike.deps.json",
-            "HuahaiClipboard.NativeUiSpike.runtimeconfig.json",
+            "HuahaiClipboard.App.dll",
+            "HuahaiClipboard.App.deps.json",
+            "HuahaiClipboard.App.runtimeconfig.json",
+            "HuahaiClipboard.App.pri",
             "HuahaiClipboard.Core.dll",
+            "Microsoft.WinUI.dll",
+            "Microsoft.Web.WebView2.Core.dll",
+            "Microsoft.WindowsAppRuntime.Bootstrap.Net.dll",
             "Microsoft.Windows.SDK.NET.dll",
             "WinRT.Runtime.dll",
+            "App.xbf",
+            @"Presentation\Windows\CursorPanelWindow.xbf",
+            @"Assets\Web\product-shell.html",
+            "WebView2Loader.dll",
+            "Microsoft.WindowsAppRuntime.Bootstrap.dll",
+            @"prerequisites\WindowsAppRuntimeInstall-x64.exe",
+            @"prerequisites\MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
             "Uninstall.ps1",
             "UninstallPolicy.ps1"
         };
@@ -279,14 +290,26 @@ internal static class Bootstrapper
         string[] dotNetInstallers = Directory.Exists(prerequisiteRoot)
             ? Directory.GetFiles(prerequisiteRoot, "windowsdesktop-runtime-8.*-win-x64.exe")
             : new string[0];
+        string[] windowsAppRuntimeInstallers = Directory.Exists(prerequisiteRoot)
+            ? Directory.GetFiles(prerequisiteRoot, "WindowsAppRuntimeInstall-x64.exe")
+            : new string[0];
+        string[] webView2RuntimeInstallers = Directory.Exists(prerequisiteRoot)
+            ? Directory.GetFiles(prerequisiteRoot, "MicrosoftEdgeWebView2RuntimeInstallerX64.exe")
+            : new string[0];
 
         if (dotNetInstallers.Length != 1)
             throw new InvalidDataException("安装包缺少 .NET 8 桌面运行时组件。");
+        if (windowsAppRuntimeInstallers.Length != 1)
+            throw new InvalidDataException("安装包缺少 Windows App Runtime 1.7 组件。");
+        if (webView2RuntimeInstallers.Length != 1)
+            throw new InvalidDataException("安装包缺少 Evergreen WebView2 Runtime 组件。");
 
         bool needsDotNet = PrerequisitePolicy.NeedsDotNetDesktopRuntime(GetInstalledDesktopRuntimeVersions());
+        bool needsWindowsAppRuntime = PrerequisitePolicy.NeedsWindowsAppRuntime(GetInstalledWindowsAppRuntimeVersions());
+        bool needsWebView2Runtime = PrerequisitePolicy.NeedsWebView2Runtime(GetInstalledWebView2RuntimeVersions());
 
         // 前置安装程序从系统临时目录运行，避免其子进程锁住应用暂存目录。
-        if (needsDotNet)
+        if (needsDotNet || needsWindowsAppRuntime || needsWebView2Runtime)
         {
             string temporaryRoot = Path.Combine(Path.GetTempPath(), "HuahaiClipboardPrerequisites-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(temporaryRoot);
@@ -297,6 +320,20 @@ internal static class Bootstrapper
                     string temporaryDotNet = Path.Combine(temporaryRoot, Path.GetFileName(dotNetInstallers[0]));
                     File.Copy(dotNetInstallers[0], temporaryDotNet, true);
                     RunPrerequisiteInstaller(temporaryDotNet, "/install /quiet /norestart", ".NET Desktop Runtime 8");
+                }
+
+                if (needsWindowsAppRuntime)
+                {
+                    string temporaryWindowsAppRuntime = Path.Combine(temporaryRoot, Path.GetFileName(windowsAppRuntimeInstallers[0]));
+                    File.Copy(windowsAppRuntimeInstallers[0], temporaryWindowsAppRuntime, true);
+                    RunPrerequisiteInstaller(temporaryWindowsAppRuntime, "--quiet", "Windows App Runtime 1.7");
+                }
+
+                if (needsWebView2Runtime)
+                {
+                    string temporaryWebView2Runtime = Path.Combine(temporaryRoot, Path.GetFileName(webView2RuntimeInstallers[0]));
+                    File.Copy(webView2RuntimeInstallers[0], temporaryWebView2Runtime, true);
+                    RunPrerequisiteInstaller(temporaryWebView2Runtime, "/silent /install", "Evergreen WebView2 Runtime");
                 }
 
             }
@@ -331,6 +368,88 @@ internal static class Bootstrapper
         for (int index = 0; index < directories.Length; index++)
             versions[index] = Path.GetFileName(directories[index]);
         return versions;
+    }
+
+    private static string[] GetInstalledWindowsAppRuntimeVersions()
+    {
+        var versions = new List<string>();
+        string powershell = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.System),
+            "WindowsPowerShell", "v1.0", "powershell.exe");
+        var startInfo = new ProcessStartInfo(
+            powershell,
+            "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"Get-AppxPackage -Name 'Microsoft.WindowsAppRuntime.1.7' | Where-Object { $_.Architecture -in @('X64','Neutral') } | Select-Object -ExpandProperty Version\"")
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+
+        try
+        {
+            using (Process process = Process.Start(startInfo))
+            {
+                if (process == null)
+                    return versions.ToArray();
+
+                if (!process.WaitForExit(15000))
+                {
+                    process.Kill();
+                    process.WaitForExit(2000);
+                    return versions.ToArray();
+                }
+
+                string output = process.StandardOutput.ReadToEnd();
+                foreach (string line in output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    string version = line.Trim();
+                    if (!String.IsNullOrWhiteSpace(version))
+                        versions.Add(version);
+                }
+            }
+        }
+        catch
+        {
+            // If detection is unavailable, safely run the signed runtime installer.
+        }
+
+        return versions.ToArray();
+    }
+
+    private static string[] GetInstalledWebView2RuntimeVersions()
+    {
+        const string clientKey = @"SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}";
+        var versions = new List<string>();
+        RegistryHive[] hives = { RegistryHive.LocalMachine, RegistryHive.CurrentUser };
+        RegistryView[] views = { RegistryView.Registry64, RegistryView.Registry32 };
+
+        foreach (RegistryHive hive in hives)
+        {
+            foreach (RegistryView view in views)
+            {
+                try
+                {
+                    using (RegistryKey baseKey = RegistryKey.OpenBaseKey(hive, view))
+                    using (RegistryKey key = baseKey.OpenSubKey(clientKey))
+                    {
+                        string version = key == null ? null : key.GetValue("pv") as string;
+                        if (!String.IsNullOrWhiteSpace(version))
+                            versions.Add(version);
+                    }
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // 无权读取某个注册表视图时继续检查其他当前用户或本机视图。
+                }
+                catch (System.Security.SecurityException)
+                {
+                    // 检测不可用时安全地运行微软签名的离线安装器。
+                }
+            }
+        }
+
+        return versions.ToArray();
     }
 
     // 仅接受微软安装器的成功、已安装和需重启返回码。
@@ -437,7 +556,7 @@ internal static class Bootstrapper
                 throw new InvalidOperationException("无法创建卸载入口。");
 
             key.SetValue("DisplayName", ProductName, RegistryValueKind.String);
-            key.SetValue("DisplayVersion", "1.1.0", RegistryValueKind.String);
+            key.SetValue("DisplayVersion", "1.1.1", RegistryValueKind.String);
             key.SetValue("Publisher", "HuahaiClipboard", RegistryValueKind.String);
             key.SetValue("DisplayIcon", appPath + ",0", RegistryValueKind.String);
             key.SetValue("InstallLocation", installRoot, RegistryValueKind.String);

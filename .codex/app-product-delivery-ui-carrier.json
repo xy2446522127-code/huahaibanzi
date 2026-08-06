@@ -1,11 +1,11 @@
 {
   "allowed_changes": [
-    "experiments/HuahaiClipboard.NativeUiSpike/**",
-    "ui/**",
+    "src/HuahaiClipboard.App/**",
     "src/HuahaiClipboard.Core/**",
-    "installer/**"
+    "installer/**",
+    "tests/**"
   ],
-  "approval_evidence": "用户已批准以原型 UI 为视觉基准，并明确通过轻量 WPF 原生移植方案。",
+  "approval_evidence": "User explicitly approved solution A: restore the previously approved WebView UI and accept the memory increase.",
   "capability_matrix": {
     "clipboard": {
       "desktop": "desktop",
@@ -20,7 +20,7 @@
       "prototype": "shared"
     },
     "themes_and_motion": {
-      "desktop": "desktop",
+      "desktop": "shared",
       "prototype": "shared"
     },
     "tray": {
@@ -32,31 +32,28 @@
       "prototype": "simulated-platform-capability"
     }
   },
-  "change_scale": "large",
-  "cross_target_evidence": "Prototype contract tests 42/42 and native UI tests 38/38 passed against the shared approved shell specification.",
+  "change_scale": "small",
+  "cross_target_evidence": "",
   "delivery_maturity": "release",
   "entrypoint": "Web/product-shell.html",
-  "entrypoint_sha256": "d9c44af28407f8e3d3839ab673b24bf69ee9a0822f6fd51e78b2df1c65df8525",
+  "entrypoint_sha256": "654214f00e12c1a13ef6a600b7fd58ec4eb654191c3b899c2b8983528d8ed90e",
   "mock_status": "removed",
   "native_port": {
-    "blockers": [
-      "WebView2 version consumed about 300 MB and could not meet the approved lightweight background target."
-    ],
-    "experience_change_approved": true,
-    "machine_evidence": [
-      "60-second installed smoke: private memory median 69.13 MB, no child process; clipboard/live-count/lifecycle smoke passed."
-    ]
+    "blockers": [],
+    "experience_change_approved": false,
+    "machine_evidence": []
   },
   "parent_source_manifest_sha256": "3d45de22b932f3438f20062be6b5d7429c6279e7899aa75a8ae27e992329a292",
-  "parent_visual_source_version": "huahai-approved-shell-v6-native-port-1.1.0",
+  "parent_visual_source_version": "huahai-approved-shell-v6-webview-restore-1.1.1",
   "preserved_areas": [
     "src/HuahaiClipboard.App/Assets/Web/product-shell.html",
-    "src/HuahaiClipboard.App/Assets/Brand/**"
+    "src/HuahaiClipboard.App/Assets/Brand/**",
+    "%LOCALAPPDATA%/HuahaiClipboard/**"
   ],
-  "product_scale": "small",
-  "project_revision": 2,
-  "risk_level": "high",
-  "rollback_commit": "9ca09a418a931987988f35c6ac1477c83bdd486d",
+  "product_scale": "medium",
+  "project_revision": 4,
+  "risk_level": "medium",
+  "rollback_commit": "42af42a329c94965ebb0f1ac811c938265f8b745",
   "runtime_topology": "desktop-first",
   "source_manifest": [
     {
@@ -92,8 +89,8 @@
     {
       "logical_asset_id": "Web/product-shell.html",
       "path": "Web/product-shell.html",
-      "sha256": "d9c44af28407f8e3d3839ab673b24bf69ee9a0822f6fd51e78b2df1c65df8525",
-      "size": 54097
+      "sha256": "654214f00e12c1a13ef6a600b7fd58ec4eb654191c3b899c2b8983528d8ed90e",
+      "size": 54748
     },
     {
       "logical_asset_id": "Web/retention-policy.js",
@@ -108,9 +105,9 @@
       "size": 908
     }
   ],
-  "source_manifest_sha256": "3d45de22b932f3438f20062be6b5d7429c6279e7899aa75a8ae27e992329a292",
+  "source_manifest_sha256": "15d076c8468b2ad923abe4a6e64eecc143f9ada8852e954e817732bb15092b60",
   "source_root": "src/HuahaiClipboard.App/Assets",
-  "strategy": "authorized-native-port",
+  "strategy": "retain-and-integrate",
   "surfaces": [
     "panel/default/windows/rose-purple",
     "panel/settings/windows/rose-purple",
@@ -118,61 +115,61 @@
   ],
   "targets": {
     "desktop": {
-      "build_evidence": "Release solution build passed with 0 warnings and 0 errors; core 82/82, native 39/39, Web 42/42.",
+      "build_evidence": "VS MSBuild x64 Release passed; Core 85/85, Native rollback 39/39, Web 42/42, installer policy 8/8.",
       "build_manifest": [
         {
           "logical_asset_id": "Brand/fox-icon-source.png",
-          "path": "dist/native-release-1.1.0-r3/HuahaiClipboard.NativeUiSpike.dll",
-          "sha256": "e5322bb0578fc33467458cb5cbdd677b73cf7d38a33764b5bada968f4ce411f7",
-          "size": 3185152
+          "path": "dist/webview-build-1.1.1/Assets/Brand/fox-icon-source.png",
+          "sha256": "5f5b3c841eb2bd6dd1a15f523d5cd81cf644fe75aa99d02a23d04f1ad1dd2ad4",
+          "size": 2626585
         },
         {
           "logical_asset_id": "Brand/fox-icon.ico",
-          "path": "dist/native-release-1.1.0-r3/HuahaiClipboard.NativeUiSpike.dll",
-          "sha256": "e5322bb0578fc33467458cb5cbdd677b73cf7d38a33764b5bada968f4ce411f7",
-          "size": 3185152
+          "path": "dist/webview-build-1.1.1/Assets/Brand/fox-icon.ico",
+          "sha256": "c53c44885d0bb22f7b7c6bb17088fd164e3a66552013faa91571af092f228d42",
+          "size": 205086
         },
         {
           "logical_asset_id": "Web/glass-opacity.js",
-          "path": "dist/native-release-1.1.0-r3/HuahaiClipboard.NativeUiSpike.dll",
-          "sha256": "e5322bb0578fc33467458cb5cbdd677b73cf7d38a33764b5bada968f4ce411f7",
-          "size": 3185152
+          "path": "dist/webview-build-1.1.1/Assets/Web/glass-opacity.js",
+          "sha256": "2878f9ee5f4ee3107f679194a1c0b1245fcfcc4c3b36f4bd2f1e598055a47d1e",
+          "size": 797
         },
         {
           "logical_asset_id": "Web/host-scale.js",
-          "path": "dist/native-release-1.1.0-r3/HuahaiClipboard.NativeUiSpike.dll",
-          "sha256": "e5322bb0578fc33467458cb5cbdd677b73cf7d38a33764b5bada968f4ce411f7",
-          "size": 3185152
+          "path": "dist/webview-build-1.1.1/Assets/Web/host-scale.js",
+          "sha256": "a5e9f4af7703bb2eebd93a7fab7760025f55c71187fc79654946a9b6a47b528c",
+          "size": 913
         },
         {
           "logical_asset_id": "Web/panel-drag.js",
-          "path": "dist/native-release-1.1.0-r3/HuahaiClipboard.NativeUiSpike.dll",
-          "sha256": "e5322bb0578fc33467458cb5cbdd677b73cf7d38a33764b5bada968f4ce411f7",
-          "size": 3185152
+          "path": "dist/webview-build-1.1.1/Assets/Web/panel-drag.js",
+          "sha256": "9766e875fba941b75739327015e35a61921697a43d9e1efa5f0f323a87fe31ed",
+          "size": 3069
         },
         {
           "logical_asset_id": "Web/product-shell.html",
-          "path": "dist/native-release-1.1.0-r3/HuahaiClipboard.NativeUiSpike.dll",
-          "sha256": "e5322bb0578fc33467458cb5cbdd677b73cf7d38a33764b5bada968f4ce411f7",
-          "size": 3185152
+          "path": "dist/webview-build-1.1.1/Assets/Web/product-shell.html",
+          "sha256": "654214f00e12c1a13ef6a600b7fd58ec4eb654191c3b899c2b8983528d8ed90e",
+          "size": 54748
         },
         {
           "logical_asset_id": "Web/retention-policy.js",
-          "path": "dist/native-release-1.1.0-r3/HuahaiClipboard.NativeUiSpike.dll",
-          "sha256": "e5322bb0578fc33467458cb5cbdd677b73cf7d38a33764b5bada968f4ce411f7",
-          "size": 3185152
+          "path": "dist/webview-build-1.1.1/Assets/Web/retention-policy.js",
+          "sha256": "df43c45d899083668da69788e75a4f5fa03d9871a05a206d8598817e776a0ffe",
+          "size": 823
         },
         {
           "logical_asset_id": "Web/shortcut-input.js",
-          "path": "dist/native-release-1.1.0-r3/HuahaiClipboard.NativeUiSpike.dll",
-          "sha256": "e5322bb0578fc33467458cb5cbdd677b73cf7d38a33764b5bada968f4ce411f7",
-          "size": 3185152
+          "path": "dist/webview-build-1.1.1/Assets/Web/shortcut-input.js",
+          "sha256": "c0714b6493b5010c46bd0b0cd78f5a9f51f9787b3975f100c6444316727f3ff8",
+          "size": 908
         }
       ],
-      "build_output": "dist/native-release-1.1.0-r3",
-      "host": "WPF .NET 8 Desktop",
-      "install_evidence": "Installed at F:\\HuahaiClipboard; clipboard smoke passed 3/3; topmost lifecycle passed; private memory median 68.22 MB.",
-      "load_target": "native-wpf://HuahaiClipboard/MainWindow",
+      "build_output": "dist/webview-build-1.1.1",
+      "host": "WinUI 3 + WebView2 (.NET 8, unpackaged)",
+      "install_evidence": "Setup 1.1.1 installed to F:\\HuahaiClipboard with exit 0; 64/64 user-data files unchanged; installed startup, hidden summon, topmost, hide, live count, copy, pin, favorite, delete, proportional scale, update bridge and settings rendering smokes passed.",
+      "load_target": "https://app.huahai.local/Web/product-shell.html",
       "package": "dist/HuahaiClipboard-Setup.exe",
       "source_manifest": [
         {
@@ -208,8 +205,8 @@
         {
           "logical_asset_id": "Web/product-shell.html",
           "path": "Web/product-shell.html",
-          "sha256": "d9c44af28407f8e3d3839ab673b24bf69ee9a0822f6fd51e78b2df1c65df8525",
-          "size": 54097
+          "sha256": "654214f00e12c1a13ef6a600b7fd58ec4eb654191c3b899c2b8983528d8ed90e",
+          "size": 54748
         },
         {
           "logical_asset_id": "Web/retention-policy.js",
@@ -228,5 +225,5 @@
   },
   "ui_class": "existing-production-shell",
   "version": 1,
-  "visual_source_version": "huahai-approved-shell-v6-native-port-1.1.0-r3"
+  "visual_source_version": "huahai-approved-shell-v6-webview-restore-1.1.1-r2"
 }

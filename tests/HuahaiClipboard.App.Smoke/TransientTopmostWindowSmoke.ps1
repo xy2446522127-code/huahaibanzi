@@ -2,7 +2,9 @@ param(
     [Parameter(Mandatory = $true)]
     [string] $ExePath,
 
-    [int] $TimeoutSeconds = 12
+    [int] $TimeoutSeconds = 12,
+
+    [switch] $StartHidden
 )
 
 $ErrorActionPreference = 'Stop'
@@ -12,6 +14,15 @@ Add-Type @'
 using System;
 using System.Runtime.InteropServices;
 public static class HuahaiTransientWindowProbe {
+    public delegate bool EnumWindowsCallback(IntPtr windowHandle, IntPtr parameter);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool EnumWindows(EnumWindowsCallback callback, IntPtr parameter);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr windowHandle, out uint processId);
+
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     public static extern IntPtr GetWindowLongPtr(IntPtr windowHandle, int index);
 
@@ -26,13 +37,29 @@ public static class HuahaiTransientWindowProbe {
         uint message,
         IntPtr wParam,
         IntPtr lParam);
+
+    public static IntPtr FindWindowForProcess(uint expectedProcessId) {
+        IntPtr found = IntPtr.Zero;
+        EnumWindows((windowHandle, parameter) => {
+            uint processId;
+            GetWindowThreadProcessId(windowHandle, out processId);
+            if (processId != expectedProcessId) return true;
+            found = windowHandle;
+            return false;
+        }, IntPtr.Zero);
+        return found;
+    }
 }
 '@
 
 $extendedStyleIndex = -20
 $topmostStyle = 0x00000008
 $closeMessage = 0x0010
-$process = Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru
+$process = if ($StartHidden) {
+    Start-Process -FilePath $resolvedExe -ArgumentList '--background' -WorkingDirectory (Split-Path $resolvedExe) -PassThru
+} else {
+    Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru
+}
 
 try {
     $handle = [IntPtr]::Zero
@@ -43,8 +70,9 @@ try {
             throw "Application exited before the window was ready. ExitCode=$($process.ExitCode)"
         }
 
-        if ($process.MainWindowHandle -ne [IntPtr]::Zero) {
-            $handle = $process.MainWindowHandle
+        $candidateHandle = [HuahaiTransientWindowProbe]::FindWindowForProcess([uint32]$process.Id)
+        if ($candidateHandle -ne [IntPtr]::Zero) {
+            $handle = $candidateHandle
             break
         }
     }
@@ -55,10 +83,24 @@ try {
 
     # The WinUI handle exists before WebView2 and the single-instance activation path are ready.
     Start-Sleep -Seconds 3
+    if ($StartHidden -and [HuahaiTransientWindowProbe]::IsWindowVisible($handle)) {
+        throw 'A --background launch must remain hidden before the summon activation.'
+    }
+    if ($StartHidden) {
+        $backgroundActivation = Start-Process -FilePath $resolvedExe -ArgumentList '--background' -WorkingDirectory (Split-Path $resolvedExe) -PassThru -WindowStyle Hidden
+        if (-not $backgroundActivation.WaitForExit($TimeoutSeconds * 1000) -or $backgroundActivation.ExitCode -ne 0) {
+            throw 'A second --background launch did not exit cleanly.'
+        }
+        Start-Sleep -Milliseconds 500
+        if ([HuahaiTransientWindowProbe]::IsWindowVisible($handle)) {
+            throw 'A second --background launch must not summon the hidden panel.'
+        }
+    }
     $summon = Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru -WindowStyle Hidden
     if (-not $summon.WaitForExit($TimeoutSeconds * 1000)) {
         throw 'The second launch did not redirect its activation to the background instance.'
     }
+    $summonExitCode = $summon.ExitCode
 
     $shownTopmost = $false
     $shownVisible = $false
@@ -72,7 +114,8 @@ try {
         }
     }
     if (-not $shownTopmost -or -not $shownVisible) {
-        throw 'Summoning must show the panel as a topmost window.'
+        $process.Refresh()
+        throw "Summoning must show the panel as a topmost window. Handle=$handle MainHandle=$($process.MainWindowHandle) Visible=$shownVisible Topmost=$shownTopmost Style=0x$('{0:X}' -f $shownStyle) SecondExitCode=$summonExitCode"
     }
 
     $null = [HuahaiTransientWindowProbe]::PostMessage(

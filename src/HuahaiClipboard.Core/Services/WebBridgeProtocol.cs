@@ -26,7 +26,11 @@ public static class WebBridgeProtocol
         "setExclusions",
         "openDataFolder",
         "setStartup",
-        "setBackground"
+        "setBackground",
+        "setPanelScale",
+        "setCheckUpdatesOnStartup",
+        "checkUpdate",
+        "openRelease"
     };
 
     public static bool IsSupported(string? action) =>

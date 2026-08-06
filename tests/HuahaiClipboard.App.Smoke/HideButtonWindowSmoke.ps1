@@ -48,7 +48,22 @@ try {
         throw 'The minimize button must hide the window while keeping the process alive.'
     }
 
-    # 隐藏后恢复后台运行设置，避免 smoke 污染本机用户偏好。
+    # 隐藏后 WebView2 会挂起；先通过第二实例唤出并恢复内容，再还原用户偏好。
+    $summon = Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru -WindowStyle Hidden
+    if (-not $summon.WaitForExit(15000) -or $summon.ExitCode -ne 0) {
+        throw 'The hidden panel could not be summoned before restoring its background setting.'
+    }
+    $visibleAfterSummon = $false
+    for ($attempt = 0; $attempt -lt 30; $attempt++) {
+        Start-Sleep -Milliseconds 100
+        if ([HuahaiWindowProbe]::IsWindowVisible($handle)) {
+            $visibleAfterSummon = $true
+            break
+        }
+    }
+    if (-not $visibleAfterSummon) {
+        throw 'The hidden panel did not resume before restoring its background setting.'
+    }
     $restoreResult = node $clickProbe $DebugPort restore-background
     if ($LASTEXITCODE -ne 0) { throw 'The background setting restore probe failed.' }
 
@@ -59,6 +74,7 @@ try {
         ProcessAlive = -not $process.HasExited
         VisibleBefore = $visibleBefore
         VisibleAfter = $visibleAfter
+        VisibleAfterSummon = $visibleAfterSummon
         ProcessId = $process.Id
     } | ConvertTo-Json -Compress
 }

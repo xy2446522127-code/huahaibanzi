@@ -37,25 +37,25 @@ dist/HuahaiClipboard-Setup.exe
 
 ## 从源码构建
 
-要求：Windows 10/11 x64、.NET 8 SDK、PowerShell 5.1 或更高版本。
+要求：Windows 10/11 x64、.NET 8 SDK、Visual Studio 2022 Build Tools（Windows App SDK 生成组件）、PowerShell 5.1 或更高版本。
 
 ```powershell
 dotnet test tests\HuahaiClipboard.Core.Tests\HuahaiClipboard.Core.Tests.csproj -c Release
-dotnet test tests\HuahaiClipboard.NativeUiSpike.Tests\HuahaiClipboard.NativeUiSpike.Tests.csproj -c Release
 
-dotnet publish experiments\HuahaiClipboard.NativeUiSpike\HuahaiClipboard.NativeUiSpike.csproj `
-  -c Release -r win-x64 --self-contained false `
-  -p:DebugType=None -p:DebugSymbols=false `
-  -o dist\native-release-1.1.0
+& 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe' `
+  src\HuahaiClipboard.App\HuahaiClipboard.App.csproj `
+  /t:Build /p:Configuration=Release /p:Platform=x64 `
+  /p:RuntimeIdentifier=win-x64 /p:SelfContained=false /p:Version=1.1.1 `
+  /p:OutDir="$PWD\dist\webview-build-1.1.1\" /restore /m
 
 .\installer\Fetch-Prerequisites.ps1 -Destination dist\prerequisites
 .\installer\Build-Installer.ps1 `
-  -PublishRoot dist\native-release-1.1.0 `
+  -PublishRoot dist\webview-build-1.1.1 `
   -PrerequisiteRoot dist\prerequisites `
   -OutputPath dist\HuahaiClipboard-Setup.exe
 ```
 
-原生桌面入口目前位于 `experiments/HuahaiClipboard.NativeUiSpike`。目录名保留了迁移阶段的历史命名，但其中代码是当前 1.1.0 正式 WPF 客户端。网页交互母版位于 `src/HuahaiClipboard.App/Assets/Web/product-shell.html`，共享视觉参数位于 `ui/huahai-ui-spec.json`。
+正式桌面入口位于 `src/HuahaiClipboard.App`，使用 WinUI 3 + WebView2 离线加载 `Assets/Web/product-shell.html`；安装后的程序不依赖 localhost 或开发服务器。`experiments/HuahaiClipboard.NativeUiSpike` 仅保留为 1.1.0 原生 WPF 回滚实现。
 
 ## 开源许可
 
