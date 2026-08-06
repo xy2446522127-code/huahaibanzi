@@ -1,7 +1,7 @@
 {
   "product_scale": "medium",
-  "change_scale": "small",
-  "risk_level": "medium",
+  "change_scale": "medium",
+  "risk_level": "high",
   "delivery_maturity": "release",
   "runtime_topology": "desktop-first",
   "scale_evidence": {
@@ -18,14 +18,14 @@
       "overrides": []
     },
     "change": {
-      "scale": "small",
-      "score": 6,
+      "scale": "medium",
+      "score": 14,
       "dimensions": {
-        "workflows": 1,
-        "surfaces": 1,
-        "boundaries": 2,
-        "integrations": 1,
-        "slices": 1
+        "workflows": 3,
+        "surfaces": 2,
+        "boundaries": 3,
+        "integrations": 3,
+        "slices": 3
       },
       "overrides": []
     },

@@ -138,6 +138,11 @@ internal static class Bootstrapper
         if (String.IsNullOrWhiteSpace(parent))
             throw new InvalidOperationException("无法确定安装目录。");
 
+        string dataRoot = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            ProductFolderName);
+        InstallTargetPolicy.Validate(installRoot, GetRegisteredInstallRoot(), dataRoot);
+
         Directory.CreateDirectory(parent);
         string stagingRoot = Path.Combine(parent, ".HuahaiClipboard-install-" + Guid.NewGuid().ToString("N"));
         string backupRoot = Path.Combine(parent, ".HuahaiClipboard-backup-" + Guid.NewGuid().ToString("N"));
@@ -168,6 +173,8 @@ internal static class Bootstrapper
             activeStep = "启用新版本";
             MoveDirectoryWithRetry(stagingRoot, installRoot);
             candidateMoved = true;
+            activeStep = "写入安装所有权标记";
+            InstallTargetPolicy.WriteOwnerMarker(installRoot);
             activeStep = "创建快捷方式";
             CreateShortcuts(installRoot);
             activeStep = "注册卸载入口";
@@ -567,6 +574,12 @@ internal static class Bootstrapper
             key.SetValue("NoModify", 1, RegistryValueKind.DWord);
             key.SetValue("NoRepair", 1, RegistryValueKind.DWord);
         }
+    }
+
+    private static string GetRegisteredInstallRoot()
+    {
+        using (RegistryKey key = Registry.CurrentUser.OpenSubKey(UninstallKey))
+            return key == null ? null : key.GetValue("InstallLocation") as string;
     }
 
     // 计算安装目录大小，供 Windows 卸载列表显示。

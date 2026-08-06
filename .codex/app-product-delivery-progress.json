@@ -1,60 +1,82 @@
 {
   "version": 2,
-  "scope_revision": 5,
+  "scope_revision": 6,
   "product_scale": "medium",
-  "change_scale": "small",
-  "risk_level": "medium",
+  "change_scale": "medium",
+  "risk_level": "high",
   "runtime_topology": "desktop-first",
   "delivery_maturity": "release",
   "delivery_target": "release",
   "execution_mode": "autonomous_implementation",
-  "core_percent": 100,
-  "overall_percent": 100,
-  "current_milestone": null,
+  "core_percent": 72.22,
+  "overall_percent": 65.0,
+  "current_milestone": "automatic-update",
   "blockers": [],
   "milestones": [
     {
       "id": "webview-carrier",
-      "label": "Approved WebView UI is the formal desktop carrier",
+      "label": "Approved WebView liquid-glass UI remains the formal desktop carrier",
+      "weight": 25,
+      "core": true,
+      "status": "verified",
+      "blocker": "",
+      "evidence": "v1.1.1 installed WebView carrier and drag/resize checkpoint fa767fe remain verified; no UI redesign authorized."
+    },
+    {
+      "id": "production-bridge",
+      "label": "Existing clipboard, history, settings, summon and tray bridge remains connected",
       "weight": 30,
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": "WinUI x64 Release build completed with 0 warnings and 0 errors; installed CDP captures show the approved panel and settings shell."
+      "evidence": "Prior Core/Web/installed smokes remain evidence for unchanged paths; release rerun pending after new changes."
     },
     {
-      "id": "production-bridge",
-      "label": "Clipboard, history, settings, shortcuts and lifecycle remain connected",
-      "weight": 35,
+      "id": "installer-target-safety",
+      "label": "Installer cannot overwrite unrelated or data-overlapping directories",
+      "weight": 10,
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": "Node 42/42, Core 82/82, and installed live-count/copy/pin/favorite/delete/topmost/hide smoke passed."
+      "evidence": "InstallerTargetOwnershipPolicyTests passed for absent, empty, foreign, legacy-owned, mismatch, overlap and unsafe-name cases."
     },
     {
-      "id": "friend-package",
-      "label": "Version 1.1.1 installer preserves local data",
-      "weight": 20,
-      "core": true,
-      "status": "verified",
-      "blocker": "",
-      "evidence": "Installer exit 0 at F:\\HuahaiClipboard; 64/64 user-data files remained byte-identical; PRI, XBF, Web shell and uninstaller are present."
-    },
-    {
-      "id": "release-sync",
-      "label": "Release gates, Git checkpoint and remote synchronization",
+      "id": "automatic-update",
+      "label": "In-app update downloads, verifies, installs, rolls back and restarts",
       "weight": 15,
+      "core": true,
+      "status": "pending",
+      "blocker": "Implementation and end-to-end verification remain.",
+      "evidence": ""
+    },
+    {
+      "id": "full-feature-audit",
+      "label": "Approved production feature matrix passes on installed Windows x64 app",
+      "weight": 10,
+      "core": true,
+      "status": "pending",
+      "blocker": "Release matrix has not been rerun after new changes.",
+      "evidence": ""
+    },
+    {
+      "id": "v1-1-2-release",
+      "label": "v1.1.2 installer, F-drive upgrade, public release sync and runtime cleanup",
+      "weight": 10,
       "core": false,
-      "status": "verified",
-      "blocker": "",
-      "evidence": "Core 85/85, Native rollback 39/39, Web 42/42, installer 8/8, installed Windows smokes, UI carrier release gate and independent review passed; release commit was pushed and remote master/feature refs matched."
+      "status": "pending",
+      "blocker": "Depends on updater and full matrix.",
+      "evidence": ""
     }
   ],
   "scope_changes": [
     {
       "revision": 5,
       "reason": "User approved restoring the previous WebView UI and accepting its higher memory usage while preserving all production behavior and local data."
+    },
+    {
+      "revision": 6,
+      "reason": "User requested unattended full tuning; automatic update and exhaustive release verification expand the v1.1.1 scope and raise installer/update risk to high."
     }
   ],
-  "updated_at": "2026-08-07T00:27:00+08:00"
+  "updated_at": "2026-08-07T02:20:00+08:00"
 }
