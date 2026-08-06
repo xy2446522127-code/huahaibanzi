@@ -54,6 +54,20 @@ if (-not (Test-Path -LiteralPath $prerequisiteManifestPath)) { throw 'Prerequisi
 
 # 构建前重新验证下载物，避免仅凭文件名接受被替换的安装器。
 $prerequisiteManifest = Get-Content -Raw -LiteralPath $prerequisiteManifestPath | ConvertFrom-Json
+function Assert-MicrosoftAuthenticodeSignature {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string]$DisplayName
+    )
+
+    $signature = Get-AuthenticodeSignature -LiteralPath $Path
+    $subject = if ($null -eq $signature.SignerCertificate) { '' } else { $signature.SignerCertificate.Subject }
+    $isMicrosoftPublisher = $subject -match '(?:^|,\s*)O=Microsoft Corporation(?:,|$)'
+    if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid -or -not $isMicrosoftPublisher) {
+        throw "$DisplayName prerequisite does not have a valid Microsoft Authenticode signature."
+    }
+}
+
 if ($prerequisiteManifest.DotNet.FileName -ne $dotNetInstallers[0].Name) {
     throw 'The .NET prerequisite file name does not match prerequisites.json.'
 }
@@ -75,6 +89,10 @@ $webView2RuntimeHash = (Get-FileHash -Algorithm SHA512 -LiteralPath $webView2Run
 if ($webView2RuntimeHash -ne ([string]$prerequisiteManifest.WebView2Runtime.Sha512).ToLowerInvariant()) {
     throw 'The Evergreen WebView2 Runtime prerequisite SHA-512 does not match prerequisites.json.'
 }
+
+Assert-MicrosoftAuthenticodeSignature -Path $dotNetInstallers[0].FullName -DisplayName '.NET'
+Assert-MicrosoftAuthenticodeSignature -Path $windowsAppRuntimeInstallers[0].FullName -DisplayName 'Windows App Runtime'
+Assert-MicrosoftAuthenticodeSignature -Path $webView2RuntimeInstallers[0].FullName -DisplayName 'Evergreen WebView2 Runtime'
 
 try {
     New-Item -ItemType Directory -Path $payloadRoot -Force | Out-Null

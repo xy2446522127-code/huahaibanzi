@@ -6,9 +6,11 @@ $fixtureRoot = Join-Path $fixtureParent ('installer-integrity-fixture-' + [guid]
 $dotNetReleaseRoot = Join-Path $fixtureRoot 'dotnet-release'
 $windowsReleaseRoot = Join-Path $fixtureRoot 'windows-release'
 $webViewReleaseRoot = Join-Path $fixtureRoot 'webview-release'
+$unsignedReleaseRoot = Join-Path $fixtureRoot 'unsigned-release'
 $dotNetPrerequisiteRoot = Join-Path $fixtureRoot 'dotnet-prerequisites'
 $windowsPrerequisiteRoot = Join-Path $fixtureRoot 'windows-prerequisites'
 $webViewPrerequisiteRoot = Join-Path $fixtureRoot 'webview-prerequisites'
+$unsignedPrerequisiteRoot = Join-Path $fixtureRoot 'unsigned-prerequisites'
 $probeOutput = Join-Path $fixtureRoot 'probe.exe'
 $buildScript = Join-Path $projectRoot 'installer\Build-Installer.ps1'
 
@@ -33,7 +35,7 @@ $requiredReleasePaths = @(
 )
 
 # 构造完整应用目录和被替换的前置包，验证构建器检查内容而不是文件名。
-foreach ($releaseRoot in @($dotNetReleaseRoot, $windowsReleaseRoot, $webViewReleaseRoot)) {
+foreach ($releaseRoot in @($dotNetReleaseRoot, $windowsReleaseRoot, $webViewReleaseRoot, $unsignedReleaseRoot)) {
     foreach ($relativePath in $requiredReleasePaths) {
         $target = Join-Path $releaseRoot $relativePath
         New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
@@ -45,7 +47,7 @@ $dotNetName = 'windowsdesktop-runtime-8.0.29-win-x64.exe'
 $windowsName = 'WindowsAppRuntimeInstall-x64.exe'
 $webViewName = 'MicrosoftEdgeWebView2RuntimeInstallerX64.exe'
 
-function New-PrerequisiteFixture([string]$root, [ValidateSet('dotnet', 'windows', 'webview')][string]$tamperedComponent) {
+function New-PrerequisiteFixture([string]$root, [ValidateSet('none', 'dotnet', 'windows', 'webview')][string]$tamperedComponent) {
     New-Item -ItemType Directory -Path $root -Force | Out-Null
     $dotNetPath = Join-Path $root $dotNetName
     $windowsPath = Join-Path $root $windowsName
@@ -66,6 +68,7 @@ function New-PrerequisiteFixture([string]$root, [ValidateSet('dotnet', 'windows'
 New-PrerequisiteFixture $dotNetPrerequisiteRoot 'dotnet'
 New-PrerequisiteFixture $windowsPrerequisiteRoot 'windows'
 New-PrerequisiteFixture $webViewPrerequisiteRoot 'webview'
+New-PrerequisiteFixture $unsignedPrerequisiteRoot 'none'
 
 $dotNetFailure = $null
 try {
@@ -97,11 +100,22 @@ if ($webViewFailure -notmatch 'Evergreen WebView2 Runtime prerequisite SHA-512 d
     throw "Unexpected WebView2 Runtime prerequisite integrity result: $webViewFailure"
 }
 
+$unsignedFailure = $null
+try {
+    & $buildScript -PublishRoot $unsignedReleaseRoot -OutputPath $probeOutput -PrerequisiteRoot $unsignedPrerequisiteRoot
+} catch {
+    $unsignedFailure = $_.Exception.Message
+}
+if ($unsignedFailure -notmatch '\.NET prerequisite does not have a valid Microsoft Authenticode signature') {
+    throw "Unsigned prerequisite with a matching manifest was not rejected: $unsignedFailure"
+}
+
 [pscustomobject]@{
     Status = 'passed'
     DotNetHash = $dotNetFailure
     WindowsAppRuntimeHash = $windowsFailure
     WebView2RuntimeHash = $webViewFailure
+    UnsignedMicrosoftInstaller = $unsignedFailure
 } | ConvertTo-Json -Compress
 }
 finally {
