@@ -8,6 +8,8 @@ public static class WebBridgeProtocol
         "hide",
         "resize",
         "beginDrag",
+        "dragMove",
+        "endDrag",
         "copy",
         "togglePin",
         "toggleFavorite",

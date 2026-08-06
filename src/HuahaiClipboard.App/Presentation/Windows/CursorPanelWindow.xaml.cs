@@ -34,8 +34,6 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private const uint SetWindowNoMove = 0x0002;
     private const uint SetWindowNoZOrder = 0x0004;
     private const uint SetWindowNoActivate = 0x0010;
-    private const uint WmNonClientLeftButtonDown = 0x00A1;
-    private const int HitTestCaption = 2;
     private const int ShowWindowHide = 0;
     private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly IntPtr HwndNoTopmost = new(-2);
@@ -59,6 +57,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private bool settingsSurfaceVisible;
     private double panelScale = 1d;
     private int webContentActivityVersion;
+    private PointInt32? dragPointerOrigin;
+    private PointInt32? dragWindowOrigin;
 
     public CursorPanelWindow()
     {
@@ -376,7 +376,13 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                 });
                 return;
             case "beginDrag":
-                await BeginWindowDragAsync();
+                BeginWindowDrag(request.X, request.Y);
+                return;
+            case "dragMove":
+                MoveWindowDrag(request.X, request.Y);
+                return;
+            case "endDrag":
+                await EndWindowDragAsync();
                 return;
         }
 
@@ -622,20 +628,53 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     private int ScaleDimension(int value) => Math.Max(1, (int)Math.Round(value * panelScale));
 
-    private async Task BeginWindowDragAsync()
+    private void BeginWindowDrag(double? pointerX, double? pointerY)
     {
-        if (appWindow is null)
+        if (appWindow is null || pointerX is null || pointerY is null)
         {
             return;
         }
 
-        var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
-        _ = ReleaseCapture();
-        _ = SendMessage(
-            handle,
-            WmNonClientLeftButtonDown,
-            new IntPtr(HitTestCaption),
-            IntPtr.Zero);
+        dragPointerOrigin = new PointInt32(
+            (int)Math.Round(pointerX.Value),
+            (int)Math.Round(pointerY.Value));
+        dragWindowOrigin = appWindow.Position;
+    }
+
+    private void MoveWindowDrag(double? pointerX, double? pointerY)
+    {
+        if (appWindow is null ||
+            dragPointerOrigin is not { } pointerOrigin ||
+            dragWindowOrigin is not { } windowOrigin ||
+            pointerX is null ||
+            pointerY is null)
+        {
+            return;
+        }
+
+        var pointer = new PointInt32(
+            (int)Math.Round(pointerX.Value),
+            (int)Math.Round(pointerY.Value));
+        var display = DisplayArea.GetFromPoint(pointer, DisplayAreaFallback.Nearest);
+        var workArea = display.WorkArea;
+        var width = ScaleDimension(settingsSurfaceVisible ? SettingsWidth : PanelWidth);
+        var height = ScaleDimension(settingsSurfaceVisible ? SettingsHeight : PanelHeight);
+        var targetX = windowOrigin.X + pointer.X - pointerOrigin.X;
+        var targetY = windowOrigin.Y + pointer.Y - pointerOrigin.Y;
+        appWindow.Move(new PointInt32(
+            Math.Clamp(targetX, workArea.X, Math.Max(workArea.X, workArea.X + workArea.Width - width)),
+            Math.Clamp(targetY, workArea.Y, Math.Max(workArea.Y, workArea.Y + workArea.Height - height))));
+    }
+
+    private async Task EndWindowDragAsync()
+    {
+        if (appWindow is null || dragPointerOrigin is null)
+        {
+            return;
+        }
+
+        dragPointerOrigin = null;
+        dragWindowOrigin = null;
         var display = DisplayArea.GetFromWindowId(appWindow.Id, DisplayAreaFallback.Primary);
         await windowPlacementStore.SaveAsync(new WindowPlacement(
             DisplayKey(display),
@@ -854,16 +893,6 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     [DllImport("user32.dll")]
     private static extern bool ShowWindow(IntPtr windowHandle, int command);
-
-    [DllImport("user32.dll")]
-    private static extern bool ReleaseCapture();
-
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-    private static extern IntPtr SendMessage(
-        IntPtr windowHandle,
-        uint message,
-        IntPtr wParam,
-        IntPtr lParam);
 
     [DllImport("user32.dll")]
     private static extern uint GetDpiForWindow(IntPtr windowHandle);

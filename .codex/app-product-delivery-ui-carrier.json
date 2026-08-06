@@ -5,7 +5,7 @@
     "installer/**",
     "tests/**"
   ],
-  "approval_evidence": "User explicitly approved solution A: restore the previously approved WebView UI and accept the memory increase.",
+  "approval_evidence": "User explicitly requested a comprehensive functional audit and approved fixing panel drag, proportional resize, stability, and automatic Release updates while preserving the approved old UI.",
   "capability_matrix": {
     "clipboard": {
       "desktop": "desktop",
@@ -36,22 +36,22 @@
   "cross_target_evidence": "",
   "delivery_maturity": "release",
   "entrypoint": "Web/product-shell.html",
-  "entrypoint_sha256": "654214f00e12c1a13ef6a600b7fd58ec4eb654191c3b899c2b8983528d8ed90e",
+  "entrypoint_sha256": "94c9a9624ebfe79e874756fe036c9f806b69aae3bab9821661d70a5a53b9becf",
   "mock_status": "removed",
   "native_port": {
     "blockers": [],
     "experience_change_approved": false,
     "machine_evidence": []
   },
-  "parent_source_manifest_sha256": "3d45de22b932f3438f20062be6b5d7429c6279e7899aa75a8ae27e992329a292",
-  "parent_visual_source_version": "huahai-approved-shell-v6-webview-restore-1.1.1",
+  "parent_source_manifest_sha256": "983b80e64b0660282e390e812962d798f1fafdd4166aac3b36449f55cbdf9a36",
+  "parent_visual_source_version": "huahai-approved-shell-v6-drag-stability-1.1.2",
   "preserved_areas": [
     "src/HuahaiClipboard.App/Assets/Web/product-shell.html",
     "src/HuahaiClipboard.App/Assets/Brand/**",
     "%LOCALAPPDATA%/HuahaiClipboard/**"
   ],
   "product_scale": "medium",
-  "project_revision": 4,
+  "project_revision": 6,
   "risk_level": "medium",
   "rollback_commit": "42af42a329c94965ebb0f1ac811c938265f8b745",
   "runtime_topology": "desktop-first",
@@ -89,8 +89,8 @@
     {
       "logical_asset_id": "Web/product-shell.html",
       "path": "Web/product-shell.html",
-      "sha256": "654214f00e12c1a13ef6a600b7fd58ec4eb654191c3b899c2b8983528d8ed90e",
-      "size": 54748
+      "sha256": "94c9a9624ebfe79e874756fe036c9f806b69aae3bab9821661d70a5a53b9becf",
+      "size": 55980
     },
     {
       "logical_asset_id": "Web/retention-policy.js",
@@ -105,7 +105,7 @@
       "size": 908
     }
   ],
-  "source_manifest_sha256": "15d076c8468b2ad923abe4a6e64eecc143f9ada8852e954e817732bb15092b60",
+  "source_manifest_sha256": "9fe9edfcc86133e1033d8c1b0dd6065a5f720ae162bd1f7d99beb3d54cac47ec",
   "source_root": "src/HuahaiClipboard.App/Assets",
   "strategy": "retain-and-integrate",
   "surfaces": [
@@ -115,7 +115,7 @@
   ],
   "targets": {
     "desktop": {
-      "build_evidence": "VS MSBuild x64 Release passed; Core 85/85, Native rollback 39/39, Web 42/42, installer policy 8/8.",
+      "build_evidence": "Release x64 build succeeded with 0 warnings and 0 errors; real pointer smoke moved the panel and resized it proportionally without freezing WebView content.",
       "build_manifest": [
         {
           "logical_asset_id": "Brand/fox-icon-source.png",
@@ -166,7 +166,7 @@
           "size": 908
         }
       ],
-      "build_output": "dist/webview-build-1.1.1",
+      "build_output": "dist/webview-build-1.1.2-audit",
       "host": "WinUI 3 + WebView2 (.NET 8, unpackaged)",
       "install_evidence": "Setup 1.1.1 installed to F:\\HuahaiClipboard with exit 0; 64/64 user-data files unchanged; installed startup, hidden summon, topmost, hide, live count, copy, pin, favorite, delete, proportional scale, update bridge and settings rendering smokes passed.",
       "load_target": "https://app.huahai.local/Web/product-shell.html",
@@ -205,8 +205,8 @@
         {
           "logical_asset_id": "Web/product-shell.html",
           "path": "Web/product-shell.html",
-          "sha256": "654214f00e12c1a13ef6a600b7fd58ec4eb654191c3b899c2b8983528d8ed90e",
-          "size": 54748
+          "sha256": "94c9a9624ebfe79e874756fe036c9f806b69aae3bab9821661d70a5a53b9becf",
+          "size": 55980
         },
         {
           "logical_asset_id": "Web/retention-policy.js",
@@ -225,5 +225,5 @@
   },
   "ui_class": "existing-production-shell",
   "version": 1,
-  "visual_source_version": "huahai-approved-shell-v6-webview-restore-1.1.1-r2"
+  "visual_source_version": "huahai-approved-shell-v6-drag-stability-1.1.2-r2"
 }

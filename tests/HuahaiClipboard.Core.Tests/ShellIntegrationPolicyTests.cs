@@ -70,6 +70,11 @@ public sealed class ShellIntegrationPolicyTests
             ((double?)requestType.GetProperty("Number")!.GetValue(opacityArguments[1]))!.Value,
             0.001);
 
+        object?[] dragArguments = ["{\"action\":\"beginDrag\",\"x\":125.5,\"y\":240.25}", null];
+        Assert.AreEqual(true, tryParse.Invoke(null, dragArguments));
+        Assert.AreEqual(125.5, ((double?)requestType.GetProperty("X")!.GetValue(dragArguments[1]))!.Value, 0.001);
+        Assert.AreEqual(240.25, ((double?)requestType.GetProperty("Y")!.GetValue(dragArguments[1]))!.Value, 0.001);
+
         object?[] invalidArguments = ["{}", null];
         Assert.AreEqual(false, tryParse.Invoke(null, invalidArguments));
         Assert.IsNull(invalidArguments[1]);
@@ -90,7 +95,7 @@ public sealed class ShellIntegrationPolicyTests
             "setRetentionDays", "clearOrdinary", "clearAll", "setTheme", "setOpacity",
             "setPetals", "setReduceMotion", "setClickDuration", "setRightDoubleClick",
             "setShortcut", "resetShortcut", "setExclusions", "openDataFolder", "setStartup",
-            "setBackground", "beginDrag"
+            "setBackground", "beginDrag", "dragMove", "endDrag"
             , "setPanelScale", "setCheckUpdatesOnStartup", "checkUpdate", "openRelease"
         ];
 

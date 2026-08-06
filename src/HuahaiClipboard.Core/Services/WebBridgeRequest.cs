@@ -9,6 +9,8 @@ public sealed record WebBridgeRequest(
     string[] Values,
     bool? Enabled,
     double? Number,
+    double? X,
+    double? Y,
     string? Mode)
 {
     public static bool TryParse(string json, out WebBridgeRequest? request)
@@ -37,6 +39,8 @@ public sealed record WebBridgeRequest(
                 GetStrings(root, "values"),
                 GetBoolean(root, "enabled"),
                 GetNumber(root, "number"),
+                GetNumber(root, "x"),
+                GetNumber(root, "y"),
                 GetString(root, "mode"));
             return true;
         }

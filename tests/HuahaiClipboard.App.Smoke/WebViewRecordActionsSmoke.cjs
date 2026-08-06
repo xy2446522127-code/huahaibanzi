@@ -55,6 +55,39 @@ async function run() {
         }
         throw new Error('settings surface timeout');
       })()`
+    : operation === 'hit-test'
+    ? `(() => {
+        const [x,y]=${quoted}.split(',').map(Number);
+        const element=document.elementFromPoint(x,y);
+        if (!element) throw new Error('no element at requested point');
+        return {
+          x,y,
+          tag:element.tagName,
+          id:element.id || '',
+          classes:element.className || '',
+          interactive:window.HuahaiPanelDrag.isInteractiveTarget(element),
+          panelRect:(() => { const r=document.querySelector('#glassPanel').getBoundingClientRect(); return {left:r.left,top:r.top,right:r.right,bottom:r.bottom}; })()
+        };
+      })()`
+    : operation === 'arm-pointer-log'
+    ? `(() => {
+        window.__huahaiPointerAudit=[];
+        const record=event=>window.__huahaiPointerAudit.push({type:event.type,clientX:event.clientX,clientY:event.clientY,screenX:event.screenX,screenY:event.screenY,pointerId:event.pointerId,target:event.target?.className||event.target?.id||event.target?.tagName||''});
+        for (const type of ['pointerdown','pointermove','pointerup','pointercancel']) document.addEventListener(type,record,{capture:true});
+        return {armed:true};
+      })()`
+    : operation === 'read-pointer-log'
+    ? `(() => ({events:(window.__huahaiPointerAudit||[]).slice(-20)}))()`
+    : operation === 'resize-grab-point'
+    ? `(() => {
+        const panel=document.querySelector('#glassPanel').getBoundingClientRect();
+        const handle=document.querySelector('#resizeHandle');
+        const handleRect=handle.getBoundingClientRect();
+        const pseudo=getComputedStyle(handle,'::after');
+        const x=handleRect.right-parseFloat(pseudo.right)-1;
+        const y=handleRect.bottom-parseFloat(pseudo.bottom)-1;
+        return {xRatio:(x-panel.left)/panel.width,yRatio:(y-panel.top)/panel.height,pseudoRight:parseFloat(pseudo.right),pseudoBottom:parseFloat(pseudo.bottom)};
+      })()`
     : operation === 'set-scale'
     ? `(async () => {
         const target=Number(${quoted});
