@@ -9,8 +9,8 @@
   "delivery_target": "release",
   "execution_mode": "autonomous_implementation",
   "core_percent": 100,
-  "overall_percent": 98,
-  "current_milestone": "release-sync",
+  "overall_percent": 100,
+  "current_milestone": null,
   "blockers": [],
   "milestones": [
     {
@@ -45,9 +45,9 @@
       "label": "Release gates, Git checkpoint and remote synchronization",
       "weight": 15,
       "core": false,
-      "status": "in_progress",
+      "status": "verified",
       "blocker": "",
-      "evidence": "Core 85/85, Native rollback 39/39, Web 42/42, installer 8/8, installed Windows smokes, UI carrier release gate and independent review passed; checkpoint and authorized push remain."
+      "evidence": "Core 85/85, Native rollback 39/39, Web 42/42, installer 8/8, installed Windows smokes, UI carrier release gate and independent review passed; release commit was pushed and remote master/feature refs matched."
     }
   ],
   "scope_changes": [
@@ -56,5 +56,5 @@
       "reason": "User approved restoring the previous WebView UI and accepting its higher memory usage while preserving all production behavior and local data."
     }
   ],
-  "updated_at": "2026-08-07T00:18:00+08:00"
+  "updated_at": "2026-08-07T00:27:00+08:00"
 }
