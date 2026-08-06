@@ -55,6 +55,32 @@ async function run() {
         }
         throw new Error('settings surface timeout');
       })()`
+    : operation === 'clear-all'
+    ? `(async () => {
+        window.chrome.webview.postMessage({action:'clearAll'});
+        for (let i=0;i<80;i++) {
+          if (document.querySelectorAll('.record').length === 0) return { cleared:true };
+          await new Promise(resolve=>setTimeout(resolve,100));
+        }
+        throw new Error('isolated history clear timeout');
+      })()`
+    : operation === 'seed-visual-fixture'
+    ? `(() => {
+        const list=document.querySelector('#recordList');
+        const count=document.querySelector('#countText');
+        if(!list||!count)throw new Error('record surface missing');
+        const fixtures=[
+          ['文本','Huahai Clipboard visual acceptance','just now · Test fixture','&#xE8D2;'],
+          ['链接','https://github.com/xy2446522127-code/huahaibanzi','2 min ago · Test fixture','&#xE71B;'],
+          ['文本','Safe update: download, verify, rollback, restart','5 min ago · Test fixture','&#xE8D2;'],
+          ['文件','HuahaiClipboard-Setup.exe','8 min ago · Test fixture','&#xE8A5;'],
+          ['文本','Favorites and pinned records survive cleanup','12 min ago · Test fixture','&#xE8D2;'],
+          ['图片','fox-icon-preview.png','15 min ago · Test fixture','&#xE8B9;']
+        ];
+        list.innerHTML=fixtures.map((item,index)=>'<div class="record" data-id="fixture-'+index+'"><div class="kind" title="'+item[0]+'"><span class="kind-glyph" aria-hidden="true">'+item[3]+'</span></div><div class="record-text"><strong>'+item[1]+'</strong><small>'+(index===0?'置顶 · ':'')+item[2]+'</small></div><div class="row-actions"><button class="row-action pin '+(index===0?'on':'')+'" title="置顶"><span class="pin-glyph" aria-hidden="true">&#xE718;</span></button><button class="row-action fav '+(index===4?'on':'')+'" title="收藏">★</button><button class="row-action del" title="删除">×</button></div></div>').join('');
+        count.textContent='最近 7 天 · '+fixtures.length+' 条';
+        return {seeded:true,count:fixtures.length};
+      })()`
     : operation === 'hit-test'
     ? `(() => {
         const [x,y]=${quoted}.split(',').map(Number);

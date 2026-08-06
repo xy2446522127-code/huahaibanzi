@@ -7,6 +7,8 @@ $ErrorActionPreference = 'Stop'
 $resolvedExe = (Resolve-Path -LiteralPath $ExePath).Path
 $projectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $clickProbe = Join-Path $projectRoot 'tests\HuahaiClipboard.App.Smoke\WebViewHideButtonSmoke.cjs'
+$tempBase = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
+$testRoot = Join-Path $tempBase ('HuahaiClipboard.HideSmoke.' + [guid]::NewGuid().ToString('N'))
 
 Add-Type @'
 using System;
@@ -19,10 +21,13 @@ public static class HuahaiWindowProbe {
 
 # 仅向本次启动的 WebView2 子进程开放本机 CDP 端口。
 $previousArguments = $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS
+$previousDataRoot = $env:HUAHAI_CLIPBOARD_LOCALAPPDATA
 $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$DebugPort"
-$process = Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru
+$env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $testRoot
+$process = $null
 
 try {
+    $process = Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru
     $handle = [IntPtr]::Zero
     for ($attempt = 0; $attempt -lt 30; $attempt++) {
         Start-Sleep -Milliseconds 500
@@ -79,9 +84,15 @@ try {
     } | ConvertTo-Json -Compress
 }
 finally {
-    if (-not $process.HasExited) {
+    if ($null -ne $process -and -not $process.HasExited) {
         Stop-Process -Id $process.Id
         Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
     }
+    $env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $previousDataRoot
     $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = $previousArguments
+    $resolvedTestRoot = [System.IO.Path]::GetFullPath($testRoot)
+    if ($resolvedTestRoot.StartsWith($tempBase, [System.StringComparison]::OrdinalIgnoreCase) -and
+        (Split-Path -Leaf $resolvedTestRoot) -match '^HuahaiClipboard\.HideSmoke\.[0-9a-f]{32}$') {
+        Remove-Item -LiteralPath $resolvedTestRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
 }

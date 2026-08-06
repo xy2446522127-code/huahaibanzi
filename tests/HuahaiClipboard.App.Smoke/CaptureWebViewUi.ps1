@@ -14,11 +14,16 @@ New-Item -ItemType Directory -Path (Split-Path -Parent $panelOutput) -Force | Ou
 New-Item -ItemType Directory -Path (Split-Path -Parent $settingsOutput) -Force | Out-Null
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $probe = Join-Path $projectRoot 'tests\HuahaiClipboard.App.Smoke\WebViewRecordActionsSmoke.cjs'
+$tempBase = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
+$testRoot = Join-Path $tempBase ('HuahaiClipboard.CaptureSmoke.' + [guid]::NewGuid().ToString('N'))
 $previousArguments = $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS
+$previousDataRoot = $env:HUAHAI_CLIPBOARD_LOCALAPPDATA
 $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$DebugPort"
-$process = Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru
+$env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $testRoot
+$process = $null
 
 try {
+    $process = Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru
     for ($attempt = 0; $attempt -lt 60; $attempt++) {
         Start-Sleep -Milliseconds 250
         $process.Refresh()
@@ -30,6 +35,11 @@ try {
             if ($attempt -eq 59) { throw 'WebView2 debugging endpoint did not become ready.' }
         }
     }
+
+    $cleared = node $probe $DebugPort clear-all | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0 -or -not $cleared.cleared) { throw 'Isolated screenshot history could not be cleared.' }
+    $fixture = node $probe $DebugPort seed-visual-fixture | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0 -or -not $fixture.seeded -or $fixture.count -ne 6) { throw 'Deterministic screenshot fixture failed.' }
 
     Start-Sleep -Milliseconds $StabilizationMilliseconds
     $panel = node $probe $DebugPort capture $panelOutput | ConvertFrom-Json
@@ -47,9 +57,15 @@ try {
     } | ConvertTo-Json -Compress
 }
 finally {
-    if (-not $process.HasExited) {
+    if ($null -ne $process -and -not $process.HasExited) {
         Stop-Process -Id $process.Id -Force
         Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
     }
+    $env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $previousDataRoot
     $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = $previousArguments
+    $resolvedTestRoot = [IO.Path]::GetFullPath($testRoot)
+    if ($resolvedTestRoot.StartsWith($tempBase, [StringComparison]::OrdinalIgnoreCase) -and
+        (Split-Path -Leaf $resolvedTestRoot) -match '^HuahaiClipboard\.CaptureSmoke\.[0-9a-f]{32}$') {
+        Remove-Item -LiteralPath $resolvedTestRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
 }

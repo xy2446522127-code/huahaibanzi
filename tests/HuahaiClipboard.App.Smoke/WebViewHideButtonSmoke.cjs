@@ -1,5 +1,6 @@
 const port = Number(process.argv[2]);
 const operation = process.argv[3] || 'hide-with-background-disabled';
+const { buildExpression } = require('./WebViewHideButtonExpression.cjs');
 if (!Number.isInteger(port) || port <= 0) throw new Error('A valid WebView2 debugging port is required.');
 
 // 连接 WebView2 的 CDP 页面并真实点击“隐藏到后台”按钮。
@@ -17,6 +18,7 @@ async function run() {
     const request = pending.get(message.id);
     if (!request) return;
     pending.delete(message.id);
+    clearTimeout(request.timer);
     if (message.error) request.reject(new Error(message.error.message));
     else request.resolve(message.result);
   });
@@ -27,29 +29,25 @@ async function run() {
   });
 
   // 发送单条 CDP 命令并等待对应响应，避免依赖页面日志文本。
+  socket.addEventListener('close', () => {
+    for (const [id, request] of pending) {
+      clearTimeout(request.timer);
+      request.reject(new Error(`CDP socket closed before response ${id}.`));
+    }
+    pending.clear();
+  });
+
   const command = (method, params = {}) => new Promise((resolve, reject) => {
     const id = nextId++;
-    pending.set(id, { resolve, reject });
+    const timer = setTimeout(() => {
+      pending.delete(id);
+      reject(new Error(`CDP command timed out: ${method}`));
+    }, 15000);
+    pending.set(id, { resolve, reject, timer });
     socket.send(JSON.stringify({ id, method, params }));
   });
 
-  const expression = operation === 'restore-background'
-    ? `(() => {
-      const toggle = document.querySelector('#backgroundToggle');
-      if (!toggle) return { restored: false, reason: 'missing-toggle' };
-      if (!toggle.classList.contains('on')) toggle.click();
-      return { restored: toggle.classList.contains('on') };
-    })()`
-    : `(async () => {
-      const button = document.querySelector('#minimizeButton');
-      const toggle = document.querySelector('#backgroundToggle');
-      if (!button || !toggle) return { clicked: false, reason: 'missing-control' };
-      if (toggle.classList.contains('on')) toggle.click();
-      await new Promise(resolve => setTimeout(resolve, 350));
-      const title = button.getAttribute('title');
-      button.click();
-      return { clicked: true, title, backgroundEnabled: toggle.classList.contains('on') };
-    })()`;
+  const expression = buildExpression(operation);
 
   const evaluation = await command('Runtime.evaluate', {
     expression,

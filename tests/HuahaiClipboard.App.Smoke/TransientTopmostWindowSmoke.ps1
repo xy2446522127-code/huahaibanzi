@@ -9,6 +9,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $resolvedExe = (Resolve-Path -LiteralPath $ExePath).Path
+$tempBase = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
+$testRoot = Join-Path $tempBase ('HuahaiClipboard.TopmostSmoke.' + [guid]::NewGuid().ToString('N'))
+$previousDataRoot = $env:HUAHAI_CLIPBOARD_LOCALAPPDATA
+$env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $testRoot
 
 Add-Type @'
 using System;
@@ -55,13 +59,14 @@ public static class HuahaiTransientWindowProbe {
 $extendedStyleIndex = -20
 $topmostStyle = 0x00000008
 $closeMessage = 0x0010
-$process = if ($StartHidden) {
-    Start-Process -FilePath $resolvedExe -ArgumentList '--background' -WorkingDirectory (Split-Path $resolvedExe) -PassThru
-} else {
-    Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru
-}
+$process = $null
 
 try {
+    $process = if ($StartHidden) {
+        Start-Process -FilePath $resolvedExe -ArgumentList '--background' -WorkingDirectory (Split-Path $resolvedExe) -PassThru
+    } else {
+        Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru
+    }
     $handle = [IntPtr]::Zero
     for ($attempt = 0; $attempt -lt ($TimeoutSeconds * 2); $attempt++) {
         Start-Sleep -Milliseconds 500
@@ -143,8 +148,14 @@ try {
     } | ConvertTo-Json -Compress
 }
 finally {
-    if (-not $process.HasExited) {
+    if ($null -ne $process -and -not $process.HasExited) {
         Stop-Process -Id $process.Id -Force
         Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
+    }
+    $env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $previousDataRoot
+    $resolvedTestRoot = [System.IO.Path]::GetFullPath($testRoot)
+    if ($resolvedTestRoot.StartsWith($tempBase, [System.StringComparison]::OrdinalIgnoreCase) -and
+        (Split-Path -Leaf $resolvedTestRoot) -match '^HuahaiClipboard\.TopmostSmoke\.[0-9a-f]{32}$') {
+        Remove-Item -LiteralPath $resolvedTestRoot -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
