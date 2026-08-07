@@ -51,7 +51,11 @@ async function run() {
   const quoted = JSON.stringify(value);
   const expression = operation === 'open-settings'
     ? `(async () => {
-        const button=document.querySelector('#settingsButton');
+        let button=null;
+        for(let i=0;i<80 && !button;i++){
+          button=document.querySelector('#settingsButton');
+          if(!button) await new Promise(resolve=>setTimeout(resolve,100));
+        }
         if (!button) throw new Error('settings button missing');
         button.click();
         for (let i=0;i<50;i++) {
@@ -169,6 +173,37 @@ async function run() {
         }
         input.dispatchEvent(new Event('change',{bubbles:true}));
         return {scrubbed:true,samples,blankSamples:samples.filter(sample=>!sample.visible||!sample.hasContent||sample.width<=0||sample.height<=0).length,finalLabel:document.querySelector('#scaleValue')?.textContent||''};
+      })()`
+    : operation === 'scale-layout-signature'
+    ? `(() => {
+        const small=document.querySelector('#scaleRange')?.closest('.setting-row')?.querySelector('small');
+        if(!small) throw new Error('scale helper text missing');
+        const node=small.firstChild;
+        if(!node) throw new Error('scale helper text node missing');
+        const lines=[];
+        for(let index=0;index<node.textContent.length;index++){
+          const range=document.createRange();
+          range.setStart(node,index); range.setEnd(node,index+1);
+          const rect=range.getBoundingClientRect();
+          const top=Math.round(rect.top*100)/100;
+          let line=lines.find(item=>item.top===top);
+          if(!line){line={top,text:''};lines.push(line)}
+          line.text+=node.textContent[index];
+        }
+        return {
+          lines:lines.sort((a,b)=>a.top-b.top).map(item=>item.text),
+          panelRect:(()=>{const r=document.querySelector('#glassPanel').getBoundingClientRect();return {width:r.width,height:r.height}})(),
+          helperRect:(()=>{const r=small.getBoundingClientRect();return {width:r.width,height:r.height}})(),
+          layout:{
+            viewportWidth:document.documentElement.clientWidth,
+            panelOffsetWidth:document.querySelector('#glassPanel').offsetWidth,
+            mainClientWidth:document.querySelector('.settings-main').clientWidth,
+            rowClientWidth:small.closest('.setting-row').clientWidth,
+            rootTransform:getComputedStyle(document.querySelector('.experience')).transform,
+            panelTransform:getComputedStyle(document.querySelector('#glassPanel')).transform,
+            panelZoom:getComputedStyle(document.querySelector('#glassPanel')).zoom
+          }
+        };
       })()`
     : operation === 'check-update'
     ? `(async () => {

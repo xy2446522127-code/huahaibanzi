@@ -10,7 +10,7 @@
   "execution_mode": "autonomous_implementation",
   "core_percent": 100.0,
   "overall_percent": 100.0,
-  "current_milestone": "v1-1-5-local-delivery",
+  "current_milestone": "v1-1-5-scale-layout-bugfix",
   "blockers": [],
   "milestones": [
     {
@@ -38,7 +38,7 @@
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": "Installed samples 81, 83, 117, 149 and 159 percent passed; rapid reversal produced zero blank samples, final persistence was exact, and the settings fox returned from a nested page to #panel."
+      "evidence": "The deterministic installed regression now passes 80%, 100%, and 160% after fixing the intrinsic width of the scale-value slot and removing width/height transitions that reflowed the settings Flex layout; line signature is identical at all three endpoints and physical panel rectangles remain proportional."
     },
     {
       "id": "installer-runtime-and-identity",
@@ -47,7 +47,7 @@
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": "The self-signed installer preserves HuahaiClipboard.App.exe with PRI/XBF resources, excludes 229 generated WebView2 profile entries, bundles Windows App SDK, auto-detects .NET 8/WebView2, and its Windows PowerShell 5.1 uninstaller parses and removes data cleanly."
+      "evidence": "The signed v1.1.5 scale-fix2 installer preserves HuahaiClipboard.App.exe with PRI/XBF resources, excludes generated WebView2 profile entries, bundles Windows App SDK prerequisites, and passed payload identity, prerequisite integrity, architecture, and UI contract checks."
     },
     {
       "id": "full-feature-audit",
@@ -56,7 +56,7 @@
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": ".NET 156 tests, Node 57 tests, installer 19 scripts, Release x64 MSBuild, clipboard, global summon, topmost, drag/resize, hide/background, and installed startup evidence passed."
+      "evidence": ".NET solution tests passed 117 Core + 39 Native UI; 15 applicable Node tests passed; installed SettingsScaleLayoutSmoke passed 80/100/160; Release x64 build and carrier hash match passed; installer payload, prerequisite, architecture, and UI contract checks passed."
     },
     {
       "id": "v1-1-5-local-delivery",
@@ -65,7 +65,7 @@
       "core": false,
       "status": "verified",
       "blocker": "",
-      "evidence": "F-drive clean uninstall/reinstall completed, current Data and registration are present, installer SHA-256 is ECB05B4F7E83FFFC29F2CFCB184466BBC4275ED86CA0E4FE6DA9753E34160526, and no push or GitHub Release was performed."
+      "evidence": "F-drive overwrite install completed with exit 0, current Data/<SID> was preserved, source and installed Assets match across 11 files, and the signed installer is dist/HuahaiClipboard-Setup-v1.1.5-scale-fix2.exe (SHA-256 02486F48C0F47BC37F3EE6AF3E32ACD22145DC57E0546EFD41F4E93DBC854C05). No push or GitHub Release was performed."
     }
   ],
   "scope_changes": [
@@ -80,7 +80,11 @@
     {
       "revision": 7,
       "reason": "User required self-contained dependency handling, install-root per-user data, continuous one-percent scaling without blank frames, global fox navigation, full local data removal, and clean F-drive reinstall."
+    },
+    {
+      "revision": 8,
+      "reason": "User reported proportional scaling still reflowed the settings helper text; root cause was intrinsic scale-label width plus active size transitions, so the fix was limited to the approved WebView shell and its installed regression evidence."
     }
   ],
-  "updated_at": "2026-08-08T01:08:00+08:00"
+  "updated_at": "2026-08-08T02:16:00+08:00"
 }
