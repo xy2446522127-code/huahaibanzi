@@ -1,6 +1,13 @@
 using System;
 using System.Collections.Generic;
 
+internal enum PrerequisiteInstallOutcome
+{
+    Failed,
+    Succeeded,
+    RestartRequired
+}
+
 internal static class PrerequisitePolicy
 {
     // 只要存在任意 .NET 8 Windows Desktop Runtime 即满足应用运行要求。
@@ -51,9 +58,17 @@ internal static class PrerequisitePolicy
         return true;
     }
 
-    // 0 为成功，1638 为同版本已安装，3010 为成功但建议重启。
-    internal static bool IsAcceptedInstallerExitCode(int exitCode)
+    internal static PrerequisiteInstallOutcome ClassifyInstallerExitCode(int exitCode)
     {
-        return exitCode == 0 || exitCode == 1638 || exitCode == 3010;
+        if (exitCode == 3010)
+            return PrerequisiteInstallOutcome.RestartRequired;
+        if (exitCode == 0 || exitCode == 1638)
+            return PrerequisiteInstallOutcome.Succeeded;
+        return PrerequisiteInstallOutcome.Failed;
+    }
+
+    internal static bool HasMissingRuntime(bool needsDotNet, bool needsWebView2)
+    {
+        return needsDotNet || needsWebView2;
     }
 }

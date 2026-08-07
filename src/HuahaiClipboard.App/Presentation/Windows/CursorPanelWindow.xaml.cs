@@ -38,7 +38,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private const int LeftMouseButton = 0x01;
     private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly IntPtr HwndNoTopmost = new(-2);
-    private static readonly Version CurrentVersion = new(1, 1, 4);
+    private static readonly Version CurrentVersion = new(1, 1, 5);
 
     private readonly CompositionRoot compositionRoot = new();
     private readonly WindowNavigator navigator = new();
@@ -62,7 +62,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private bool shellReady;
     private bool openSettingsWhenReady;
     private bool settingsSurfaceVisible;
-    private double panelScale = 1d;
+    private PanelScalePreviewSession panelScaleSession = new(1d);
+    private bool panelScalePreviewActive;
     private int webContentActivityVersion;
     private UpdateCheckResult? availableUpdate;
     private bool updateInstallationInProgress;
@@ -130,7 +131,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         await RestoreWindowPositionAsync();
         await panelViewModel.LoadAsync();
         await settingsViewModel.LoadAsync();
-        panelScale = Math.Clamp(settingsViewModel.Draft.Appearance.PanelScale, 0.8, 1.6);
+        panelScaleSession = new PanelScalePreviewSession(settingsViewModel.Draft.Appearance.PanelScale);
         ResizeWindow(PanelWidth, PanelHeight);
         await ProductWebView.EnsureCoreWebView2Async();
         ProductWebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
@@ -361,10 +362,22 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                 await settingsViewModel.UpdateBehaviorAsync(
                     settingsViewModel.Draft.Behavior with { BackgroundEnabled = request.Enabled == true });
                 break;
+            case "previewPanelScale":
+                PreviewPanelScale(request.Number ?? 1d);
+                return;
+            case "cancelPanelScale":
+                panelScaleSession.Cancel();
+                panelScalePreviewActive = false;
+                ResizeWindow(
+                    settingsSurfaceVisible ? SettingsWidth : PanelWidth,
+                    settingsSurfaceVisible ? SettingsHeight : PanelHeight);
+                return;
+            case "commitPanelScale":
             case "setPanelScale":
-                panelScale = Math.Clamp(request.Number ?? 1d, 0.8, 1.6);
+                var committedPanelScale = panelScaleSession.Commit(request.Number ?? 1d);
                 await settingsViewModel.UpdateAppearanceAsync(
-                    settingsViewModel.Draft.Appearance with { PanelScale = panelScale });
+                    settingsViewModel.Draft.Appearance with { PanelScale = committedPanelScale });
+                panelScalePreviewActive = false;
                 ResizeWindow(
                     settingsSurfaceVisible ? SettingsWidth : PanelWidth,
                     settingsSurfaceVisible ? SettingsHeight : PanelHeight);
@@ -521,10 +534,9 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                     release.ReleaseUrl,
                     progress: value);
             });
-            var updateDirectory = Path.Combine(
-                compositionRoot.DataLayout.DataDirectory,
-                "Updates",
-                "Pending");
+            var updateDirectory = UpdateCacheLayout.ResolvePendingDirectory(
+                Path.GetTempPath(),
+                LocalDataLayout.ResolveUserKey());
             var installerPath = await updateCheckService.DownloadInstallerAsync(
                 release,
                 updateDirectory,
@@ -680,7 +692,22 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         await ProductWebView.CoreWebView2.ExecuteScriptAsync(script);
     }
 
-    private void ResizeWindow(int width, int height)
+    private void PreviewPanelScale(double ratio)
+    {
+        panelScaleSession.Preview(ratio);
+        if (!panelScalePreviewActive)
+        {
+            panelScalePreviewActive = true;
+            _ = SetWindowRgn(WinRT.Interop.WindowNative.GetWindowHandle(this), IntPtr.Zero, false);
+        }
+
+        ResizeWindow(
+            settingsSurfaceVisible ? SettingsWidth : PanelWidth,
+            settingsSurfaceVisible ? SettingsHeight : PanelHeight,
+            rebuildChrome: false);
+    }
+
+    private void ResizeWindow(int width, int height, bool rebuildChrome = true)
     {
         if (appWindow is null)
         {
@@ -695,13 +722,17 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         var x = Math.Clamp(current.X, workArea.X, Math.Max(workArea.X, workArea.X + workArea.Width - width));
         var y = Math.Clamp(current.Y, workArea.Y, Math.Max(workArea.Y, workArea.Y + workArea.Height - height));
         appWindow.MoveAndResize(new RectInt32(x, y, width, height));
-        ApplyNativeGlassChrome(
-            WinRT.Interop.WindowNative.GetWindowHandle(this),
-            width,
-            height);
+        if (rebuildChrome)
+        {
+            ApplyNativeGlassChrome(
+                WinRT.Interop.WindowNative.GetWindowHandle(this),
+                width,
+                height);
+        }
     }
 
-    private int ScaleDimension(int value) => Math.Max(1, (int)Math.Round(value * panelScale));
+    private int ScaleDimension(int value) =>
+        Math.Max(1, (int)Math.Round(value * panelScaleSession.CurrentRatio));
 
     private void BeginNativeWindowDrag(double? pointerX, double? pointerY)
     {
@@ -970,7 +1001,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             height,
             PanelCornerRadius,
             GetDpiForWindow(windowHandle),
-            panelScale);
+            panelScaleSession.CurrentRatio);
         var region = CreateRoundRectRgn(
             0,
             0,

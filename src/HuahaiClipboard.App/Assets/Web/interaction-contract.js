@@ -8,7 +8,7 @@
 
   const staticControls = Object.freeze({
     'panel.search': '#searchInput', 'panel.minimize': '#minimizeButton', 'panel.settings': '#settingsButton', 'panel.summon': '#summonButton', 'records.scroll': '#recordList', 'panel.autohide': '#autoHide', 'panel.drag': '.panel-header',
-    'settings.nav.appearance': '.nav-button[data-page="appearance"]', 'settings.nav.motion': '.nav-button[data-page="motion"]', 'settings.nav.input': '.nav-button[data-page="input"]', 'settings.nav.storage': '.nav-button[data-page="storage"]', 'settings.nav.system': '.nav-button[data-page="system"]', 'settings.nav.about': '.nav-button[data-page="about"]', 'settings.back': '#backButton',
+    'settings.nav.appearance': '.nav-button[data-page="appearance"]', 'settings.nav.motion': '.nav-button[data-page="motion"]', 'settings.nav.input': '.nav-button[data-page="input"]', 'settings.nav.storage': '.nav-button[data-page="storage"]', 'settings.nav.system': '.nav-button[data-page="system"]', 'settings.nav.about': '.nav-button[data-page="about"]', 'settings.back': '#backButton', 'settings.home': '#settingsHome',
     'theme.rose': '.theme[data-theme="rose-purple"]', 'theme.cobalt': '.theme[data-theme="cobalt-blue"]', 'theme.emerald': '.theme[data-theme="emerald-cyan"]', 'theme.amber': '.theme[data-theme="amber-orange"]', 'theme.aurora': '.theme[data-theme="aurora-cyan-purple"]',
     'appearance.opacity': '#opacityRange', 'appearance.scale': '#scaleRange', 'appearance.reset-scale': '#resetScale', 'appearance.resize-handle': '#resizeHandle',
     'motion.petals': '#petalToggle', 'motion.reduced': '#reduceToggle', 'motion.duration': '#durationRange',

@@ -12,7 +12,7 @@
 
 - The preserved 1.0.0 WebView shell is the only production visual source.
 - Existing local data, clipboard semantics, privacy filters and cleanup rules remain compatible.
-- The restored desktop build loads no localhost or network UI.
+- The restored desktop build loads only packaged offline UI and has no development HTTP-origin or network UI dependency.
 - WebView memory regression is an explicitly accepted trade-off.
 - The release must install to `F:\HuahaiClipboard` without deleting user data.
 - One writer, no worktree, no subagent, rollback commit `42af42a329c94965ebb0f1ac811c938265f8b745`.
@@ -107,5 +107,4 @@
 - [ ] Run the release delivery gate, diff review, secret scan and private-artifact scan.
 - [ ] Create one verified checkpoint with only owned product paths.
 - [ ] Fast-forward `master`, push without force, and verify local/remote SHA equality.
-- [ ] Start the installed app in background and verify the process path is `F:\HuahaiClipboard\HuahaiClipboard.exe`.
-
+- [ ] Start the installed app in background and verify the WinUI resource-preserving process path is `F:\HuahaiClipboard\HuahaiClipboard.App.exe`.

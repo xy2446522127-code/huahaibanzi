@@ -14,16 +14,17 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("HuahaiClipboard")]
 [assembly: AssemblyProduct("花海剪贴板")]
 [assembly: AssemblyCopyright("Copyright © 2026")]
-[assembly: AssemblyVersion("1.1.4.0")]
-[assembly: AssemblyFileVersion("1.1.4.0")]
+[assembly: AssemblyVersion("1.1.5.0")]
+[assembly: AssemblyFileVersion("1.1.5.0")]
 
 internal static class Bootstrapper
 {
     private const string ProductName = "花海剪贴板";
     private const string ProductFolderName = "HuahaiClipboard";
-    private const string AppFileName = "HuahaiClipboard.exe";
+    private const string AppFileName = "HuahaiClipboard.App.exe";
     private const string ResourceName = "HuahaiClipboard.Payload";
     private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\HuahaiClipboard";
+    private static string installerLogPath;
 
     // 解析静默参数并串行执行安装，避免两个安装器同时替换文件。
     [STAThread]
@@ -31,6 +32,8 @@ internal static class Bootstrapper
     {
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
+        installerLogPath = InstallerLogPolicy.ResolvePath(Path.GetTempPath(), DateTime.Now);
+        Log("Installer started.");
 
         bool silent = HasArgument(args, "--silent");
         bool noLaunch = HasArgument(args, "--no-launch");
@@ -46,6 +49,7 @@ internal static class Bootstrapper
 
             string defaultInstallRoot;
             string installRoot;
+            bool restartRequired;
             try
             {
                 defaultInstallRoot = InstallLocationPolicy.DefaultForRoots(GetAvailableFixedDriveRoots(), ProductFolderName);
@@ -57,15 +61,16 @@ internal static class Bootstrapper
                         return 4;
                 }
                 installRoot = InstallLocationPolicy.Resolve(requestedInstallRoot, defaultInstallRoot);
-                Install(installRoot);
+                restartRequired = Install(installRoot);
             }
             catch (Exception ex)
             {
+                Log("Installation failed: " + ex);
                 ShowMessage("安装失败：\n" + ex.Message, MessageBoxIcon.Error, silent);
                 return 1;
             }
 
-            if (!noLaunch)
+            if (PostInstallLaunchPolicy.ShouldLaunch(noLaunch, restartRequired))
             {
                 try
                 {
@@ -79,6 +84,7 @@ internal static class Bootstrapper
                 }
                 catch (Exception ex)
                 {
+                    Log("Post-install launch failed: " + ex);
                     ShowMessage(
                         "安装已完成，但自动启动失败。\n请从桌面快捷方式打开花海剪贴板。\n\n原因：" + ex.Message,
                         MessageBoxIcon.Warning,
@@ -87,7 +93,13 @@ internal static class Bootstrapper
                 }
             }
 
-            ShowMessage("花海剪贴板已安装完成。\n\n安装位置：" + installRoot, MessageBoxIcon.Information, silent);
+            ShowMessage(
+                restartRequired
+                    ? "花海剪贴板已安装完成，但 Windows 需要重启后才能启动程序。\n\n安装位置：" + installRoot
+                    : "花海剪贴板已安装完成。\n\n安装位置：" + installRoot,
+                MessageBoxIcon.Information,
+                silent);
+            Log("Installation completed. RestartRequired=" + restartRequired + "; InstallRoot=" + installRoot);
             return 0;
         }
     }
@@ -134,16 +146,13 @@ internal static class Bootstrapper
     }
 
     // 使用同卷暂存与备份目录完成可回滚的当前用户安装。
-    private static void Install(string installRoot)
+    private static bool Install(string installRoot)
     {
         string parent = Path.GetDirectoryName(installRoot);
         if (String.IsNullOrWhiteSpace(parent))
             throw new InvalidOperationException("无法确定安装目录。");
 
-        string dataRoot = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            ProductFolderName);
-        InstallTargetPolicy.Validate(installRoot, GetRegisteredInstallRoot(), dataRoot);
+        InstallTargetPolicy.Validate(installRoot, GetRegisteredInstallRoot());
 
         Directory.CreateDirectory(parent);
         string stagingRoot = Path.Combine(parent, ".HuahaiClipboard-install-" + Guid.NewGuid().ToString("N"));
@@ -159,9 +168,13 @@ internal static class Bootstrapper
             activeStep = "校验应用文件";
             ValidatePayload(stagingRoot);
             activeStep = "检查 Microsoft 运行时";
-            InstallMissingPrerequisites(stagingRoot);
+            bool restartRequired = InstallMissingPrerequisites(stagingRoot);
+            Log("Prerequisites verified. RestartRequired=" + restartRequired);
             activeStep = "关闭旧版本";
             StopInstalledProcesses(installRoot);
+            activeStep = "保留安装目录中的用户数据";
+            InstallDataPreserver.CopyIntoCandidate(installRoot, stagingRoot);
+            Log("Install-root Data was preserved into the candidate payload.");
 
             InstallSwapResult swapResult = InstallSwapTransaction.Execute(
                 stagingRoot,
@@ -182,6 +195,7 @@ internal static class Bootstrapper
 
             if (swapResult.BackupCleanupPending)
                 Trace.WriteLine("Installation committed; old-version backup cleanup is pending: " + backupRoot);
+            return restartRequired;
         }
         catch (Exception ex)
         {
@@ -271,9 +285,9 @@ internal static class Bootstrapper
             "App.xbf",
             @"Presentation\Windows\CursorPanelWindow.xbf",
             @"Assets\Web\product-shell.html",
+            @"Assets\Web\panel-scale.js",
             "WebView2Loader.dll",
             "Microsoft.WindowsAppRuntime.Bootstrap.dll",
-            @"prerequisites\WindowsAppRuntimeInstall-x64.exe",
             @"prerequisites\MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
             "Uninstall.ps1",
             "UninstallPolicy.ps1"
@@ -286,14 +300,11 @@ internal static class Bootstrapper
     }
 
     // 仅在本机缺失时安装微软官方运行时，并清除安装包中的临时副本。
-    private static void InstallMissingPrerequisites(string stagingRoot)
+    private static bool InstallMissingPrerequisites(string stagingRoot)
     {
         string prerequisiteRoot = Path.Combine(stagingRoot, "prerequisites");
         string[] dotNetInstallers = Directory.Exists(prerequisiteRoot)
             ? Directory.GetFiles(prerequisiteRoot, "windowsdesktop-runtime-8.*-win-x64.exe")
-            : new string[0];
-        string[] windowsAppRuntimeInstallers = Directory.Exists(prerequisiteRoot)
-            ? Directory.GetFiles(prerequisiteRoot, "WindowsAppRuntimeInstall-x64.exe")
             : new string[0];
         string[] webView2RuntimeInstallers = Directory.Exists(prerequisiteRoot)
             ? Directory.GetFiles(prerequisiteRoot, "MicrosoftEdgeWebView2RuntimeInstallerX64.exe")
@@ -301,17 +312,15 @@ internal static class Bootstrapper
 
         if (dotNetInstallers.Length != 1)
             throw new InvalidDataException("安装包缺少 .NET 8 桌面运行时组件。");
-        if (windowsAppRuntimeInstallers.Length != 1)
-            throw new InvalidDataException("安装包缺少 Windows App Runtime 1.7 组件。");
         if (webView2RuntimeInstallers.Length != 1)
             throw new InvalidDataException("安装包缺少 Evergreen WebView2 Runtime 组件。");
 
         bool needsDotNet = PrerequisitePolicy.NeedsDotNetDesktopRuntime(GetInstalledDesktopRuntimeVersions());
-        bool needsWindowsAppRuntime = PrerequisitePolicy.NeedsWindowsAppRuntime(GetInstalledWindowsAppRuntimeVersions());
         bool needsWebView2Runtime = PrerequisitePolicy.NeedsWebView2Runtime(GetInstalledWebView2RuntimeVersions());
+        bool restartRequired = false;
 
         // 前置安装程序从系统临时目录运行，避免其子进程锁住应用暂存目录。
-        if (needsDotNet || needsWindowsAppRuntime || needsWebView2Runtime)
+        if (needsDotNet || needsWebView2Runtime)
         {
             string temporaryRoot = Path.Combine(Path.GetTempPath(), "HuahaiClipboardPrerequisites-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(temporaryRoot);
@@ -321,21 +330,14 @@ internal static class Bootstrapper
                 {
                     string temporaryDotNet = Path.Combine(temporaryRoot, Path.GetFileName(dotNetInstallers[0]));
                     File.Copy(dotNetInstallers[0], temporaryDotNet, true);
-                    RunPrerequisiteInstaller(temporaryDotNet, "/install /quiet /norestart", ".NET Desktop Runtime 8");
-                }
-
-                if (needsWindowsAppRuntime)
-                {
-                    string temporaryWindowsAppRuntime = Path.Combine(temporaryRoot, Path.GetFileName(windowsAppRuntimeInstallers[0]));
-                    File.Copy(windowsAppRuntimeInstallers[0], temporaryWindowsAppRuntime, true);
-                    RunPrerequisiteInstaller(temporaryWindowsAppRuntime, "--quiet", "Windows App Runtime 1.7");
+                    restartRequired |= RunPrerequisiteInstaller(temporaryDotNet, "/install /quiet /norestart", ".NET Desktop Runtime 8");
                 }
 
                 if (needsWebView2Runtime)
                 {
                     string temporaryWebView2Runtime = Path.Combine(temporaryRoot, Path.GetFileName(webView2RuntimeInstallers[0]));
                     File.Copy(webView2RuntimeInstallers[0], temporaryWebView2Runtime, true);
-                    RunPrerequisiteInstaller(temporaryWebView2Runtime, "/silent /install", "Evergreen WebView2 Runtime");
+                    restartRequired |= RunPrerequisiteInstaller(temporaryWebView2Runtime, "/silent /install", "Evergreen WebView2 Runtime");
                 }
 
             }
@@ -345,9 +347,15 @@ internal static class Bootstrapper
             }
         }
 
+        if (PrerequisitePolicy.HasMissingRuntime(
+                PrerequisitePolicy.NeedsDotNetDesktopRuntime(GetInstalledDesktopRuntimeVersions()),
+                PrerequisitePolicy.NeedsWebView2Runtime(GetInstalledWebView2RuntimeVersions())))
+            throw new InvalidOperationException("运行环境安装后复验失败，请查看安装日志或重启 Windows 后重试。");
+
         TryDeleteDirectory(prerequisiteRoot);
         if (Directory.Exists(prerequisiteRoot))
             throw new IOException("无法清理安装包中的 Microsoft 运行时临时文件。");
+        return restartRequired;
     }
 
     // 从实际 dotnet 安装根目录枚举桌面运行时版本，兼容未写入 sharedfx 注册表的安装方式。
@@ -370,53 +378,6 @@ internal static class Bootstrapper
         for (int index = 0; index < directories.Length; index++)
             versions[index] = Path.GetFileName(directories[index]);
         return versions;
-    }
-
-    private static string[] GetInstalledWindowsAppRuntimeVersions()
-    {
-        var versions = new List<string>();
-        string powershell = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.System),
-            "WindowsPowerShell", "v1.0", "powershell.exe");
-        var startInfo = new ProcessStartInfo(
-            powershell,
-            "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"Get-AppxPackage -Name 'Microsoft.WindowsAppRuntime.1.7' | Where-Object { $_.Architecture -in @('X64','Neutral') } | Select-Object -ExpandProperty Version\"")
-        {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true
-        };
-
-        try
-        {
-            using (Process process = Process.Start(startInfo))
-            {
-                if (process == null)
-                    return versions.ToArray();
-
-                if (!process.WaitForExit(15000))
-                {
-                    process.Kill();
-                    process.WaitForExit(2000);
-                    return versions.ToArray();
-                }
-
-                string output = process.StandardOutput.ReadToEnd();
-                foreach (string line in output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    string version = line.Trim();
-                    if (!String.IsNullOrWhiteSpace(version))
-                        versions.Add(version);
-                }
-            }
-        }
-        catch
-        {
-            // If detection is unavailable, safely run the signed runtime installer.
-        }
-
-        return versions.ToArray();
     }
 
     private static string[] GetInstalledWebView2RuntimeVersions()
@@ -455,7 +416,7 @@ internal static class Bootstrapper
     }
 
     // 仅接受微软安装器的成功、已安装和需重启返回码。
-    private static void RunPrerequisiteInstaller(string path, string arguments, string displayName)
+    private static bool RunPrerequisiteInstaller(string path, string arguments, string displayName)
     {
         var startInfo = new ProcessStartInfo(path, arguments)
         {
@@ -469,8 +430,11 @@ internal static class Bootstrapper
             if (process == null)
                 throw new InvalidOperationException("无法启动 " + displayName + " 安装程序。");
             process.WaitForExit();
-            if (!PrerequisitePolicy.IsAcceptedInstallerExitCode(process.ExitCode))
+            PrerequisiteInstallOutcome outcome = PrerequisitePolicy.ClassifyInstallerExitCode(process.ExitCode);
+            Log(displayName + " installer exit code=" + process.ExitCode + "; outcome=" + outcome);
+            if (outcome == PrerequisiteInstallOutcome.Failed)
                 throw new InvalidOperationException(displayName + " 安装失败，退出码：" + process.ExitCode);
+            return outcome == PrerequisiteInstallOutcome.RestartRequired;
         }
     }
 
@@ -558,7 +522,7 @@ internal static class Bootstrapper
                 throw new InvalidOperationException("无法创建卸载入口。");
 
             key.SetValue("DisplayName", ProductName, RegistryValueKind.String);
-            key.SetValue("DisplayVersion", "1.1.4", RegistryValueKind.String);
+            key.SetValue("DisplayVersion", "1.1.5", RegistryValueKind.String);
             key.SetValue("Publisher", "HuahaiClipboard", RegistryValueKind.String);
             key.SetValue("DisplayIcon", appPath + ",0", RegistryValueKind.String);
             key.SetValue("InstallLocation", installRoot, RegistryValueKind.String);
@@ -626,5 +590,19 @@ internal static class Bootstrapper
     {
         if (!silent)
             MessageBox.Show(message, ProductName, MessageBoxButtons.OK, icon);
+    }
+
+    private static void Log(string message)
+    {
+        try
+        {
+            string directory = Path.GetDirectoryName(installerLogPath);
+            if (!String.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
+            File.AppendAllText(installerLogPath, DateTime.Now.ToString("O") + " " + message + Environment.NewLine);
+        }
+        catch
+        {
+            // Diagnostic logging must never make installation fail.
+        }
     }
 }

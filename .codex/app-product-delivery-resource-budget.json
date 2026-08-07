@@ -1,6 +1,6 @@
 {
   "cleanup_plan": "Stop owned processes, release leases, rotate logs, and reconcile orphans.",
-  "completion_boundary": "Automatic update downloads, verifies, installs with rollback and restarts; approved feature matrix passes on the installed Windows x64 app; v1.1.2 installer is built, installed to F drive without user-data loss, reviewed, and all owned test browsers and processes are cleaned up.",
+  "completion_boundary": "Verified self-contained dependency installation, install-root per-user data migration and preservation, 80-160 percent one-point scaling without transient blank frames, settings fox return, signed installer, and clean F-drive reinstall.",
   "critical_path_benefit": "",
   "limits": {
     "concurrent_reviewers": 1,
@@ -26,7 +26,7 @@
     "worktrees": 2
   },
   "profile": "medium",
-  "stage_id": "v1-1-2-full-audit",
+  "stage_id": "v1-1-5-portable-data-scale",
   "status": "active",
   "version": 2
 }

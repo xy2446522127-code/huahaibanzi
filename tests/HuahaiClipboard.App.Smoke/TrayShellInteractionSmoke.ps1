@@ -1,5 +1,5 @@
 param(
-    [string]$AppExe = 'F:\HuahaiClipboard\HuahaiClipboard.exe'
+    [string]$AppExe = 'F:\HuahaiClipboard\HuahaiClipboard.App.exe'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -7,7 +7,7 @@ $resolvedExe = [IO.Path]::GetFullPath($AppExe)
 if (-not (Test-Path -LiteralPath $resolvedExe -PathType Leaf)) {
     throw "Installed application was not found: $resolvedExe"
 }
-if (@(Get-Process HuahaiClipboard -ErrorAction SilentlyContinue).Count -gt 0) {
+if (@(Get-Process HuahaiClipboard,HuahaiClipboard.App -ErrorAction SilentlyContinue).Count -gt 0) {
     throw 'Tray shell smoke requires no pre-existing HuahaiClipboard process.'
 }
 
@@ -37,10 +37,19 @@ public static class HuahaiTrayShellProbe
     public static IntPtr FindWindowForProcess(uint expectedProcessId)
     {
         IntPtr found = IntPtr.Zero;
+        long largestArea = -1;
         EnumWindows(delegate(IntPtr hwnd, IntPtr unused) {
             uint processId;
             GetWindowThreadProcessId(hwnd, out processId);
-            if (processId == expectedProcessId) { found = hwnd; return false; }
+            if (processId == expectedProcessId) {
+                Rect rect;
+                if (GetWindowRect(hwnd, out rect)) {
+                    long width = Math.Max(0, rect.Right - rect.Left);
+                    long height = Math.Max(0, rect.Bottom - rect.Top);
+                    long area = width * height;
+                    if (area > largestArea) { largestArea = area; found = hwnd; }
+                }
+            }
             return true;
         }, IntPtr.Zero);
         return found;
@@ -51,6 +60,8 @@ public static class HuahaiTrayShellProbe
 $vkLWin = [byte]0x5B
 $vkB = [byte]0x42
 $vkRight = [byte]0x27
+$vkDown = [byte]0x28
+$vkHome = [byte]0x24
 $vkReturn = [byte]0x0D
 $vkShift = [byte]0x10
 $vkF10 = [byte]0x79
@@ -230,7 +241,16 @@ function Invoke-TrayMenuItem {
         }
         Start-Sleep -Milliseconds 100
     }
-    throw "Tray context menu item was not exposed by Windows UI Automation: $Name"
+
+    # Windows 11 can render a WinForms tray menu without exposing its items to
+    # UI Automation. The opened menu still has keyboard focus, so exercise the
+    # real command by its stable menu order and let the resulting window/process
+    # state remain the authority for success.
+    $downCount = if ($Name -eq $showPanelName) { 0 } elseif ($Name -eq $settingsName) { 1 } elseif ($Name -eq $exitName) { 2 } else { -1 }
+    if ($downCount -lt 0) { throw "Unknown tray command: $Name" }
+    Send-Key $vkHome
+    for ($index = 0; $index -lt $downCount; $index++) { Send-Key $vkDown }
+    Send-Key $vkReturn
 }
 
 function Wait-WindowState {

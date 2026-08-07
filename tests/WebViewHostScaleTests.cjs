@@ -24,15 +24,6 @@ test('native host layout restores the approved CSS viewport', () => {
   assert.equal(policy.layoutPixels(430, 1), 430);
 });
 
-test('panel scale is clamped to the approved proportional range', () => {
-  assert.equal(policy.clampPanelScale(0.6), 0.8);
-  assert.equal(policy.clampPanelScale(0.8), 0.8);
-  assert.equal(policy.clampPanelScale(1.25), 1.25);
-  assert.equal(policy.clampPanelScale(1.6), 1.6);
-  assert.equal(policy.clampPanelScale(2), 1.6);
-  assert.equal(policy.clampPanelScale('invalid'), 1);
-});
-
 test('only the Huahai virtual host is treated as the native desktop shell', () => {
   const webview = { postMessage() {} };
 

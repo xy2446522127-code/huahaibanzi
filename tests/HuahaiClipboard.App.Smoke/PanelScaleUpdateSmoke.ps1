@@ -11,6 +11,7 @@ $tempBase = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $testRoot = Join-Path $tempBase ('HuahaiClipboard.ScaleSmoke.' + [guid]::NewGuid().ToString('N'))
 $previousArguments = $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS
 $previousDataRoot = $env:HUAHAI_CLIPBOARD_LOCALAPPDATA
+$previousUserKey = $env:HUAHAI_CLIPBOARD_USER_KEY
 
 Add-Type @'
 using System;
@@ -32,6 +33,7 @@ function Get-WindowSize([IntPtr]$handle) {
 }
 
 $env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $testRoot
+$env:HUAHAI_CLIPBOARD_USER_KEY = 'scale-smoke-user'
 $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$DebugPort"
 $process = Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru
 
@@ -49,31 +51,50 @@ try {
     }
     if ($handle -eq [IntPtr]::Zero) { throw 'Installed app did not expose a top-level window.' }
 
+    $homeResult = node $webProbe $DebugPort settings-home | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0 -or -not $homeResult.returned -or $homeResult.hash -ne '#panel') {
+        throw 'The settings fox did not return from a nested settings page to the main panel.'
+    }
+
     $before = Get-WindowSize $handle
-    $scale = node $webProbe $DebugPort set-scale 1.2 | ConvertFrom-Json
-    if ($LASTEXITCODE -ne 0 -or -not $scale.scaled) { throw 'The WebView scale control did not reach the production bridge.' }
-
-    $after = $null
-    for ($attempt = 0; $attempt -lt 40; $attempt++) {
-        Start-Sleep -Milliseconds 100
+    $observed = @()
+    foreach ($percent in @(81, 83, 117, 149, 159)) {
+        $ratio = $percent / 100
+        $scale = node $webProbe $DebugPort set-scale $ratio | ConvertFrom-Json
+        if ($LASTEXITCODE -ne 0 -or -not $scale.scaled -or $scale.label -ne "$percent%") {
+            throw "The production scale bridge did not commit $percent percent."
+        }
+        $expectedWidth = [Math]::Round(430 * $ratio)
+        $expectedHeight = [Math]::Round(680 * $ratio)
         $after = Get-WindowSize $handle
-        if ([Math]::Abs($after.Width - 516) -le 2 -and [Math]::Abs($after.Height - 816) -le 2) { break }
-    }
-    if ([Math]::Abs($after.Width - 516) -gt 2 -or [Math]::Abs($after.Height - 816) -gt 2) {
-        throw "Panel scaling did not resize the native window proportionally. Before=$($before.Width)x$($before.Height) After=$($after.Width)x$($after.Height)"
+        if ([Math]::Abs($after.Width - $expectedWidth) -gt 2 -or [Math]::Abs($after.Height - $expectedHeight) -gt 2) {
+            throw "Panel scaling reached the wrong native size at $percent percent: $($after.Width)x$($after.Height)"
+        }
+        $observed += "$percent%=$($after.Width)x$($after.Height)"
     }
 
-    $update = node $webProbe $DebugPort check-update | ConvertFrom-Json
-    if ($LASTEXITCODE -ne 0 -or -not $update.completed -or $update.statusClass -notmatch '(available|current|error)') {
-        throw "The production update bridge did not return a terminal result: $($update | ConvertTo-Json -Compress)"
+    $scrub = node $webProbe $DebugPort scrub-scale '159,81,149,83,117,159' | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0 -or -not $scrub.scrubbed -or $scrub.blankSamples -ne 0 -or $scrub.finalLabel -ne '159%') {
+        throw "Rapid reversal scale scrub lost render continuity: $($scrub | ConvertTo-Json -Compress)"
+    }
+
+    $settingsPath = Join-Path $testRoot 'Data\scale-smoke-user\settings.json'
+    for ($attempt = 0; $attempt -lt 40 -and -not (Test-Path -LiteralPath $settingsPath); $attempt++) {
+        Start-Sleep -Milliseconds 100
+    }
+    $saved = Get-Content -Raw -LiteralPath $settingsPath | ConvertFrom-Json
+    if ([Math]::Abs([double]$saved.Appearance.PanelScale - 1.59) -gt 0.0001) {
+        throw "The final committed scale was not persisted exactly once at the settled value: $($saved.Appearance.PanelScale)"
     }
 
     [pscustomobject]@{
         Status = 'passed'
         Before = "$($before.Width)x$($before.Height)"
-        After = "$($after.Width)x$($after.Height)"
-        ScaleLabel = $scale.label
-        UpdateStatus = $update.statusClass
+        SettingsHome = $homeResult.returned
+        Samples = $observed
+        RapidReversalSamples = $scrub.samples.Count
+        BlankSamples = $scrub.blankSamples
+        FinalScale = $saved.Appearance.PanelScale
     } | ConvertTo-Json -Compress
 }
 finally {
@@ -82,6 +103,7 @@ finally {
         Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
     }
     $env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $previousDataRoot
+    $env:HUAHAI_CLIPBOARD_USER_KEY = $previousUserKey
     $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = $previousArguments
     $resolvedTestRoot = [IO.Path]::GetFullPath($testRoot)
     if ($resolvedTestRoot.StartsWith($tempBase, [StringComparison]::OrdinalIgnoreCase) -and

@@ -69,5 +69,5 @@ test('production shell exposes a hide-to-background button beside settings', () 
   assert.ok(minimizeIndex < settingsIndex);
   assert.match(toolbar, /id="minimizeButton"[^>]*title="隐藏到后台"/);
   assert.match(html, /hhQ\('#minimizeButton'\)\.onclick=hidePanel/);
-  assert.match(html, /\.toolbar\{[^}]*grid-template-columns:minmax\(0,1fr\) 38px 38px/);
+  assert.match(html, /\.toolbar\{[^}]*grid-template-columns:minmax\(0,1fr\) 42px 42px/);
 });

@@ -7,8 +7,10 @@ $ErrorActionPreference = 'Stop'
 $resolvedExe = (Resolve-Path -LiteralPath $ExePath).Path
 $tempBase = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $testRoot = Join-Path $tempBase ('HuahaiClipboard.GlobalSummon.' + [guid]::NewGuid().ToString('N'))
-$dataRoot = Join-Path $testRoot 'HuahaiClipboard'
+$testUserKey = 'global-summon-user'
+$dataRoot = Join-Path $testRoot "Data\$testUserKey"
 $previousDataRoot = $env:HUAHAI_CLIPBOARD_LOCALAPPDATA
+$previousUserKey = $env:HUAHAI_CLIPBOARD_USER_KEY
 $process = $null
 
 Add-Type @'
@@ -104,6 +106,7 @@ try {
     }
 
     $env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $testRoot
+    $env:HUAHAI_CLIPBOARD_USER_KEY = $testUserKey
     $process = Start-Process -FilePath $resolvedExe -ArgumentList '--background' -WorkingDirectory (Split-Path $resolvedExe) -PassThru
     $handle = [IntPtr]::Zero
     for ($attempt = 0; $attempt -lt 60; $attempt++) {
@@ -158,6 +161,7 @@ finally {
         Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
     }
     $env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $previousDataRoot
+    $env:HUAHAI_CLIPBOARD_USER_KEY = $previousUserKey
     $resolvedTestRoot = [IO.Path]::GetFullPath($testRoot)
     if ($resolvedTestRoot.StartsWith($tempBase, [StringComparison]::OrdinalIgnoreCase) -and
         (Split-Path -Leaf $resolvedTestRoot) -match '^HuahaiClipboard\.GlobalSummon\.[0-9a-f]{32}$') {

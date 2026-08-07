@@ -20,6 +20,8 @@ test('settings gear has one live entry and every settings page shares a return p
   assert.match(html, /hhQ\('#settingsButton'\)\.onclick=\(\)=>openSettings\('appearance'\)/);
   assert.equal(count('id="backButton"'), 1);
   assert.match(html, /hhQ\('#backButton'\)\.onclick=\(\)=>closeSettings\(\)/);
+  assert.equal(count('id="settingsHome"'), 1);
+  assert.match(html, /hhQ\('#settingsHome'\)\.onclick=\(\)=>closeSettings\(\)/);
 
   for (const page of ['appearance', 'motion', 'input', 'storage', 'system', 'about']) {
     assert.match(html, new RegExp(`class="nav-button(?: active)?" data-page="${page}"`), `${page} nav`);
@@ -29,14 +31,15 @@ test('settings gear has one live entry and every settings page shares a return p
 
 test('appearance page exposes proportional panel scaling and a one-click reset', () => {
   assert.equal(count('id="scaleRange"'), 1);
-  assert.match(html, /id="scaleRange"[^>]*min="80"[^>]*max="160"[^>]*step="5"[^>]*value="100"/);
+  assert.match(html, /id="scaleRange"[^>]*min="80"[^>]*max="160"[^>]*step="1"[^>]*value="100"/);
   assert.equal(count('id="scaleValue"'), 1);
   assert.equal(count('id="resetScale"'), 1);
   assert.equal(count('id="resizeHandle"'), 1);
   assert.match(html, /hhQ\('#scaleRange'\)\.oninput=/);
   assert.match(html, /hhQ\('#resetScale'\)\.onclick=/);
-  assert.match(html, /window\.HuahaiHostScale\.clampPanelScale/);
-  assert.match(html, /postNative\('setPanelScale'/);
+  assert.match(html, /window\.HuahaiPanelScale\.createController/);
+  assert.match(html, /postNative\('previewPanelScale'/);
+  assert.match(html, /postNative\('commitPanelScale'/);
 });
 
 test('about page uses the production update bridge while keeping preview simulation offline', () => {
@@ -45,7 +48,7 @@ test('about page uses the production update bridge while keeping preview simulat
   assert.equal(count('id="updateStatus"'), 1);
   assert.equal(count('id="releaseButton"'), 1);
   assert.equal(count('id="installUpdateButton"'), 1);
-  assert.match(html, /版本 1\.1\.2/);
+  assert.match(html, /版本 1\.1\.5/);
   assert.match(html, /postNative\('setCheckUpdatesOnStartup'/);
   assert.match(html, /postNative\('checkUpdate'/);
   assert.match(html, /postNative\('installUpdate'/);
@@ -88,7 +91,7 @@ test('every WebView-visible contract control is tagged on the real product shell
   const visibleControls = interactionContract.controls.filter(control =>
     control.fixture.route.startsWith('https://app.huahai.local/Web/product-shell.html'),
   );
-  assert.equal(visibleControls.length, 54);
+  assert.equal(visibleControls.length, 55);
   assert.match(interactionModule, /data-apd-control-id/);
   for (const control of visibleControls) {
     assert.ok((html + interactionModule).includes(`'${control.control_id}'`), control.control_id);

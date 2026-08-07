@@ -34,6 +34,7 @@ $requiredReleaseFiles = @(
     'App.xbf',
     'Presentation\Windows\CursorPanelWindow.xbf',
     'Assets\Web\product-shell.html',
+    'Assets\Web\panel-scale.js',
     'WebView2Loader.dll',
     'Microsoft.WindowsAppRuntime.Bootstrap.dll'
 )
@@ -45,11 +46,9 @@ foreach ($relativePath in $requiredReleaseFiles) {
 if (-not (Test-Path -LiteralPath $csc)) { throw "C# compiler was not found: $csc" }
 if (-not (Test-Path -LiteralPath $referenceRoot)) { throw ".NET Framework 4.8 reference assemblies were not found: $referenceRoot" }
 $dotNetInstallers = @(Get-ChildItem -LiteralPath $prerequisiteRoot -Filter 'windowsdesktop-runtime-8.*-win-x64.exe' -File -ErrorAction SilentlyContinue)
-$windowsAppRuntimeInstallers = @(Get-ChildItem -LiteralPath $prerequisiteRoot -Filter 'WindowsAppRuntimeInstall-x64.exe' -File -ErrorAction SilentlyContinue)
 $webView2RuntimeInstallers = @(Get-ChildItem -LiteralPath $prerequisiteRoot -Filter 'MicrosoftEdgeWebView2RuntimeInstallerX64.exe' -File -ErrorAction SilentlyContinue)
 $prerequisiteManifestPath = Join-Path $prerequisiteRoot 'prerequisites.json'
 if ($dotNetInstallers.Count -ne 1) { throw 'Prerequisite directory must contain exactly one .NET 8 x64 Windows Desktop Runtime installer.' }
-if ($windowsAppRuntimeInstallers.Count -ne 1) { throw 'Prerequisite directory must contain exactly one Windows App Runtime 1.7 x64 installer.' }
 if ($webView2RuntimeInstallers.Count -ne 1) { throw 'Prerequisite directory must contain exactly one Evergreen WebView2 Runtime x64 installer.' }
 if (-not (Test-Path -LiteralPath $prerequisiteManifestPath)) { throw 'Prerequisite directory is missing prerequisites.json.' }
 
@@ -76,13 +75,6 @@ $dotNetHash = (Get-FileHash -Algorithm SHA512 -LiteralPath $dotNetInstallers[0].
 if ($dotNetHash -ne ([string]$prerequisiteManifest.DotNet.Sha512).ToLowerInvariant()) {
     throw 'The .NET prerequisite SHA-512 does not match prerequisites.json.'
 }
-if ($prerequisiteManifest.WindowsAppRuntime.FileName -ne $windowsAppRuntimeInstallers[0].Name) {
-    throw 'The Windows App Runtime prerequisite file name does not match prerequisites.json.'
-}
-$windowsAppRuntimeHash = (Get-FileHash -Algorithm SHA512 -LiteralPath $windowsAppRuntimeInstallers[0].FullName).Hash.ToLowerInvariant()
-if ($windowsAppRuntimeHash -ne ([string]$prerequisiteManifest.WindowsAppRuntime.Sha512).ToLowerInvariant()) {
-    throw 'The Windows App Runtime prerequisite SHA-512 does not match prerequisites.json.'
-}
 if ($prerequisiteManifest.WebView2Runtime.FileName -ne $webView2RuntimeInstallers[0].Name) {
     throw 'The Evergreen WebView2 Runtime prerequisite file name does not match prerequisites.json.'
 }
@@ -92,22 +84,28 @@ if ($webView2RuntimeHash -ne ([string]$prerequisiteManifest.WebView2Runtime.Sha5
 }
 
 Assert-MicrosoftAuthenticodeSignature -Path $dotNetInstallers[0].FullName -DisplayName '.NET'
-Assert-MicrosoftAuthenticodeSignature -Path $windowsAppRuntimeInstallers[0].FullName -DisplayName 'Windows App Runtime'
 Assert-MicrosoftAuthenticodeSignature -Path $webView2RuntimeInstallers[0].FullName -DisplayName 'Evergreen WebView2 Runtime'
 
 try {
     New-Item -ItemType Directory -Path $payloadRoot -Force | Out-Null
+    $excludedPayloadNames = @(
+        '.huahai-install-owner',
+        'Data',
+        'prerequisites',
+        'Uninstall.ps1',
+        'UninstallPolicy.ps1'
+    )
     Get-ChildItem -LiteralPath $publishRoot -Force | ForEach-Object {
-        Copy-Item -LiteralPath $_.FullName -Destination $payloadRoot -Recurse -Force
+        if ($excludedPayloadNames -notcontains $_.Name -and $_.Name -notlike '*.WebView2') {
+            Copy-Item -LiteralPath $_.FullName -Destination $payloadRoot -Recurse -Force
+        }
     }
 
-    Rename-Item -LiteralPath (Join-Path $payloadRoot 'HuahaiClipboard.App.exe') -NewName 'HuahaiClipboard.exe'
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Uninstall.ps1') -Destination (Join-Path $payloadRoot 'Uninstall.ps1') -Force
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'UninstallPolicy.ps1') -Destination (Join-Path $payloadRoot 'UninstallPolicy.ps1') -Force
     $payloadPrerequisites = Join-Path $payloadRoot 'prerequisites'
     New-Item -ItemType Directory -Path $payloadPrerequisites -Force | Out-Null
     Copy-Item -LiteralPath $dotNetInstallers[0].FullName -Destination $payloadPrerequisites -Force
-    Copy-Item -LiteralPath $windowsAppRuntimeInstallers[0].FullName -Destination $payloadPrerequisites -Force
     Copy-Item -LiteralPath $webView2RuntimeInstallers[0].FullName -Destination $payloadPrerequisites -Force
 
     Compress-Archive -Path (Join-Path $payloadRoot '*') -DestinationPath $payloadZip -CompressionLevel Optimal
@@ -129,7 +127,9 @@ try {
         (Join-Path $PSScriptRoot 'PrerequisitePolicy.cs'),
         (Join-Path $PSScriptRoot 'InstallLocationPolicy.cs'),
         (Join-Path $PSScriptRoot 'InstallTargetPolicy.cs'),
+        (Join-Path $PSScriptRoot 'InstallDataPreserver.cs'),
         (Join-Path $PSScriptRoot 'PostInstallLaunchPolicy.cs'),
+        (Join-Path $PSScriptRoot 'InstallerLogPolicy.cs'),
         (Join-Path $PSScriptRoot 'InstallSwapTransaction.cs'),
         (Join-Path $PSScriptRoot 'Bootstrapper.cs')
     )

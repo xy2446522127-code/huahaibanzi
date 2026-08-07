@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "contract_revision": "huahai-webview-1.1.2-interactions-v3",
+  "contract_revision": "huahai-webview-1.1.5-interactions-v1",
   "controls": [
     {
       "control_id": "panel.search",
@@ -1092,6 +1092,50 @@
       "state_contract": {
         "loading": "需要等待时显示忙碌状态并阻止重复提交。",
         "success": "设置关闭并恢复面板尺寸，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "window-visibility"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "settings.home",
+      "test_id": "webview.settings.home",
+      "disposition": "interactive",
+      "user_intent": "点击狐狸图标从任意设置页返回主面板",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "panel-visible"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "设置关闭并恢复主面板尺寸；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "设置关闭并恢复主面板尺寸，界面状态与保存结果保持一致。",
         "error": "失败时保留原状态并显示可读错误信息。",
         "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },

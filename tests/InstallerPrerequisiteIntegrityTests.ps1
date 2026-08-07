@@ -4,11 +4,9 @@ $projectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $fixtureParent = [System.IO.Path]::GetFullPath((Join-Path ([System.IO.Path]::GetTempPath()) 'HuahaiClipboard.Tests'))
 $fixtureRoot = Join-Path $fixtureParent ('installer-integrity-fixture-' + [guid]::NewGuid().ToString('N'))
 $dotNetReleaseRoot = Join-Path $fixtureRoot 'dotnet-release'
-$windowsReleaseRoot = Join-Path $fixtureRoot 'windows-release'
 $webViewReleaseRoot = Join-Path $fixtureRoot 'webview-release'
 $unsignedReleaseRoot = Join-Path $fixtureRoot 'unsigned-release'
 $dotNetPrerequisiteRoot = Join-Path $fixtureRoot 'dotnet-prerequisites'
-$windowsPrerequisiteRoot = Join-Path $fixtureRoot 'windows-prerequisites'
 $webViewPrerequisiteRoot = Join-Path $fixtureRoot 'webview-prerequisites'
 $unsignedPrerequisiteRoot = Join-Path $fixtureRoot 'unsigned-prerequisites'
 $probeOutput = Join-Path $fixtureRoot 'probe.exe'
@@ -30,12 +28,13 @@ $requiredReleasePaths = @(
     'App.xbf'
     'Presentation\Windows\CursorPanelWindow.xbf'
     'Assets\Web\product-shell.html'
+    'Assets\Web\panel-scale.js'
     'WebView2Loader.dll'
     'Microsoft.WindowsAppRuntime.Bootstrap.dll'
 )
 
 # 构造完整应用目录和被替换的前置包，验证构建器检查内容而不是文件名。
-foreach ($releaseRoot in @($dotNetReleaseRoot, $windowsReleaseRoot, $webViewReleaseRoot, $unsignedReleaseRoot)) {
+foreach ($releaseRoot in @($dotNetReleaseRoot, $webViewReleaseRoot, $unsignedReleaseRoot)) {
     foreach ($relativePath in $requiredReleasePaths) {
         $target = Join-Path $releaseRoot $relativePath
         New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
@@ -66,7 +65,6 @@ function New-PrerequisiteFixture([string]$root, [ValidateSet('none', 'dotnet', '
 }
 
 New-PrerequisiteFixture $dotNetPrerequisiteRoot 'dotnet'
-New-PrerequisiteFixture $windowsPrerequisiteRoot 'windows'
 New-PrerequisiteFixture $webViewPrerequisiteRoot 'webview'
 New-PrerequisiteFixture $unsignedPrerequisiteRoot 'none'
 
@@ -78,16 +76,6 @@ try {
 }
 if ($dotNetFailure -notmatch '\.NET prerequisite SHA-512 does not match') {
     throw "Unexpected .NET prerequisite integrity result: $dotNetFailure"
-}
-
-$windowsFailure = $null
-try {
-    & $buildScript -PublishRoot $windowsReleaseRoot -OutputPath $probeOutput -PrerequisiteRoot $windowsPrerequisiteRoot
-} catch {
-    $windowsFailure = $_.Exception.Message
-}
-if ($windowsFailure -notmatch 'Windows App Runtime prerequisite SHA-512 does not match') {
-    throw "Unexpected Windows App Runtime prerequisite integrity result: $windowsFailure"
 }
 
 $webViewFailure = $null
@@ -113,7 +101,6 @@ if ($unsignedFailure -notmatch '\.NET prerequisite does not have a valid Microso
 [pscustomobject]@{
     Status = 'passed'
     DotNetHash = $dotNetFailure
-    WindowsAppRuntimeHash = $windowsFailure
     WebView2RuntimeHash = $webViewFailure
     UnsignedMicrosoftInstaller = $unsignedFailure
 } | ConvertTo-Json -Compress

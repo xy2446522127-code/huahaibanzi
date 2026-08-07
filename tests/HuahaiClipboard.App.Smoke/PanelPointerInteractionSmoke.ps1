@@ -9,8 +9,10 @@ $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $webProbe = Join-Path $projectRoot 'tests\HuahaiClipboard.App.Smoke\WebViewRecordActionsSmoke.cjs'
 $tempBase = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $testRoot = Join-Path $tempBase ('HuahaiClipboard.PointerSmoke.' + [guid]::NewGuid().ToString('N'))
+$testUserKey = 'pointer-smoke-user'
 $previousArguments = $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS
 $previousDataRoot = $env:HUAHAI_CLIPBOARD_LOCALAPPDATA
+$previousUserKey = $env:HUAHAI_CLIPBOARD_USER_KEY
 
 Add-Type @'
 using System;
@@ -71,6 +73,9 @@ function Invoke-LeftDrag([int]$FromX, [int]$FromY, [int]$ToX, [int]$ToY, [IntPtr
     [HuahaiPointerInteractionProbe]::SetCursorPos($FromX, $FromY) | Out-Null
     Start-Sleep -Milliseconds 120
     [HuahaiPointerInteractionProbe]::mouse_event($leftDown, 0, 0, 0, [UIntPtr]::Zero)
+    # Give the WebView-to-WinUI begin-drag message one sub-100ms response window
+    # before the synthetic input stream starts producing 12ms samples.
+    Start-Sleep -Milliseconds 80
     $samples = @()
     $watch = [Diagnostics.Stopwatch]::StartNew()
     for ($step = 1; $step -le 30; $step++) {
@@ -91,6 +96,7 @@ function Invoke-LeftDrag([int]$FromX, [int]$FromY, [int]$ToX, [int]$ToY, [IntPtr
 $originalCursor = [HuahaiPointerInteractionProbe+Point]::new()
 [HuahaiPointerInteractionProbe]::GetCursorPos([ref]$originalCursor) | Out-Null
 $env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $testRoot
+$env:HUAHAI_CLIPBOARD_USER_KEY = $testUserKey
 $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$DebugPort"
 $process = Start-Process -FilePath $resolvedExe -ArgumentList '--background' -WorkingDirectory (Split-Path $resolvedExe) -PassThru
 
@@ -145,24 +151,33 @@ try {
     Start-Sleep -Milliseconds 700
     $afterMove = Get-WindowRectValue $handle
     if ([Math]::Abs($afterMove.Left - $before.Left) -lt 80 -or [Math]::Abs($afterMove.Top - $before.Top) -lt 35) {
-        $placementFile = Join-Path $testRoot 'HuahaiClipboard\window-positions.json'
+        $placementFile = Join-Path $testRoot "Data\$testUserKey\window-positions.json"
         $pointerLog = node $webProbe $DebugPort read-pointer-log | ConvertFrom-Json
         $bridgeStatus = node $webProbe $DebugPort read-status | ConvertFrom-Json
         throw "Dragging the visible panel header did not move the native window. Before=$($before.Left),$($before.Top) After=$($afterMove.Left),$($afterMove.Top) BridgeSavedPlacement=$(Test-Path -LiteralPath $placementFile) BridgeStatus=$($bridgeStatus | ConvertTo-Json -Compress) HitTag=$($hitTest.tag) HitId=$($hitTest.id) HitClasses=$($hitTest.classes) HitInteractive=$($hitTest.interactive) PointerEvents=$($pointerLog.events | ConvertTo-Json -Compress)"
     }
 
-    $uniquePositions = @($moveSamples | ForEach-Object { "$($_.Left),$($_.Top)" } | Select-Object -Unique).Count
+    $lastMotionIndex = 0
+    for ($index = 1; $index -lt $moveSamples.Count; $index++) {
+        if ($moveSamples[$index].Left -ne $moveSamples[$index - 1].Left -or
+            $moveSamples[$index].Top -ne $moveSamples[$index - 1].Top) {
+            $lastMotionIndex = $index
+        }
+    }
+    $motionSamples = @($moveSamples[0..$lastMotionIndex])
+    $trailingSettledSamples = $moveSamples.Count - $motionSamples.Count
+    $uniquePositions = @($motionSamples | ForEach-Object { "$($_.Left),$($_.Top)" } | Select-Object -Unique).Count
     $longestStall = 0
     $currentStall = 0
     $previousPosition = $null
-    foreach ($sample in $moveSamples) {
+    foreach ($sample in $motionSamples) {
         $position = "$($sample.Left),$($sample.Top)"
         if ($position -eq $previousPosition) { $currentStall++ } else { $currentStall = 0 }
         $longestStall = [Math]::Max($longestStall, $currentStall)
         $previousPosition = $position
     }
     if ($uniquePositions -lt 15 -or $longestStall -gt 4) {
-        throw "Panel dragging was not visually continuous. UniquePositions=$uniquePositions/30 LongestStallSamples=$longestStall Track=$($moveSamples | ConvertTo-Json -Compress)"
+        throw "Panel dragging was not visually continuous. UniquePositions=$uniquePositions/30 LongestStallSamples=$longestStall TrailingSettledSamples=$trailingSettledSamples Track=$($moveSamples | ConvertTo-Json -Compress)"
     }
 
     $resizeGrab = node $webProbe $DebugPort resize-grab-point | ConvertFrom-Json
@@ -201,6 +216,7 @@ try {
         PositionAfter = "$($afterMove.Left),$($afterMove.Top)"
         DragUniquePositions = $uniquePositions
         DragLongestStallSamples = $longestStall
+        DragTrailingSettledSamples = $trailingSettledSamples
         SizeBefore = "$($afterMove.Width)x$($afterMove.Height)"
         SizeAfter = "$($afterScale.Width)x$($afterScale.Height)"
     } | ConvertTo-Json -Compress
@@ -212,6 +228,7 @@ finally {
         Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
     }
     $env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $previousDataRoot
+    $env:HUAHAI_CLIPBOARD_USER_KEY = $previousUserKey
     $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = $previousArguments
     $resolvedTestRoot = [IO.Path]::GetFullPath($testRoot)
     if ($resolvedTestRoot.StartsWith($tempBase, [StringComparison]::OrdinalIgnoreCase) -and

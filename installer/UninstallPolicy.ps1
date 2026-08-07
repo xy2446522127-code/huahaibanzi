@@ -43,8 +43,11 @@ function Test-HuahaiRunValueTargetsInstallRoot {
     if (-not $match.Success) { return $false }
 
     $actual = [System.IO.Path]::GetFullPath($match.Groups['path'].Value)
-    $expected = [System.IO.Path]::GetFullPath((Join-Path $InstallRoot 'HuahaiClipboard.exe'))
-    return [string]::Equals($actual, $expected, [System.StringComparison]::OrdinalIgnoreCase)
+    $expectedNames = @('HuahaiClipboard.App.exe', 'HuahaiClipboard.exe')
+    return $null -ne ($expectedNames | Where-Object {
+        $expected = [System.IO.Path]::GetFullPath((Join-Path $InstallRoot $_))
+        [string]::Equals($actual, $expected, [System.StringComparison]::OrdinalIgnoreCase)
+    } | Select-Object -First 1)
 }
 
 # 缺失的 Run 键或值按未配置处理，避免静默卸载因非终止错误中断。
@@ -59,4 +62,18 @@ function Get-HuahaiRunValue {
     $property = $properties.PSObject.Properties[$Name]
     if ($null -eq $property) { return $null }
     return [string]$property.Value
+}
+
+function Get-HuahaiRemovalTargets {
+    param(
+        [Parameter(Mandatory = $true)][string]$InstallRoot,
+        [switch]$RemoveData
+    )
+
+    $resolvedRoot = [IO.Path]::GetFullPath($InstallRoot).TrimEnd('\')
+    if (-not (Test-Path -LiteralPath $resolvedRoot -PathType Container)) { return @() }
+
+    return @(Get-ChildItem -LiteralPath $resolvedRoot -Force | Where-Object {
+        $RemoveData -or -not ($_.PSIsContainer -and $_.Name -eq 'Data')
+    } | ForEach-Object { $_.FullName })
 }

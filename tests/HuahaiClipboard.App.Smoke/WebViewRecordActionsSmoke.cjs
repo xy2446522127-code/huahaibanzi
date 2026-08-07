@@ -7,9 +7,14 @@ const value = process.argv[4] || '';
 if (!Number.isInteger(port) || port <= 0) throw new Error('A valid WebView2 debugging port is required.');
 
 async function connect() {
-  const targets = await fetch(`http://127.0.0.1:${port}/json`).then(response => response.json());
-  const page = targets.find(target => target.type === 'page');
-  if (!page) throw new Error('No WebView2 page target was found.');
+  let page;
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const targets = await fetch(`http://127.0.0.1:${port}/json`).then(response => response.json());
+    page = targets.find(target => target.type === 'page' && String(target.url || '').startsWith('https://app.huahai.local/Web/product-shell.html'));
+    if (page) break;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  if (!page) throw new Error('The Huahai product-shell WebView2 target was not ready.');
   const socket = new WebSocket(page.webSocketDebuggerUrl);
   const pending = new Map();
   let nextId = 1;
@@ -54,6 +59,21 @@ async function run() {
           await new Promise(resolve => setTimeout(resolve,100));
         }
         throw new Error('settings surface timeout');
+      })()`
+    : operation === 'settings-home'
+    ? `(async () => {
+        document.querySelector('#settingsButton')?.click();
+        await new Promise(resolve=>setTimeout(resolve,50));
+        document.querySelector('.nav-button[data-page="about"]')?.click();
+        await new Promise(resolve=>setTimeout(resolve,50));
+        const home=document.querySelector('#settingsHome');
+        if (!home) throw new Error('settings home missing');
+        home.click();
+        for (let i=0;i<50;i++) {
+          if (!document.querySelector('#glassPanel')?.classList.contains('settings-mode') && location.hash==='#panel') return {returned:true,hash:location.hash};
+          await new Promise(resolve=>setTimeout(resolve,50));
+        }
+        throw new Error('settings home return timeout');
       })()`
     : operation === 'clear-all'
     ? `(async () => {
@@ -124,12 +144,31 @@ async function run() {
         if (!input) throw new Error('scale control missing');
         input.value=String(Math.round(target*100));
         input.dispatchEvent(new Event('input',{bubbles:true}));
+        await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        input.dispatchEvent(new Event('change',{bubbles:true}));
         for (let i=0;i<50;i++) {
           const actual=Number(getComputedStyle(document.documentElement).getPropertyValue('--panel-scale'));
           if (Math.abs(actual-target)<0.001) return { scaled:true, target, actual, label:document.querySelector('#scaleValue')?.textContent || '' };
           await new Promise(resolve=>setTimeout(resolve,100));
         }
         throw new Error('scale state timeout');
+      })()`
+    : operation === 'scrub-scale'
+    ? `(async () => {
+        const sequence=${quoted}.split(',').map(Number);
+        const input=document.querySelector('#scaleRange');
+        const panel=document.querySelector('#glassPanel');
+        if (!input || !panel || sequence.some(value=>!Number.isInteger(value))) throw new Error('invalid scale scrub');
+        const samples=[];
+        for (const percent of sequence) {
+          input.value=String(percent);
+          input.dispatchEvent(new Event('input',{bubbles:true}));
+          await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+          const rect=panel.getBoundingClientRect();
+          samples.push({percent,label:document.querySelector('#scaleValue')?.textContent||'',width:rect.width,height:rect.height,visible:getComputedStyle(panel).visibility!=='hidden'&&getComputedStyle(panel).display!=='none',hasContent:Boolean(panel.textContent.trim())});
+        }
+        input.dispatchEvent(new Event('change',{bubbles:true}));
+        return {scrubbed:true,samples,blankSamples:samples.filter(sample=>!sample.visible||!sample.hasContent||sample.width<=0||sample.height<=0).length,finalLabel:document.querySelector('#scaleValue')?.textContent||''};
       })()`
     : operation === 'check-update'
     ? `(async () => {

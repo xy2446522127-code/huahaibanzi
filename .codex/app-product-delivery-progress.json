@@ -1,71 +1,71 @@
 {
   "version": 2,
-  "scope_revision": 6,
+  "scope_revision": 7,
   "product_scale": "medium",
   "change_scale": "medium",
   "risk_level": "high",
   "runtime_topology": "desktop-first",
   "delivery_maturity": "release",
-  "delivery_target": "release",
+  "delivery_target": "local-installed-release",
   "execution_mode": "autonomous_implementation",
   "core_percent": 100.0,
-  "overall_percent": 90.0,
-  "current_milestone": "v1-1-2-release",
+  "overall_percent": 100.0,
+  "current_milestone": "v1-1-5-local-delivery",
   "blockers": [],
   "milestones": [
     {
       "id": "webview-carrier",
       "label": "Approved WebView liquid-glass UI remains the formal desktop carrier",
-      "weight": 25,
+      "weight": 20,
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": "Installed v1.1.2 panel and settings captures preserve the approved WebView liquid-glass shell; source/build/installed Assets manifests match across 10 files."
+      "evidence": "Current source and v1.1.5 build Assets match across 11 files; build carrier gate passed, Web interaction passed 55/55, and composed desktop interaction passed 60/60 with zero unexplained controls or console errors."
     },
     {
-      "id": "production-bridge",
-      "label": "Existing clipboard, history, settings, summon and tray bridge remains connected",
-      "weight": 30,
+      "id": "install-root-data",
+      "label": "Per-user clipboard data lives beneath the chosen install root",
+      "weight": 20,
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": "Web 51/51 and desktop 56/56 interaction contracts pass; installed clipboard, hide, scale, DPI drag, global input and tray tests pass."
+      "evidence": "The final installed app wrote settings to <install-root>/Data/<Windows-SID>/settings.json without overrides; the old LocalAppData path was absent and transactional reinstall preserved all Data files by SHA-256."
     },
     {
-      "id": "installer-target-safety",
-      "label": "Installer cannot overwrite unrelated or data-overlapping directories",
-      "weight": 10,
+      "id": "fluid-scale-and-navigation",
+      "label": "Scale is 80-160 percent at one-percent precision with preview/commit separation and settings-home navigation",
+      "weight": 20,
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": "InstallerTargetOwnershipPolicyTests passed for absent, empty, foreign, legacy-owned, mismatch, overlap and unsafe-name cases."
+      "evidence": "Installed samples 81, 83, 117, 149 and 159 percent passed; rapid reversal produced zero blank samples, final persistence was exact, and the settings fox returned from a nested page to #panel."
     },
     {
-      "id": "automatic-update",
-      "label": "In-app update downloads, verifies, installs, rolls back and restarts",
-      "weight": 15,
+      "id": "installer-runtime-and-identity",
+      "label": "Single EXE installer carries required runtime policy and preserves WinUI resource identity",
+      "weight": 20,
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": "Download size/SHA-256 and launcher tests pass; a running F-drive installation upgraded in place, restarted in background, and preserved 68/68 user-data files exactly."
+      "evidence": "The self-signed installer preserves HuahaiClipboard.App.exe with PRI/XBF resources, excludes 229 generated WebView2 profile entries, bundles Windows App SDK, auto-detects .NET 8/WebView2, and its Windows PowerShell 5.1 uninstaller parses and removes data cleanly."
     },
     {
       "id": "full-feature-audit",
-      "label": "Approved production feature matrix passes on installed Windows x64 app",
+      "label": "Affected production and packaging feature matrix passes",
       "weight": 10,
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": "Core 94 tests, all Node tests, tray test, installer policy matrix and eight installed Windows x64 smokes pass."
+      "evidence": ".NET 156 tests, Node 57 tests, installer 19 scripts, Release x64 MSBuild, clipboard, global summon, topmost, drag/resize, hide/background, and installed startup evidence passed."
     },
     {
-      "id": "v1-1-2-release",
-      "label": "v1.1.2 installer, F-drive upgrade, public release sync and runtime cleanup",
+      "id": "v1-1-5-local-delivery",
+      "label": "v1.1.5 is cleanly installed to the authorized F drive and a signed installer is ready to share",
       "weight": 10,
       "core": false,
-      "status": "pending",
-      "blocker": "Public Git push and GitHub Release publication remain.",
-      "evidence": ""
+      "status": "verified",
+      "blocker": "",
+      "evidence": "F-drive clean uninstall/reinstall completed, current Data and registration are present, installer SHA-256 is ECB05B4F7E83FFFC29F2CFCB184466BBC4275ED86CA0E4FE6DA9753E34160526, and no push or GitHub Release was performed."
     }
   ],
   "scope_changes": [
@@ -75,8 +75,12 @@
     },
     {
       "revision": 6,
-      "reason": "User requested unattended full tuning; automatic update and exhaustive release verification expand the v1.1.1 scope and raise installer/update risk to high."
+      "reason": "User requested automatic update and exhaustive release verification, expanding installer/update risk."
+    },
+    {
+      "revision": 7,
+      "reason": "User required self-contained dependency handling, install-root per-user data, continuous one-percent scaling without blank frames, global fox navigation, full local data removal, and clean F-drive reinstall."
     }
   ],
-  "updated_at": "2026-08-07T09:55:00+08:00"
+  "updated_at": "2026-08-08T01:08:00+08:00"
 }

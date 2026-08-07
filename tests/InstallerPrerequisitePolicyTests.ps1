@@ -24,10 +24,12 @@ internal static class PolicyProbe
         Assert(PrerequisitePolicy.NeedsWebView2Runtime(new string[0]), "missing WebView2 runtime must install");
         Assert(PrerequisitePolicy.NeedsWebView2Runtime(new[] { "108.0.0.0" }), "obsolete WebView2 runtime must install");
         Assert(!PrerequisitePolicy.NeedsWebView2Runtime(new[] { "109.0.1518.0", "140.0.0.0" }), "supported WebView2 runtime must skip");
-        Assert(PrerequisitePolicy.IsAcceptedInstallerExitCode(0), "exit 0 must pass");
-        Assert(PrerequisitePolicy.IsAcceptedInstallerExitCode(1638), "already installed must pass");
-        Assert(PrerequisitePolicy.IsAcceptedInstallerExitCode(3010), "restart required must pass");
-        Assert(!PrerequisitePolicy.IsAcceptedInstallerExitCode(1602), "user cancellation must fail");
+        Assert(PrerequisitePolicy.ClassifyInstallerExitCode(0) == PrerequisiteInstallOutcome.Succeeded, "exit 0 must pass without restart");
+        Assert(PrerequisitePolicy.ClassifyInstallerExitCode(1638) == PrerequisiteInstallOutcome.Succeeded, "already installed must pass without restart");
+        Assert(PrerequisitePolicy.ClassifyInstallerExitCode(3010) == PrerequisiteInstallOutcome.RestartRequired, "exit 3010 must gate application launch until restart");
+        Assert(PrerequisitePolicy.ClassifyInstallerExitCode(1602) == PrerequisiteInstallOutcome.Failed, "user cancellation must fail");
+        Assert(PrerequisitePolicy.HasMissingRuntime(true, false), "a missing required runtime must fail post-install verification");
+        Assert(!PrerequisitePolicy.HasMissingRuntime(false, false), "post-install verification must pass only when every runtime is present");
         Console.WriteLine("passed");
         return 0;
     }

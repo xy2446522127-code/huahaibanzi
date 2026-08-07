@@ -37,7 +37,7 @@ dist/HuahaiClipboard-Setup.exe
 默认数据目录：
 
 ```text
-%LOCALAPPDATA%\HuahaiClipboard
+<安装目录>\Data\<Windows 用户 SID>
 ```
 
 设置、历史、图片缓存和窗口位置只保存在本机。文本历史使用当前 Windows 用户范围的 DPAPI 保护。卸载程序只删除安装目录、快捷方式和本应用拥有的开机启动项，默认保留上述用户数据。
@@ -52,12 +52,12 @@ dotnet test tests\HuahaiClipboard.Core.Tests\HuahaiClipboard.Core.Tests.csproj -
 & 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe' `
   src\HuahaiClipboard.App\HuahaiClipboard.App.csproj `
   /t:Build /p:Configuration=Release /p:Platform=x64 `
-  /p:RuntimeIdentifier=win-x64 /p:SelfContained=false /p:Version=1.1.4 `
-  /p:OutDir="$PWD\dist\webview-build-1.1.4\" /restore /m
+  /p:RuntimeIdentifier=win-x64 /p:SelfContained=false /p:WindowsAppSDKSelfContained=true /p:Version=1.1.5 `
+  /p:OutDir="$PWD\dist\webview-build-1.1.5\" /restore /m
 
 .\installer\Fetch-Prerequisites.ps1 -Destination dist\prerequisites
 .\installer\Build-Installer.ps1 `
-  -PublishRoot dist\webview-build-1.1.4 `
+  -PublishRoot dist\webview-build-1.1.5 `
   -PrerequisiteRoot dist\prerequisites `
   -OutputPath dist\HuahaiClipboard-Setup.exe `
   -SigningThumbprint CD06B727BD8811C3B59CE0A4F9384D68EC7431C2

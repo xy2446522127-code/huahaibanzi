@@ -13,6 +13,15 @@ if ([PostInstallLaunchPolicy]::ArgumentsFor($true) -ne '--background') {
 if ($null -ne [PostInstallLaunchPolicy]::ArgumentsFor($false)) {
     throw 'Interactive installs must open the application normally.'
 }
+if ([PostInstallLaunchPolicy]::ShouldLaunch($false, $true)) {
+    throw 'A prerequisite exit code 3010 must prevent immediate application launch.'
+}
+if ([PostInstallLaunchPolicy]::ShouldLaunch($true, $false)) {
+    throw 'The explicit no-launch option must be respected.'
+}
+if (-not [PostInstallLaunchPolicy]::ShouldLaunch($false, $false)) {
+    throw 'A verified installation without a restart requirement must launch normally.'
+}
 
 [pscustomobject]@{ Status = 'passed'; Silent = '--background'; Interactive = $null } |
     ConvertTo-Json -Compress

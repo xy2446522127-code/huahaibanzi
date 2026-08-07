@@ -29,6 +29,7 @@ const definitions = [
   ['settings.nav.system', 'nav', '打开系统设置', '系统页面显示', 'click', 'settings-page-visible', 'system'],
   ['settings.nav.about', 'nav', '打开关于与更新设置', '关于与更新页面显示', 'click', 'settings-page-visible', 'about'],
   ['settings.back', 'nav', '从设置返回剪贴板面板', '设置关闭并恢复面板尺寸', 'click', 'settings-visible', 'appearance'],
+  ['settings.home', 'nav', '点击狐狸图标从任意设置页返回主面板', '设置关闭并恢复主面板尺寸', 'click', 'panel-visible', 'appearance'],
 
   ['theme.rose', 'appearance', '切换玫瑰紫主题', '玫瑰紫主题立即应用并保存', 'click', 'theme-applied'],
   ['theme.cobalt', 'appearance', '切换钴蓝主题', '钴蓝主题立即应用并保存', 'click', 'theme-applied'],
@@ -136,7 +137,7 @@ const controls = definitions.map(([controlId, group, intent, result, trigger, ex
 
 const contract = {
   version: 1,
-  contract_revision: 'huahai-webview-1.1.2-interactions-v3',
+  contract_revision: 'huahai-webview-1.1.5-interactions-v1',
   controls,
 };
 

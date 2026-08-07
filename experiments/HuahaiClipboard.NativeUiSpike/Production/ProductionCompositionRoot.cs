@@ -11,9 +11,8 @@ public sealed class ProductionCompositionRoot
     public ProductionCompositionRoot(string? localApplicationData = null)
     {
         DataLayout = new LocalDataLayout(
-            localApplicationData ??
-            Environment.GetEnvironmentVariable("HUAHAI_CLIPBOARD_LOCALAPPDATA") ??
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+            localApplicationData ?? LocalDataLayout.ResolveInstallRoot(),
+            LocalDataLayout.ResolveUserKey());
         var protector = new DpapiTextProtector();
         SettingsStore = new JsonSettingsStore(DataLayout.SettingsFile);
         HistorySource = new JsonClipboardHistorySource(DataLayout.HistoryFile, protector);

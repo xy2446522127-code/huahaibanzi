@@ -18,7 +18,12 @@ public sealed class CompositionRoot
 
     public CompositionRoot()
     {
-        dataLayout = new LocalDataLayout(LocalDataLayout.ResolveBaseDirectory());
+        dataLayout = new LocalDataLayout(
+            LocalDataLayout.ResolveInstallRoot(),
+            LocalDataLayout.ResolveUserKey());
+        LocalDataMigrator.MigrateIfNeeded(
+            dataLayout,
+            LocalDataLayout.ResolveLegacyDataDirectory());
         var protector = new DpapiTextProtector();
         settingsStore = new JsonSettingsStore(dataLayout.SettingsFile);
         historySource = new JsonClipboardHistorySource(

@@ -94,10 +94,10 @@ function interactionExpression(controlId) {
     if (id === 'panel.drag') { const panel = document.querySelector('#glassPanel'); const before = panel.getBoundingClientRect(); panel.setPointerCapture = () => {}; panel.releasePointerCapture = () => {}; const element = byId(id); element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 7, clientX: before.left + 80, clientY: before.top + 20 })); document.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 7, clientX: before.left + 20, clientY: before.top + 80 })); document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 7, clientX: before.left + 20, clientY: before.top + 80 })); const after = panel.getBoundingClientRect(); return Math.abs(after.left - before.left) > 10 || Math.abs(after.top - before.top) > 10; }
 
     if (id.startsWith('settings.nav.')) { const page = id.split('.').at(-1); click(id); await pause(0); return document.querySelector('.settings-page.active')?.dataset.page === page && location.hash === '#settings/' + page; }
-    if (id === 'settings.back') { click(id); await pause(0); return !document.querySelector('#glassPanel').classList.contains('settings-mode') && location.hash === '#panel'; }
+    if (id === 'settings.back' || id === 'settings.home') { click(id); await pause(0); return !document.querySelector('#glassPanel').classList.contains('settings-mode') && location.hash === '#panel'; }
     if (id.startsWith('theme.')) { click(id); return byId(id).classList.contains('active') && Boolean(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()); }
     if (id === 'appearance.opacity') { input(id, 70); return document.querySelector('#opacityValue').textContent === '70%' && Number(getComputedStyle(document.documentElement).getPropertyValue('--glass-material-opacity')) === 0.7; }
-    if (id === 'appearance.scale') { input(id, 120); return document.querySelector('#scaleValue').textContent === '120%' && Number(getComputedStyle(document.documentElement).getPropertyValue('--panel-scale')) === 1.2; }
+    if (id === 'appearance.scale') { input(id, 117); await pause(20); return document.querySelector('#scaleValue').textContent === '117%' && Number(getComputedStyle(document.documentElement).getPropertyValue('--panel-scale')) === 1.17; }
     if (id === 'appearance.reset-scale') { input('appearance.scale', 120); click(id); return document.querySelector('#scaleValue').textContent === '100%'; }
     if (id === 'appearance.resize-handle') { const handle=byId(id);const before=document.querySelector('#scaleValue').textContent;handle.setPointerCapture=()=>{};handle.releasePointerCapture=()=>{};handle.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:11,clientX:400,clientY:640}));handle.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId:11,clientX:450,clientY:690}));handle.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:11,clientX:450,clientY:690}));return document.querySelector('#scaleValue').textContent!==before; }
     if (id === 'motion.petals') { const changed = toggleChanged(id); return changed && document.querySelector('#petals').classList.contains('off') === !byId(id).classList.contains('on'); }
@@ -139,7 +139,7 @@ async function main() {
       fixtureUrl.searchParams.set('apd-fixture', String(controlIndex));
       fixtureUrl.hash = hash;
       await command('Page.navigate', { url: fixtureUrl.href });
-      await waitFor(command, `document.readyState==='complete'&&new Set([...document.querySelectorAll('[data-apd-control-id]')].map(element=>element.getAttribute('data-apd-control-id'))).size===54`, `${control.control_id} route`);
+      await waitFor(command, `document.readyState==='complete'&&new Set([...document.querySelectorAll('[data-apd-control-id]')].map(element=>element.getAttribute('data-apd-control-id'))).size===55`, `${control.control_id} route`);
       const discovered = await evaluate(command, `[...document.querySelectorAll('[data-apd-control-id]')].map(element=>element.getAttribute('data-apd-control-id'))`);
       discovered.forEach(id => runtimeIds.add(id));
       const unexplained = await evaluate(command, `(() => {
