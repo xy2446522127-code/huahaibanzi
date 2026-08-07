@@ -40,6 +40,31 @@ async function connect() {
 
 async function run() {
   const { socket, command } = await connect();
+  if (operation === 'drag-scale-pointer') {
+    const evaluate = async expression => {
+      const result = await command('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
+      if (result.exceptionDetails) throw new Error(result.exceptionDetails.text || 'WebView evaluation failed.');
+      return result.result.value;
+    };
+    await evaluate(`(() => { const input=document.querySelector('#scaleRange'); input.value='80'; input.dispatchEvent(new Event('input',{bubbles:true})); input.dispatchEvent(new Event('change',{bubbles:true})); return true; })()`);
+    await new Promise(resolve => setTimeout(resolve, 350));
+    const start = await evaluate(`(() => { const input=document.querySelector('#scaleRange'); const r=input.getBoundingClientRect(); return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,value:Number(input.value)}; })()`);
+    const y = (start.top + start.bottom) / 2;
+    await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: start.left, y });
+    await command('Input.dispatchMouseEvent', { type: 'mousePressed', x: start.left, y, button: 'left', buttons: 1, clickCount: 1 });
+    const samples = [];
+    for (let index = 1; index <= 20; index += 1) {
+      const x = start.left + ((start.right - start.left) * index / 20);
+      await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y, button: 'left', buttons: 1 });
+      await new Promise(resolve => setTimeout(resolve, 25));
+      samples.push(await evaluate(`(() => { const input=document.querySelector('#scaleRange'); const r=input.getBoundingClientRect(); return {value:Number(input.value),left:r.left,right:r.right,top:r.top,bottom:r.bottom,viewport:document.documentElement.clientWidth}; })()`));
+    }
+    await command('Input.dispatchMouseEvent', { type: 'mouseReleased', x: start.right, y, button: 'left', buttons: 0, clickCount: 1 });
+    const final = await evaluate(`(() => ({value:Number(document.querySelector('#scaleRange').value),label:document.querySelector('#scaleValue').textContent}))()`);
+    socket.close();
+    console.log(JSON.stringify({ start, samples, final }));
+    return;
+  }
   if (operation === 'capture') {
     const screenshot = await command('Page.captureScreenshot', { format: 'png', fromSurface: true });
     const output = resolve(value);
@@ -140,6 +165,8 @@ async function run() {
         const y=handleRect.bottom-parseFloat(pseudo.bottom)-1;
         return {xRatio:(x-panel.left)/panel.width,yRatio:(y-panel.top)/panel.height,pseudoRight:parseFloat(pseudo.right),pseudoBottom:parseFloat(pseudo.bottom)};
       })()`
+    : operation === 'current-scale'
+    ? `(() => { const input=document.querySelector('#scaleRange'); if(!input) throw new Error('scale input missing'); return {ratio:Number(input.value)/100}; })()`
     : operation === 'set-scale'
     ? `(async () => {
         const target=Number(${quoted});

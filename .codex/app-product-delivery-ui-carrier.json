@@ -40,7 +40,7 @@
   "cross_target_evidence": "",
   "delivery_maturity": "release",
   "entrypoint": "Web/product-shell.html",
-  "entrypoint_sha256": "46df775bf155bc0cb3ba69fb9129b1f3213ba259f671c22dd19e568d0080ea51",
+  "entrypoint_sha256": "c1e56e0d1ad9d2f486e96cf90c69ae0597ee8e1ab3edbe8b50f1e13d785fe8b1",
   "mock_status": "removed",
   "native_port": {
     "blockers": [],
@@ -56,7 +56,7 @@
     "<install-root>/Data/<Windows-SID>/settings.json"
   ],
   "product_scale": "medium",
-  "project_revision": 13,
+  "project_revision": 14,
   "risk_level": "high",
   "rollback_commit": "b29d7cfe31f4d3196099c3084c10e25ded83f2da",
   "runtime_topology": "desktop-first",
@@ -106,8 +106,8 @@
     {
       "logical_asset_id": "Web/product-shell.html",
       "path": "Web/product-shell.html",
-      "sha256": "46df775bf155bc0cb3ba69fb9129b1f3213ba259f671c22dd19e568d0080ea51",
-      "size": 60047
+      "sha256": "c1e56e0d1ad9d2f486e96cf90c69ae0597ee8e1ab3edbe8b50f1e13d785fe8b1",
+      "size": 60497
     },
     {
       "logical_asset_id": "Web/retention-policy.js",
@@ -128,7 +128,7 @@
       "size": 908
     }
   ],
-  "source_manifest_sha256": "dd58f70c5cbb339757bd3d9f9c0cb15f23d6a538e0ccd2df5ba0255d26af251c",
+  "source_manifest_sha256": "26e6ba83ccd2b3198c5efeed4b4ebb9db1247a4a8975feaf49500700ad8e2f17",
   "source_root": "src/HuahaiClipboard.App/Assets",
   "strategy": "retain-and-integrate",
   "surfaces": [
@@ -185,8 +185,8 @@
         {
           "logical_asset_id": "Web/product-shell.html",
           "path": "Web/product-shell.html",
-          "sha256": "46df775bf155bc0cb3ba69fb9129b1f3213ba259f671c22dd19e568d0080ea51",
-          "size": 60047
+          "sha256": "c1e56e0d1ad9d2f486e96cf90c69ae0597ee8e1ab3edbe8b50f1e13d785fe8b1",
+          "size": 60497
         },
         {
           "logical_asset_id": "Web/retention-policy.js",
@@ -258,8 +258,8 @@
         {
           "logical_asset_id": "Web/product-shell.html",
           "path": "Web/product-shell.html",
-          "sha256": "46df775bf155bc0cb3ba69fb9129b1f3213ba259f671c22dd19e568d0080ea51",
-          "size": 60047
+          "sha256": "c1e56e0d1ad9d2f486e96cf90c69ae0597ee8e1ab3edbe8b50f1e13d785fe8b1",
+          "size": 60497
         },
         {
           "logical_asset_id": "Web/retention-policy.js",
@@ -284,5 +284,5 @@
   },
   "ui_class": "existing-production-shell",
   "version": 1,
-  "visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.5-r9-scale-layout-fix"
+  "visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.5-r10-scale-pointer-corners-fix"
 }

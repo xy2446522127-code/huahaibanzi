@@ -996,7 +996,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             ref borderColor,
             sizeof(int));
 
-        var geometry = WindowChromeGeometry.Create(
+        var geometry = WindowChromeGeometry.CreateForWebView(
             width,
             height,
             PanelCornerRadius,

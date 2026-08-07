@@ -40,4 +40,25 @@ public sealed class WindowChromeGeometryTests
         Assert.AreEqual(expectedDiameter, geometry.CornerDiameter);
     }
 
+    [DataTestMethod]
+    [DataRow(430, 680, 29, 144u, 0.8, 46)]
+    [DataRow(820, 650, 29, 144u, 1.6, 93)]
+    public void WebViewRegion_DoesNotDoubleScaleCssCornerRadiusByDpi(
+        int width,
+        int height,
+        int cornerRadius,
+        uint dpi,
+        double panelScale,
+        int expectedDiameter)
+    {
+        var geometry = WindowChromeGeometry.CreateForWebView(
+            width,
+            height,
+            cornerRadius,
+            dpi,
+            panelScale);
+
+        Assert.AreEqual(expectedDiameter, geometry.CornerDiameter);
+    }
+
 }

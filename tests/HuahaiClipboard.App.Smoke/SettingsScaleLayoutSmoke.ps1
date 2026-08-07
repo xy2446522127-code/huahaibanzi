@@ -10,6 +10,7 @@ $webProbe = Join-Path $projectRoot 'tests\HuahaiClipboard.App.Smoke\WebViewRecor
 $oldArgs = $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS
 $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$DebugPort"
 $process = Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru
+$initialRatio = $null
 
 try {
     $ready = $false
@@ -28,6 +29,9 @@ try {
 
     $open = node $webProbe $DebugPort open-settings | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0 -or -not $open.opened) { throw 'Settings surface did not open.' }
+    $initialScale = node $webProbe $DebugPort current-scale | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0 -or $null -eq $initialScale.ratio) { throw 'Initial panel scale could not be read.' }
+    $initialRatio = [double]$initialScale.ratio
 
     $signatures = @{}
     foreach ($sample in @(
@@ -57,6 +61,10 @@ try {
     } | ConvertTo-Json -Compress
 }
 finally {
+    if ($null -ne $initialRatio -and -not $process.HasExited) {
+        $null = node $webProbe $DebugPort set-scale $initialRatio
+        Start-Sleep -Milliseconds 250
+    }
     if (-not $process.HasExited) {
         Stop-Process -Id $process.Id -Force
         Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
