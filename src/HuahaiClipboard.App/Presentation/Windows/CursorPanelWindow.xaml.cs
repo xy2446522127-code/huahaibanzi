@@ -38,7 +38,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private const int LeftMouseButton = 0x01;
     private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly IntPtr HwndNoTopmost = new(-2);
-    private static readonly Version CurrentVersion = new(1, 1, 2);
+    private static readonly Version CurrentVersion = new(1, 1, 4);
 
     private readonly CompositionRoot compositionRoot = new();
     private readonly WindowNavigator navigator = new();
@@ -479,10 +479,12 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             await PostUpdateStatusAsync(
                 result.UpdateAvailable ? "available" : "current",
                 result.UpdateAvailable
-                    ? $"发现新版本 {result.LatestVersion}，可以安全下载并更新。"
+                    ? result.CanAutoInstall
+                        ? $"发现新版本 {result.LatestVersion}，可以安全下载并更新。"
+                        : $"发现新版本 {result.LatestVersion}。GitHub 接口暂时限流，可在网页下载，或稍后再试自动安装。"
                     : $"当前已是最新版本 {result.CurrentVersion}。",
                 result.ReleaseUrl,
-                canInstall: result.UpdateAvailable);
+                canInstall: result.UpdateAvailable && result.CanAutoInstall);
         }
         catch (Exception exception)
         {

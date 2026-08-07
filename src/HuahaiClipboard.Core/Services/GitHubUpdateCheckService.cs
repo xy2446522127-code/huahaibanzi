@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace HuahaiClipboard.Core.Services;
 
@@ -13,27 +14,45 @@ public sealed record UpdateCheckResult(
     string InstallerName,
     string InstallerUrl,
     long InstallerSize,
-    string InstallerSha256);
+    string InstallerSha256)
+{
+    public bool CanAutoInstall => UpdateAvailable && InstallerSize > 0 && InstallerSha256.Length == 64;
+}
 
 public sealed class GitHubUpdateCheckService(HttpClient client, Version currentVersion)
 {
     public const string ReleasesPage = "https://github.com/xy2446522127-code/huahaibanzi/releases";
     public const string InstallerAssetName = "HuahaiClipboard-Setup.exe";
     private const string LatestReleaseApi = "https://api.github.com/repos/xy2446522127-code/huahaibanzi/releases/latest";
+    private const string LatestReleasePage = "https://github.com/xy2446522127-code/huahaibanzi/releases/latest";
+    private static readonly TimeSpan MinimumCheckInterval = TimeSpan.FromSeconds(10);
+    private DateTimeOffset lastCheckTime = DateTimeOffset.MinValue;
 
     public static GitHubUpdateCheckService CreateDefault(Version currentVersion)
     {
-        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(12) };
         client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("HuahaiClipboard", currentVersion.ToString(3)));
         return new GitHubUpdateCheckService(client, currentVersion);
     }
 
     public async Task<UpdateCheckResult> CheckAsync(CancellationToken cancellationToken)
     {
+        var sinceLastCheck = DateTimeOffset.Now - lastCheckTime;
+        if (sinceLastCheck < MinimumCheckInterval)
+        {
+            throw new InvalidOperationException(
+                $"检查更新过于频繁，请约 {(int)Math.Ceiling((MinimumCheckInterval - sinceLastCheck).TotalMinutes)} 分钟后再试。");
+        }
+
+        lastCheckTime = DateTimeOffset.Now;
         using var response = await client.GetAsync(LatestReleaseApi, cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             throw new InvalidOperationException("GitHub 仓库尚未发布可下载版本，请先创建 Release 后再检查。");
+        }
+        if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
+        {
+            return await CheckViaReleasePageAsync(cancellationToken);
         }
         response.EnsureSuccessStatusCode();
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
@@ -41,6 +60,12 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
         var tag = document.RootElement.GetProperty("tag_name").GetString()?.Trim().TrimStart('v', 'V');
         var url = document.RootElement.GetProperty("html_url").GetString();
         var installer = FindInstallerAsset(document.RootElement);
+        if (installer.Sha256.Length != 64)
+        {
+            // GitHub API 不会返回 release 资产的 SHA-256；缺少摘要时降级到 Release 网页读取完整校验信息。
+            return await CheckViaReleasePageAsync(cancellationToken);
+        }
+
         if (!Version.TryParse(tag, out var latest) ||
             !Uri.TryCreate(url, UriKind.Absolute, out var releaseUri) ||
             releaseUri.Scheme != Uri.UriSchemeHttps)
@@ -57,6 +82,69 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
             installer.Url,
             installer.Size,
             installer.Sha256);
+    }
+
+    private async Task<UpdateCheckResult> CheckViaReleasePageAsync(CancellationToken cancellationToken)
+    {
+        using var response = await client.GetAsync(LatestReleasePage, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var page = await response.Content.ReadAsStringAsync(cancellationToken);
+        var tag = ExtractLatestTag(response.RequestMessage?.RequestUri?.AbsoluteUri, page)
+            ?? throw new InvalidDataException("GitHub Release 网页暂时无法识别版本信息。");
+        var cleanTag = tag.Trim().TrimStart('v', 'V');
+        if (!Version.TryParse(cleanTag, out var latest))
+        {
+            throw new InvalidDataException("GitHub Release 网页暂时无法识别版本信息。");
+        }
+
+        var tagUrl = new Uri($"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/{tag.Trim()}");
+        var installer = ExtractInstallerMetadata(page, tag.Trim());
+        return new UpdateCheckResult(
+            latest > currentVersion,
+            currentVersion,
+            latest,
+            tagUrl.AbsoluteUri,
+            InstallerAssetName,
+            installer.Url,
+            installer.Size,
+            installer.Sha256);
+    }
+
+    private static (string Url, long Size, string Sha256) ExtractInstallerMetadata(string page, string tag)
+    {
+        var marker = Regex.Match(
+            page,
+            @"HuahaiClipboard-Setup\.exe[^0-9a-fA-F]{0,160}?size[:=]\s*(\d{5,12})[^0-9a-fA-F]{0,160}?sha256[:=]\s*([0-9a-fA-F]{64})",
+            RegexOptions.IgnoreCase);
+        if (!marker.Success ||
+            !long.TryParse(marker.Groups[1].Value, out var size) ||
+            size <= 0)
+        {
+            return (string.Empty, 0, string.Empty);
+        }
+
+        var sha256 = marker.Groups[2].Value.ToLowerInvariant();
+        var downloadUrl = $"https://github.com/xy2446522127-code/huahaibanzi/releases/download/{tag}/" + InstallerAssetName;
+        return (downloadUrl, size, sha256);
+    }
+
+    private static string? ExtractLatestTag(string? finalUrl, string page)
+    {
+        if (!string.IsNullOrEmpty(finalUrl) &&
+            Uri.TryCreate(finalUrl, UriKind.Absolute, out var uri) &&
+            uri.AbsolutePath.Contains("/releases/tag/", StringComparison.OrdinalIgnoreCase))
+        {
+            var candidate = uri.AbsolutePath
+                .Substring(uri.AbsolutePath.IndexOf("/releases/tag/", StringComparison.OrdinalIgnoreCase) + "/releases/tag/".Length)
+                .TrimEnd('/');
+            if (!string.IsNullOrWhiteSpace(candidate))
+            {
+                return Uri.UnescapeDataString(candidate);
+            }
+        }
+
+        var match = Regex.Match(page, @"releases/tag/([^""'<>\s]+)", RegexOptions.IgnoreCase);
+        return match.Success ? Uri.UnescapeDataString(match.Groups[1].Value.TrimEnd('/')) : null;
     }
 
     public async Task<string> DownloadInstallerAsync(
@@ -163,13 +251,20 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
                 var installerSize = asset.TryGetProperty("size", out var size) && size.TryGetInt64(out var value)
                     ? value
                     : 0;
+                if (!Uri.TryCreate(installerUrl, UriKind.Absolute, out var installerUri) ||
+                    installerUri.Scheme != Uri.UriSchemeHttps ||
+                    !string.Equals(installerUri.Host, "github.com", StringComparison.OrdinalIgnoreCase) ||
+                    installerSize <= 0)
+                {
+                    continue;
+                }
+
                 var digest = asset.TryGetProperty("digest", out var digestElement)
                     ? digestElement.GetString()
                     : null;
                 var sha256 = digest?.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase) == true
                     ? digest[7..]
                     : string.Empty;
-                ValidateInstallerMetadata(InstallerAssetName, installerUrl, installerSize, sha256);
                 return (installerUrl!, installerSize, sha256.ToLowerInvariant());
             }
         }

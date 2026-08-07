@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using HuahaiClipboard.Core.Contracts;
@@ -67,27 +68,6 @@ public sealed class ClipboardCaptureService(
     {
         var copiedAt = DateTimeOffset.Now;
         var source = string.IsNullOrWhiteSpace(identity.ProcessName) ? "未知应用" : identity.ProcessName;
-        if (FormsClipboard.ContainsFileDropList())
-        {
-            StringCollection values = FormsClipboard.GetFileDropList();
-            var files = values.Cast<string>().ToArray();
-            if (files.Length == 0)
-            {
-                return null;
-            }
-
-            return new ClipboardRecord(
-                Guid.NewGuid(),
-                ClipboardItemKind.File,
-                string.Join(Environment.NewLine, files),
-                $"{source} · {files.Length} 个文件",
-                copiedAt,
-                false,
-                false,
-                files.All(File.Exists),
-                null);
-        }
-
         if (FormsClipboard.ContainsImage())
         {
             using var image = FormsClipboard.GetImage();
@@ -113,6 +93,59 @@ public sealed class ClipboardCaptureService(
                 false,
                 true,
                 imagePath);
+        }
+
+        if (FormsClipboard.ContainsFileDropList())
+        {
+            StringCollection values = FormsClipboard.GetFileDropList();
+            var files = values.Cast<string>().ToArray();
+            if (files.Length == 0)
+            {
+                return null;
+            }
+
+            // 从资源管理器/桌面复制图片文件时，剪贴板只有文件路径没有像素数据。
+            // 这里读取文件本身并保存为图片记录，点击后粘贴得到的是图片而不是路径。
+            if (files.Length == 1 && IsImageFile(files[0]))
+            {
+                try
+                {
+                    using var stream = File.OpenRead(files[0]);
+                    using var image = Image.FromStream(stream);
+                    var imageFileName = ClipboardDisplayName.CreateImageFileName(copiedAt);
+                    using var saveStream = new MemoryStream();
+                    image.Save(saveStream, ImageFormat.Png);
+                    var imagePath = await imageStore.SaveAsync(
+                        imageFileName,
+                        saveStream.ToArray(),
+                        CancellationToken.None);
+                    return new ClipboardRecord(
+                        Guid.NewGuid(),
+                        ClipboardItemKind.Image,
+                        Path.GetFileName(imagePath),
+                        $"{source} · {image.Width} x {image.Height} · PNG",
+                        copiedAt,
+                        false,
+                        false,
+                        true,
+                        imagePath);
+                }
+                catch (Exception)
+                {
+                    // 图片文件无法解码时回退为文件记录
+                }
+            }
+
+            return new ClipboardRecord(
+                Guid.NewGuid(),
+                ClipboardItemKind.File,
+                string.Join(Environment.NewLine, files),
+                $"{source} · {files.Length} 个文件",
+                copiedAt,
+                false,
+                false,
+                files.All(File.Exists),
+                null);
         }
 
         if (!FormsClipboard.ContainsText())
@@ -141,6 +174,12 @@ public sealed class ClipboardCaptureService(
             true,
             null);
     }
+
+    private static readonly string[] ImageFileExtensions =
+        [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff", ".tif", ".webp", ".ico"];
+
+    private static bool IsImageFile(string path) =>
+        ImageFileExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
 
     public sealed record WindowIdentity(int ProcessId, string ProcessName, string WindowTitle)
     {

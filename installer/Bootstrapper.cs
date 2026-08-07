@@ -14,8 +14,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("HuahaiClipboard")]
 [assembly: AssemblyProduct("花海剪贴板")]
 [assembly: AssemblyCopyright("Copyright © 2026")]
-[assembly: AssemblyVersion("1.1.2.0")]
-[assembly: AssemblyFileVersion("1.1.2.0")]
+[assembly: AssemblyVersion("1.1.4.0")]
+[assembly: AssemblyFileVersion("1.1.4.0")]
 
 internal static class Bootstrapper
 {
@@ -558,7 +558,7 @@ internal static class Bootstrapper
                 throw new InvalidOperationException("无法创建卸载入口。");
 
             key.SetValue("DisplayName", ProductName, RegistryValueKind.String);
-            key.SetValue("DisplayVersion", "1.1.2", RegistryValueKind.String);
+            key.SetValue("DisplayVersion", "1.1.4", RegistryValueKind.String);
             key.SetValue("Publisher", "HuahaiClipboard", RegistryValueKind.String);
             key.SetValue("DisplayIcon", appPath + ",0", RegistryValueKind.String);
             key.SetValue("InstallLocation", installRoot, RegistryValueKind.String);

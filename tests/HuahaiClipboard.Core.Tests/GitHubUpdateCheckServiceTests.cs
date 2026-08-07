@@ -108,6 +108,128 @@ public sealed class GitHubUpdateCheckServiceTests
         StringAssert.Contains(exception.Message, "尚未发布可下载版本");
     }
 
+    [TestMethod]
+    public async Task FallsBackToReleasePageWhenApiIsRateLimited()
+    {
+        using var client = new HttpClient(new RateLimitedThenPageHandler());
+        var service = new GitHubUpdateCheckService(client, new Version(1, 1, 1));
+
+        var result = await service.CheckAsync(CancellationToken.None);
+
+        Assert.IsTrue(result.UpdateAvailable);
+        Assert.AreEqual(new Version(1, 2, 0), result.LatestVersion);
+        Assert.IsTrue(result.CanAutoInstall);
+        Assert.AreEqual(345678L, result.InstallerSize);
+        Assert.AreEqual(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            result.InstallerSha256);
+        Assert.AreEqual(
+            "https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.2.0/HuahaiClipboard-Setup.exe",
+            result.InstallerUrl);
+        Assert.AreEqual(
+            "https://github.com/xy2446522127-code/huahaibanzi/releases/tag/v1.2.0",
+            result.ReleaseUrl);
+    }
+
+    [TestMethod]
+    public async Task ReleasePageFallbackOffersWebLinkWhenDigestIsMissing()
+    {
+        using var client = new HttpClient(new RateLimitedThenPageHandler(includeDigest: false));
+        var service = new GitHubUpdateCheckService(client, new Version(1, 1, 1));
+
+        var result = await service.CheckAsync(CancellationToken.None);
+
+        Assert.IsTrue(result.UpdateAvailable);
+        Assert.IsFalse(result.CanAutoInstall);
+        Assert.AreEqual(0L, result.InstallerSize);
+        Assert.AreEqual(string.Empty, result.InstallerSha256);
+    }
+
+    [TestMethod]
+    public async Task ApiWithoutDigestFallsBackToReleasePage()
+    {
+        using var client = new HttpClient(new ApiOkNoDigestThenPageHandler());
+        var service = new GitHubUpdateCheckService(client, new Version(1, 1, 1));
+
+        var result = await service.CheckAsync(CancellationToken.None);
+
+        Assert.IsTrue(result.UpdateAvailable);
+        Assert.AreEqual(new Version(1, 2, 0), result.LatestVersion);
+        Assert.IsTrue(result.CanAutoInstall);
+        Assert.AreEqual(345678L, result.InstallerSize);
+        Assert.AreEqual(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            result.InstallerSha256);
+    }
+
+    private sealed class ApiOkNoDigestThenPageHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            if (request.RequestUri!.AbsoluteUri.StartsWith(
+                    "https://api.github.com/", StringComparison.Ordinal))
+            {
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(
+                        "{\"tag_name\":\"v1.2.0\",\"html_url\":\"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/v1.2.0\",\"assets\":[{\"name\":\"HuahaiClipboard-Setup.exe\",\"browser_download_url\":\"https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.2.0/HuahaiClipboard-Setup.exe\",\"size\":345678}]}")
+                });
+            }
+
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    "<html><a href=\"/xy2446522127-code/huahaibanzi/releases/tag/v1.2.0\">Release</a><div>HuahaiClipboard-Setup.exe size=345678 sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef</div></html>")
+            };
+            response.RequestMessage = new HttpRequestMessage(
+                HttpMethod.Get,
+                "https://github.com/xy2446522127-code/huahaibanzi/releases/tag/v1.2.0");
+            return Task.FromResult(response);
+        }
+    }
+
+    [TestMethod]
+    public async Task ReleasePageFallbackReportsCurrentWhenVersionIsNewer()
+    {
+        using var client = new HttpClient(new RateLimitedThenPageHandler("v1.1.1"));
+        var service = new GitHubUpdateCheckService(client, new Version(1, 1, 4));
+
+        var result = await service.CheckAsync(CancellationToken.None);
+
+        Assert.IsFalse(result.UpdateAvailable);
+        Assert.AreEqual(new Version(1, 1, 1), result.LatestVersion);
+    }
+
+    private sealed class RateLimitedThenPageHandler(string? tag = null, bool includeDigest = true) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            if (request.RequestUri!.AbsoluteUri.StartsWith(
+                    "https://api.github.com/", StringComparison.Ordinal))
+            {
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Forbidden));
+            }
+
+            var tagValue = tag ?? "v1.2.0";
+            var notes = includeDigest
+                ? "HuahaiClipboard-Setup.exe size=345678 sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                : "no digest here";
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    $"<html><a href=\"/xy2446522127-code/huahaibanzi/releases/tag/{tagValue}\">Release</a><div>{notes}</div></html>")
+            };
+            response.RequestMessage = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/{tagValue}");
+            return Task.FromResult(response);
+        }
+    }
+
     private sealed class JsonHandler(string json) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(
