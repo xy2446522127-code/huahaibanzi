@@ -35,6 +35,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private const uint SetWindowNoZOrder = 0x0004;
     private const uint SetWindowNoActivate = 0x0010;
     private const int ShowWindowHide = 0;
+    private const int LeftMouseButton = 0x01;
     private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly IntPtr HwndNoTopmost = new(-2);
     private static readonly Version CurrentVersion = new(1, 1, 2);
@@ -51,6 +52,12 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private TrayService? trayService;
     private InputSettingsSnapshot? inputSettingsSnapshot;
     private AppWindow? appWindow;
+    private Microsoft.UI.Dispatching.DispatcherQueueTimer? dragTimer;
+    private PointInt32? dragPointerOrigin;
+    private PointInt32? dragWindowOrigin;
+    private RectInt32? dragWorkArea;
+    private int dragWindowWidth;
+    private int dragWindowHeight;
     private bool allowClose;
     private bool shellReady;
     private bool openSettingsWhenReady;
@@ -59,8 +66,6 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private int webContentActivityVersion;
     private UpdateCheckResult? availableUpdate;
     private bool updateInstallationInProgress;
-    private PointInt32? dragPointerOrigin;
-    private PointInt32? dragWindowOrigin;
 
     public CursorPanelWindow()
     {
@@ -380,14 +385,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                     UseShellExecute = true
                 });
                 return;
-            case "beginDrag":
-                BeginWindowDrag(request.X, request.Y);
-                return;
-            case "dragMove":
-                MoveWindowDrag(request.X, request.Y);
-                return;
-            case "endDrag":
-                await EndWindowDragAsync();
+            case "beginNativeDrag":
+                BeginNativeWindowDrag(request.X, request.Y);
                 return;
         }
 
@@ -702,53 +701,94 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     private int ScaleDimension(int value) => Math.Max(1, (int)Math.Round(value * panelScale));
 
-    private void BeginWindowDrag(double? pointerX, double? pointerY)
+    private void BeginNativeWindowDrag(double? pointerX, double? pointerY)
     {
-        if (appWindow is null || pointerX is null || pointerY is null)
+        if (appWindow is null)
         {
             return;
         }
 
-        dragPointerOrigin = new PointInt32(
-            (int)Math.Round(pointerX.Value),
-            (int)Math.Round(pointerY.Value));
+        if (pointerX is not null && pointerY is not null)
+        {
+            dragPointerOrigin = new PointInt32(
+                (int)Math.Round(pointerX.Value),
+                (int)Math.Round(pointerY.Value));
+        }
+        else if (GetCursorPos(out var cursor))
+        {
+            dragPointerOrigin = new PointInt32(cursor.X, cursor.Y);
+        }
+        else
+        {
+            return;
+        }
         dragWindowOrigin = appWindow.Position;
+        dragWindowWidth = ScaleDimension(settingsSurfaceVisible ? SettingsWidth : PanelWidth);
+        dragWindowHeight = ScaleDimension(settingsSurfaceVisible ? SettingsHeight : PanelHeight);
+        dragWorkArea = DisplayArea.GetFromPoint(
+            dragPointerOrigin.Value,
+            DisplayAreaFallback.Nearest).WorkArea;
+
+        if (dragTimer is null)
+        {
+            dragTimer = DispatcherQueue.CreateTimer();
+            dragTimer.Interval = TimeSpan.FromMilliseconds(8);
+            dragTimer.IsRepeating = true;
+            dragTimer.Tick += DragTimer_Tick;
+        }
+        dragTimer.Start();
     }
 
-    private void MoveWindowDrag(double? pointerX, double? pointerY)
+    private void DragTimer_Tick(
+        Microsoft.UI.Dispatching.DispatcherQueueTimer sender,
+        object args)
     {
         if (appWindow is null ||
             dragPointerOrigin is not { } pointerOrigin ||
             dragWindowOrigin is not { } windowOrigin ||
-            pointerX is null ||
-            pointerY is null)
+            (GetAsyncKeyState(LeftMouseButton) & 0x8000) == 0 ||
+            !GetCursorPos(out var cursor))
         {
+            StopNativeWindowDrag(savePosition: true);
             return;
         }
 
-        var pointer = new PointInt32(
-            (int)Math.Round(pointerX.Value),
-            (int)Math.Round(pointerY.Value));
-        var display = DisplayArea.GetFromPoint(pointer, DisplayAreaFallback.Nearest);
-        var workArea = display.WorkArea;
-        var width = ScaleDimension(settingsSurfaceVisible ? SettingsWidth : PanelWidth);
-        var height = ScaleDimension(settingsSurfaceVisible ? SettingsHeight : PanelHeight);
+        var pointer = new PointInt32(cursor.X, cursor.Y);
+        if (dragWorkArea is not { } workArea ||
+            pointer.X < workArea.X || pointer.X >= workArea.X + workArea.Width ||
+            pointer.Y < workArea.Y || pointer.Y >= workArea.Y + workArea.Height)
+        {
+            workArea = DisplayArea.GetFromPoint(pointer, DisplayAreaFallback.Nearest).WorkArea;
+            dragWorkArea = workArea;
+        }
+
         var targetX = windowOrigin.X + pointer.X - pointerOrigin.X;
         var targetY = windowOrigin.Y + pointer.Y - pointerOrigin.Y;
         appWindow.Move(new PointInt32(
-            Math.Clamp(targetX, workArea.X, Math.Max(workArea.X, workArea.X + workArea.Width - width)),
-            Math.Clamp(targetY, workArea.Y, Math.Max(workArea.Y, workArea.Y + workArea.Height - height))));
+            Math.Clamp(targetX, workArea.X, Math.Max(workArea.X, workArea.X + workArea.Width - dragWindowWidth)),
+            Math.Clamp(targetY, workArea.Y, Math.Max(workArea.Y, workArea.Y + workArea.Height - dragWindowHeight))));
     }
 
-    private async Task EndWindowDragAsync()
+    private void StopNativeWindowDrag(bool savePosition)
     {
-        if (appWindow is null || dragPointerOrigin is null)
+        dragTimer?.Stop();
+        var hadActiveDrag = dragPointerOrigin is not null;
+        dragPointerOrigin = null;
+        dragWindowOrigin = null;
+        dragWorkArea = null;
+        if (savePosition && hadActiveDrag)
+        {
+            _ = UnmanagedCallbackGuard.InvokeAsync(SaveWindowPlacementAsync);
+        }
+    }
+
+    private async Task SaveWindowPlacementAsync()
+    {
+        if (appWindow is null)
         {
             return;
         }
 
-        dragPointerOrigin = null;
-        dragWindowOrigin = null;
         var display = DisplayArea.GetFromWindowId(appWindow.Id, DisplayAreaFallback.Primary);
         await windowPlacementStore.SaveAsync(new WindowPlacement(
             DisplayKey(display),
@@ -810,6 +850,12 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     private void DisposeRuntime()
     {
+        StopNativeWindowDrag(savePosition: false);
+        if (dragTimer is not null)
+        {
+            dragTimer.Tick -= DragTimer_Tick;
+            dragTimer = null;
+        }
         compositionRoot.CaptureService.HistoryChanged -= CaptureService_HistoryChanged;
         globalInputService?.Dispose();
         globalInputService = null;
@@ -959,6 +1005,9 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     [DllImport("user32.dll")]
     private static extern bool GetCursorPos(out NativePoint point);
+
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int virtualKey);
 
     [DllImport("user32.dll")]
     private static extern bool SetForegroundWindow(IntPtr windowHandle);

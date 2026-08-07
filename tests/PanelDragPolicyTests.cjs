@@ -2,6 +2,9 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const dragPolicy = require('../src/HuahaiClipboard.App/Assets/Web/panel-drag.js');
+const fs = require('node:fs');
+const shell = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
+const windowHost = fs.readFileSync('src/HuahaiClipboard.App/Presentation/Windows/CursorPanelWindow.xaml.cs', 'utf8');
 
 test('left press on a non-interactive surface begins dragging immediately', () => {
   assert.equal(dragPolicy.holdDurationMs, 0);
@@ -39,4 +42,16 @@ test('native drag coordinates convert CSS screen pixels to physical pixels', () 
     dragPolicy.physicalScreenPoint({ screenX: 120, screenY: 80 }, 0),
     { x: 120, y: 80 }
   );
+});
+
+test('native panel dragging enters the Windows compositor move loop without per-frame WebView bridge traffic', () => {
+  assert.match(shell, /postNative\('beginNativeDrag',nativePointerPosition\(event\)\)/);
+  assert.doesNotMatch(shell, /postNative\('beginSystemDrag'/);
+  assert.doesNotMatch(shell, /postNative\('dragMove'/);
+  assert.doesNotMatch(shell, /postNative\('endDrag'/);
+  assert.match(windowHost, /DispatcherQueue\.CreateTimer\(\)/);
+  assert.match(windowHost, /GetAsyncKeyState\(LeftMouseButton\)/);
+  assert.match(windowHost, /GetCursorPos\(/);
+  assert.match(windowHost, /BeginNativeWindowDrag\(request\.X, request\.Y\)/);
+  assert.match(windowHost, /appWindow\.Move\(/);
 });

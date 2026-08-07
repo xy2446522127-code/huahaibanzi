@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "contract_revision": "huahai-webview-1.1.2-interactions-v2",
+  "contract_revision": "huahai-webview-1.1.2-interactions-v3",
   "controls": [
     {
       "control_id": "panel.search",
@@ -143,6 +143,53 @@
       ],
       "opens_surface": true,
       "exit_control_id": "settings.back"
+    },
+    {
+      "control_id": "panel.summon",
+      "test_id": "webview.panel.summon",
+      "disposition": "interactive",
+      "user_intent": "从网页预览的隐藏状态重新唤出面板",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "panel-visible"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "面板恢复显示并聚焦搜索框；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "面板恢复显示并聚焦搜索框，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
       "control_id": "filter.all",
@@ -1424,6 +1471,51 @@
       "opens_surface": false
     },
     {
+      "control_id": "appearance.resize-handle",
+      "test_id": "webview.appearance.resize-handle",
+      "disposition": "interactive",
+      "user_intent": "拖动右下角手柄等比例缩放面板",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "pointer-drag"
+      },
+      "expected": {
+        "type": "panel-scale-updated"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "字体图标圆角间距与面板按固定比例同步缩放；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "字体图标圆角间距与面板按固定比例同步缩放，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "window-geometry"
+      ],
+      "opens_surface": false
+    },
+    {
       "control_id": "motion.petals",
       "test_id": "webview.motion.petals",
       "disposition": "interactive",
@@ -1764,6 +1856,51 @@
       "state_contract": {
         "loading": "需要等待时显示忙碌状态并阻止重复提交。",
         "success": "排除列表保存到本机设置，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "global-input-registration"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "input.remove-exclusion",
+      "test_id": "webview.input.remove-exclusion",
+      "disposition": "interactive",
+      "user_intent": "从应用排除列表移除一项",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "exclusion-removed"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "目标应用从排除列表移除并立即保存显示状态；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "目标应用从排除列表移除并立即保存显示状态，界面状态与保存结果保持一致。",
         "error": "失败时保留原状态并显示可读错误信息。",
         "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },

@@ -70,10 +70,9 @@ public sealed class ShellIntegrationPolicyTests
             ((double?)requestType.GetProperty("Number")!.GetValue(opacityArguments[1]))!.Value,
             0.001);
 
-        object?[] dragArguments = ["{\"action\":\"beginDrag\",\"x\":125.5,\"y\":240.25}", null];
+        object?[] dragArguments = ["{\"action\":\"beginSystemDrag\"}", null];
         Assert.AreEqual(true, tryParse.Invoke(null, dragArguments));
-        Assert.AreEqual(125.5, ((double?)requestType.GetProperty("X")!.GetValue(dragArguments[1]))!.Value, 0.001);
-        Assert.AreEqual(240.25, ((double?)requestType.GetProperty("Y")!.GetValue(dragArguments[1]))!.Value, 0.001);
+        Assert.AreEqual("beginSystemDrag", requestType.GetProperty("Action")!.GetValue(dragArguments[1]));
 
         object?[] invalidArguments = ["{}", null];
         Assert.AreEqual(false, tryParse.Invoke(null, invalidArguments));
@@ -95,13 +94,18 @@ public sealed class ShellIntegrationPolicyTests
             "setRetentionDays", "clearOrdinary", "clearAll", "setTheme", "setOpacity",
             "setPetals", "setReduceMotion", "setClickDuration", "setRightDoubleClick",
             "setShortcut", "resetShortcut", "setExclusions", "openDataFolder", "setStartup",
-            "setBackground", "beginDrag", "dragMove", "endDrag"
+            "setBackground", "beginNativeDrag"
             , "setPanelScale", "setCheckUpdatesOnStartup", "checkUpdate", "installUpdate", "openRelease"
         ];
 
         foreach (var action in actions)
         {
             Assert.AreEqual(true, isSupported.Invoke(null, [action]), action);
+        }
+
+        foreach (var obsoleteDragAction in new[] { "beginDrag", "dragMove", "endDrag", "beginSystemDrag" })
+        {
+            Assert.AreEqual(false, isSupported.Invoke(null, [obsoleteDragAction]), obsoleteDragAction);
         }
 
         Assert.AreEqual(false, isSupported.Invoke(null, ["formatDisk"]));

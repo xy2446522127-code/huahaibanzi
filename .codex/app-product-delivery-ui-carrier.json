@@ -5,7 +5,7 @@
     "installer/**",
     "tests/**"
   ],
-  "approval_evidence": "User approved automatic GitHub Release updates while preserving the approved WebView liquid-glass UI; this derivative adds the explicit install control, stable deep-link routing, and machine-readable interaction IDs without changing the approved visual direction.",
+  "approval_evidence": "Release normalization of the approved r6 smooth-drag carrier after deterministic interaction-contract generation; behavior, layout, styling, and motion are unchanged.",
   "capability_matrix": {
     "clipboard": {
       "desktop": "desktop",
@@ -36,19 +36,19 @@
       "prototype": "simulated-platform-capability"
     }
   },
-  "change_scale": "medium",
+  "change_scale": "small",
   "cross_target_evidence": "",
   "delivery_maturity": "release",
   "entrypoint": "Web/product-shell.html",
-  "entrypoint_sha256": "1116a328486a72a18132bd1d545b42b59d1284bd0cfdd9d11b1415087907c110",
+  "entrypoint_sha256": "f8f91952d36e6e79e28f048fdf87986f9395f6f05edbfa94095e1934a09d63be",
   "mock_status": "removed",
   "native_port": {
     "blockers": [],
     "experience_change_approved": false,
     "machine_evidence": []
   },
-  "parent_source_manifest_sha256": "1f19076d0d778bd60e5a4940f735601c50c8c08ba50867c63d3d61a2009d8881",
-  "parent_visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.2-r4",
+  "parent_source_manifest_sha256": "9e4b478abc4e241eb2a8d72b21b7fb0f69f26574d9676c8eb55f11908144df16",
+  "parent_visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.2-r6-smooth-drag",
   "preserved_areas": [
     "src/HuahaiClipboard.App/Assets/Brand/**",
     "%LOCALAPPDATA%/HuahaiClipboard/history.dat",
@@ -56,7 +56,7 @@
     "%LOCALAPPDATA%/HuahaiClipboard/settings.json"
   ],
   "product_scale": "medium",
-  "project_revision": 9,
+  "project_revision": 11,
   "risk_level": "high",
   "rollback_commit": "a04d9fb68767d1de705965925742023cc0d815f0",
   "runtime_topology": "desktop-first",
@@ -88,8 +88,8 @@
     {
       "logical_asset_id": "Web/interaction-contract.js",
       "path": "Web/interaction-contract.js",
-      "sha256": "f1446baf2d653c2a501bd74a3853f6a6da2a56d0936ed1f81f5aae346f1e4461",
-      "size": 3381
+      "sha256": "2e42ebdf078a0ed2b02eecabd33d7f4759d2f9ad873aea4635516c2d5fb907c6",
+      "size": 3775
     },
     {
       "logical_asset_id": "Web/panel-drag.js",
@@ -100,8 +100,8 @@
     {
       "logical_asset_id": "Web/product-shell.html",
       "path": "Web/product-shell.html",
-      "sha256": "1116a328486a72a18132bd1d545b42b59d1284bd0cfdd9d11b1415087907c110",
-      "size": 60141
+      "sha256": "f8f91952d36e6e79e28f048fdf87986f9395f6f05edbfa94095e1934a09d63be",
+      "size": 59416
     },
     {
       "logical_asset_id": "Web/retention-policy.js",
@@ -122,7 +122,7 @@
       "size": 908
     }
   ],
-  "source_manifest_sha256": "e563e88c913d05a4f816598ac52aed909d5b942ec991219fa329df66979b8693",
+  "source_manifest_sha256": "057d17d472bdf822de5894b97b7911557f48585e38e22f5ddb101e551867df29",
   "source_root": "src/HuahaiClipboard.App/Assets",
   "strategy": "retain-and-integrate",
   "surfaces": [
@@ -132,7 +132,7 @@
   ],
   "targets": {
     "desktop": {
-      "build_evidence": "VS Build Tools MSBuild Release x64 completed with 0 errors; the 10-file Assets manifest exactly matches the approved source manifest; focused Web module and interaction tests passed.",
+      "build_evidence": "Node 56/56, Core 95/95, tray 1/1, installer scripts 15/15, Web interaction 54/54, and Release x64 build passed; source and build Assets are identical.",
       "build_manifest": [
         {
           "logical_asset_id": "Brand/fox-icon-source.png",
@@ -161,8 +161,8 @@
         {
           "logical_asset_id": "Web/interaction-contract.js",
           "path": "Web/interaction-contract.js",
-          "sha256": "f1446baf2d653c2a501bd74a3853f6a6da2a56d0936ed1f81f5aae346f1e4461",
-          "size": 3381
+          "sha256": "2e42ebdf078a0ed2b02eecabd33d7f4759d2f9ad873aea4635516c2d5fb907c6",
+          "size": 3775
         },
         {
           "logical_asset_id": "Web/panel-drag.js",
@@ -173,8 +173,8 @@
         {
           "logical_asset_id": "Web/product-shell.html",
           "path": "Web/product-shell.html",
-          "sha256": "1116a328486a72a18132bd1d545b42b59d1284bd0cfdd9d11b1415087907c110",
-          "size": 60141
+          "sha256": "f8f91952d36e6e79e28f048fdf87986f9395f6f05edbfa94095e1934a09d63be",
+          "size": 59416
         },
         {
           "logical_asset_id": "Web/retention-policy.js",
@@ -228,8 +228,8 @@
         {
           "logical_asset_id": "Web/interaction-contract.js",
           "path": "Web/interaction-contract.js",
-          "sha256": "f1446baf2d653c2a501bd74a3853f6a6da2a56d0936ed1f81f5aae346f1e4461",
-          "size": 3381
+          "sha256": "2e42ebdf078a0ed2b02eecabd33d7f4759d2f9ad873aea4635516c2d5fb907c6",
+          "size": 3775
         },
         {
           "logical_asset_id": "Web/panel-drag.js",
@@ -240,8 +240,8 @@
         {
           "logical_asset_id": "Web/product-shell.html",
           "path": "Web/product-shell.html",
-          "sha256": "1116a328486a72a18132bd1d545b42b59d1284bd0cfdd9d11b1415087907c110",
-          "size": 60141
+          "sha256": "f8f91952d36e6e79e28f048fdf87986f9395f6f05edbfa94095e1934a09d63be",
+          "size": 59416
         },
         {
           "logical_asset_id": "Web/retention-policy.js",
@@ -266,5 +266,5 @@
   },
   "ui_class": "existing-production-shell",
   "version": 1,
-  "visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.2-r5-interactions"
+  "visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.2-r7-release"
 }

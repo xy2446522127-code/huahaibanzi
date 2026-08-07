@@ -7,6 +7,7 @@ const definitions = [
   ['panel.search', 'panel', '搜索剪贴板历史', '输入关键字后只显示匹配记录', 'text-input', 'visible-items-filtered'],
   ['panel.minimize', 'panel', '隐藏面板但保持后台运行', '面板隐藏且后台监听继续工作', 'click', 'window-hidden-process-alive'],
   ['panel.settings', 'panel', '进入设置中心', '设置界面打开并可返回面板', 'click', 'settings-visible'],
+  ['panel.summon', 'panel', '从网页预览的隐藏状态重新唤出面板', '面板恢复显示并聚焦搜索框', 'click', 'panel-visible'],
   ['filter.all', 'panel', '查看全部记录', '列表恢复显示全部类型', 'click', 'list-filtered'],
   ['filter.text', 'panel', '只查看文本记录', '列表只显示文本记录', 'click', 'list-filtered'],
   ['filter.link', 'panel', '只查看链接记录', '列表只显示链接记录', 'click', 'list-filtered'],
@@ -37,6 +38,7 @@ const definitions = [
   ['appearance.opacity', 'appearance', '调节液态玻璃透明度', '面板材质透明度实时变化并保存', 'slider', 'material-opacity-updated'],
   ['appearance.scale', 'appearance', '等比例缩放整个面板', '字体图标圆角和间距同步缩放', 'slider', 'panel-scale-updated'],
   ['appearance.reset-scale', 'appearance', '恢复默认面板大小', '面板缩放恢复为百分之百', 'click', 'panel-scale-reset'],
+  ['appearance.resize-handle', 'appearance', '拖动右下角手柄等比例缩放面板', '字体图标圆角间距与面板按固定比例同步缩放', 'pointer-drag', 'panel-scale-updated'],
 
   ['motion.petals', 'motion', '开启或关闭背景花瓣', '花瓣背景层状态立即更新并保存', 'toggle', 'petal-state-updated'],
   ['motion.reduced', 'motion', '减少动态效果', '花瓣和液态反光动画按偏好暂停', 'toggle', 'motion-reduced'],
@@ -47,6 +49,7 @@ const definitions = [
   ['input.reset-shortcut', 'input', '清除自定义唤出方式', '恢复仅使用默认右键双击', 'click', 'shortcut-reset'],
   ['input.exclusions', 'input', '编辑不记录剪贴板的应用列表', '排除列表草稿可编辑', 'text-input', 'draft-updated'],
   ['input.save-exclusions', 'input', '保存应用排除列表', '排除列表保存到本机设置', 'click', 'exclusions-saved'],
+  ['input.remove-exclusion', 'input', '从应用排除列表移除一项', '目标应用从排除列表移除并立即保存显示状态', 'click', 'exclusion-removed'],
 
   ['storage.open-folder', 'storage', '打开本机数据目录', '资源管理器打开真实数据目录', 'click', 'folder-opened'],
   ['storage.retention-3', 'storage', '设置普通历史保留三天', '期限保存且收藏和置顶不受清理影响', 'click', 'retention-saved'],
@@ -133,7 +136,7 @@ const controls = definitions.map(([controlId, group, intent, result, trigger, ex
 
 const contract = {
   version: 1,
-  contract_revision: 'huahai-webview-1.1.2-interactions-v2',
+  contract_revision: 'huahai-webview-1.1.2-interactions-v3',
   controls,
 };
 

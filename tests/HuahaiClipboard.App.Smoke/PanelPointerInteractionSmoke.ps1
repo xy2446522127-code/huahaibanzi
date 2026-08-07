@@ -64,21 +64,28 @@ function Get-WindowRectValue([IntPtr]$Handle) {
     }
 }
 
-function Invoke-LeftDrag([int]$FromX, [int]$FromY, [int]$ToX, [int]$ToY) {
+function Invoke-LeftDrag([int]$FromX, [int]$FromY, [int]$ToX, [int]$ToY, [IntPtr]$TrackHandle = [IntPtr]::Zero) {
     $move = 0x0001
     $leftDown = 0x0002
     $leftUp = 0x0004
     [HuahaiPointerInteractionProbe]::SetCursorPos($FromX, $FromY) | Out-Null
     Start-Sleep -Milliseconds 120
     [HuahaiPointerInteractionProbe]::mouse_event($leftDown, 0, 0, 0, [UIntPtr]::Zero)
-    for ($step = 1; $step -le 8; $step++) {
-        $x = [Math]::Round($FromX + (($ToX - $FromX) * $step / 8))
-        $y = [Math]::Round($FromY + (($ToY - $FromY) * $step / 8))
+    $samples = @()
+    $watch = [Diagnostics.Stopwatch]::StartNew()
+    for ($step = 1; $step -le 30; $step++) {
+        $x = [Math]::Round($FromX + (($ToX - $FromX) * $step / 30))
+        $y = [Math]::Round($FromY + (($ToY - $FromY) * $step / 30))
         [HuahaiPointerInteractionProbe]::SetCursorPos($x, $y) | Out-Null
         [HuahaiPointerInteractionProbe]::mouse_event($move, 0, 0, 0, [UIntPtr]::Zero)
-        Start-Sleep -Milliseconds 35
+        Start-Sleep -Milliseconds 12
+        if ($TrackHandle -ne [IntPtr]::Zero) {
+            $rect = Get-WindowRectValue $TrackHandle
+            $samples += [pscustomobject]@{ TimeMs = $watch.ElapsedMilliseconds; Left = $rect.Left; Top = $rect.Top }
+        }
     }
     [HuahaiPointerInteractionProbe]::mouse_event($leftUp, 0, 0, 0, [UIntPtr]::Zero)
+    $samples
 }
 
 $originalCursor = [HuahaiPointerInteractionProbe+Point]::new()
@@ -134,13 +141,28 @@ try {
     if ($dragTargetProcessId -ne [uint32]$process.Id) {
         throw "The panel drag point is covered by another process. TargetPid=$dragTargetProcessId TestPid=$($process.Id)"
     }
-    Invoke-LeftDrag ($before.Left + 105) ($before.Top + 34) ($before.Left - 15) ($before.Top + 94)
+    $moveSamples = @(Invoke-LeftDrag ($before.Left + 105) ($before.Top + 34) ($before.Left - 15) ($before.Top - 26) $handle)
     Start-Sleep -Milliseconds 700
     $afterMove = Get-WindowRectValue $handle
     if ([Math]::Abs($afterMove.Left - $before.Left) -lt 80 -or [Math]::Abs($afterMove.Top - $before.Top) -lt 35) {
         $placementFile = Join-Path $testRoot 'HuahaiClipboard\window-positions.json'
         $pointerLog = node $webProbe $DebugPort read-pointer-log | ConvertFrom-Json
-        throw "Dragging the visible panel header did not move the native window. Before=$($before.Left),$($before.Top) After=$($afterMove.Left),$($afterMove.Top) BridgeSavedPlacement=$(Test-Path -LiteralPath $placementFile) HitTag=$($hitTest.tag) HitId=$($hitTest.id) HitClasses=$($hitTest.classes) HitInteractive=$($hitTest.interactive) PointerEvents=$($pointerLog.events | ConvertTo-Json -Compress)"
+        $bridgeStatus = node $webProbe $DebugPort read-status | ConvertFrom-Json
+        throw "Dragging the visible panel header did not move the native window. Before=$($before.Left),$($before.Top) After=$($afterMove.Left),$($afterMove.Top) BridgeSavedPlacement=$(Test-Path -LiteralPath $placementFile) BridgeStatus=$($bridgeStatus | ConvertTo-Json -Compress) HitTag=$($hitTest.tag) HitId=$($hitTest.id) HitClasses=$($hitTest.classes) HitInteractive=$($hitTest.interactive) PointerEvents=$($pointerLog.events | ConvertTo-Json -Compress)"
+    }
+
+    $uniquePositions = @($moveSamples | ForEach-Object { "$($_.Left),$($_.Top)" } | Select-Object -Unique).Count
+    $longestStall = 0
+    $currentStall = 0
+    $previousPosition = $null
+    foreach ($sample in $moveSamples) {
+        $position = "$($sample.Left),$($sample.Top)"
+        if ($position -eq $previousPosition) { $currentStall++ } else { $currentStall = 0 }
+        $longestStall = [Math]::Max($longestStall, $currentStall)
+        $previousPosition = $position
+    }
+    if ($uniquePositions -lt 15 -or $longestStall -gt 4) {
+        throw "Panel dragging was not visually continuous. UniquePositions=$uniquePositions/30 LongestStallSamples=$longestStall Track=$($moveSamples | ConvertTo-Json -Compress)"
     }
 
     $resizeGrab = node $webProbe $DebugPort resize-grab-point | ConvertFrom-Json
@@ -153,7 +175,7 @@ try {
     $resizeTarget = [HuahaiPointerInteractionProbe]::WindowFromPoint($resizePoint)
     $resizeTargetProcessId = [uint32]0
     [HuahaiPointerInteractionProbe]::GetWindowThreadProcessId($resizeTarget, [ref]$resizeTargetProcessId) | Out-Null
-    Invoke-LeftDrag $resizeX $resizeY ($resizeX + 92) ($resizeY + 92)
+    $null = Invoke-LeftDrag $resizeX $resizeY ($resizeX + 92) ($resizeY + 92)
     $afterScale = $null
     for ($attempt = 0; $attempt -lt 30; $attempt++) {
         Start-Sleep -Milliseconds 100
@@ -177,6 +199,8 @@ try {
         Status = 'passed'
         PositionBefore = "$($before.Left),$($before.Top)"
         PositionAfter = "$($afterMove.Left),$($afterMove.Top)"
+        DragUniquePositions = $uniquePositions
+        DragLongestStallSamples = $longestStall
         SizeBefore = "$($afterMove.Width)x$($afterMove.Height)"
         SizeAfter = "$($afterScale.Width)x$($afterScale.Height)"
     } | ConvertTo-Json -Compress

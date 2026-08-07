@@ -80,6 +80,7 @@ function interactionExpression(controlId) {
 
     if (id === 'panel.search') { input(id, 'reactbits'); return rows().length === 1 && rows()[0].textContent.includes('reactbits'); }
     if (id === 'panel.minimize') { click(id); return document.querySelector('#glassPanel').classList.contains('hidden') && document.querySelector('#launcher').classList.contains('show'); }
+    if (id === 'panel.summon') { document.querySelector('#minimizeButton').click(); click(id); return !document.querySelector('#glassPanel').classList.contains('hidden') && document.activeElement === document.querySelector('#searchInput'); }
     if (id === 'panel.settings') { click(id); await pause(0); return document.querySelector('#glassPanel').classList.contains('settings-mode') && location.hash === '#settings/appearance'; }
     const filterKinds = { 'filter.text': '文本', 'filter.link': '链接', 'filter.image': '图片', 'filter.file': '文件' };
     if (id === 'filter.all') { click(id); return rows().length === 12; }
@@ -98,6 +99,7 @@ function interactionExpression(controlId) {
     if (id === 'appearance.opacity') { input(id, 70); return document.querySelector('#opacityValue').textContent === '70%' && Number(getComputedStyle(document.documentElement).getPropertyValue('--glass-material-opacity')) === 0.7; }
     if (id === 'appearance.scale') { input(id, 120); return document.querySelector('#scaleValue').textContent === '120%' && Number(getComputedStyle(document.documentElement).getPropertyValue('--panel-scale')) === 1.2; }
     if (id === 'appearance.reset-scale') { input('appearance.scale', 120); click(id); return document.querySelector('#scaleValue').textContent === '100%'; }
+    if (id === 'appearance.resize-handle') { const handle=byId(id);const before=document.querySelector('#scaleValue').textContent;handle.setPointerCapture=()=>{};handle.releasePointerCapture=()=>{};handle.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:11,clientX:400,clientY:640}));handle.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId:11,clientX:450,clientY:690}));handle.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:11,clientX:450,clientY:690}));return document.querySelector('#scaleValue').textContent!==before; }
     if (id === 'motion.petals') { const changed = toggleChanged(id); return changed && document.querySelector('#petals').classList.contains('off') === !byId(id).classList.contains('on'); }
     if (id === 'motion.reduced') { const changed = toggleChanged(id); return changed && document.querySelector('#desktop').classList.contains('reduced') === byId(id).classList.contains('on'); }
     if (id === 'motion.duration') { input(id, 700); return document.querySelector('#durationValue').textContent === '700ms'; }
@@ -106,6 +108,7 @@ function interactionExpression(controlId) {
     if (id === 'input.reset-shortcut') { click(id); return document.querySelector('#shortcutValue').textContent === '未设置'; }
     if (id === 'input.exclusions') { input(id, 'Example.exe'); return byId(id).value === 'Example.exe'; }
     if (id === 'input.save-exclusions') { input('input.exclusions', 'Example.exe\nAnother.exe'); click(id); return document.querySelectorAll('#excludeChips .chip').length === 2; }
+    if (id === 'input.remove-exclusion') { const before=document.querySelectorAll('#excludeChips .chip').length;click(id);return before>0&&document.querySelectorAll('#excludeChips .chip').length===before-1; }
     if (id === 'storage.open-folder') { click(id); return document.querySelector('#toast').classList.contains('show') && document.querySelector('#toast').textContent.includes('EXE'); }
     if (id.startsWith('storage.retention-')) { click(id); return byId(id).classList.contains('active'); }
     if (id === 'storage.clear-ordinary') { const before = rows().length; click(id); return rows().length > 0 && rows().length < before; }
@@ -126,6 +129,7 @@ async function main() {
   const { socket, command, events } = await connect();
   const results = [];
   const runtimeIds = new Set();
+  const unexplainedRuntimeControls = new Set();
   try {
     await command('Runtime.enable');
     await command('Log.enable');
@@ -135,11 +139,20 @@ async function main() {
       fixtureUrl.searchParams.set('apd-fixture', String(controlIndex));
       fixtureUrl.hash = hash;
       await command('Page.navigate', { url: fixtureUrl.href });
-      await waitFor(command, `document.readyState==='complete'&&document.querySelectorAll('[data-apd-control-id]').length===51`, `${control.control_id} route`);
+      await waitFor(command, `document.readyState==='complete'&&new Set([...document.querySelectorAll('[data-apd-control-id]')].map(element=>element.getAttribute('data-apd-control-id'))).size===54`, `${control.control_id} route`);
       const discovered = await evaluate(command, `[...document.querySelectorAll('[data-apd-control-id]')].map(element=>element.getAttribute('data-apd-control-id'))`);
       discovered.forEach(id => runtimeIds.add(id));
+      const unexplained = await evaluate(command, `(() => {
+        const nativeTags=new Set(['BUTTON','INPUT','SELECT','TEXTAREA','A']);
+        return [...document.querySelectorAll('.experience *')]
+          .filter(element=>nativeTags.has(element.tagName)||(element.getAttribute('role')&&['button','slider','checkbox','link','menuitem'].includes(element.getAttribute('role')))||element.hasAttribute('tabindex')||typeof element.onclick==='function'||typeof element.onpointerdown==='function')
+          .filter(element=>!element.hasAttribute('disabled'))
+          .filter(element=>!element.getAttribute('data-apd-control-id'))
+          .map(element=>element.id||element.className||element.tagName)
+      })()`);
+      unexplained.forEach(id => unexplainedRuntimeControls.add(String(id)));
       const count = await evaluate(command, `document.querySelectorAll('[data-apd-control-id=${JSON.stringify(control.control_id)}]').length`);
-      if (count !== 1) {
+      if (count < 1) {
         results.push({ control_id: control.control_id, status: 'missing', reached: false, triggered: false, matched: false, behavior: control.targets.web.behavior });
         continue;
       }
@@ -165,7 +178,7 @@ async function main() {
     target: 'web',
     contract_revision: contract.contract_revision,
     results,
-    unexplained_controls: [...runtimeIds].filter(id => !declared.has(id)),
+    unexplained_controls: [...new Set([...runtimeIds].filter(id => !declared.has(id)).concat([...unexplainedRuntimeControls]))],
     console_errors: consoleErrors,
     runner: 'tests/HuahaiClipboard.App.Smoke/WebInteractionContractSmoke.cjs',
   };

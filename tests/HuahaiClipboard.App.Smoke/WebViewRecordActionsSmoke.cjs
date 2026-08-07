@@ -104,6 +104,8 @@ async function run() {
       })()`
     : operation === 'read-pointer-log'
     ? `(() => ({events:(window.__huahaiPointerAudit||[]).slice(-20)}))()`
+    : operation === 'read-status'
+    ? `(() => { const toast=document.querySelector('#toast'); return {toast:toast?.textContent||'',toastClass:toast?.className||'',panelClass:document.querySelector('#glassPanel')?.className||''}; })()`
     : operation === 'resize-grab-point'
     ? `(() => {
         const panel=document.querySelector('#glassPanel').getBoundingClientRect();
