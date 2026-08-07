@@ -129,6 +129,7 @@ try {
         (Join-Path $PSScriptRoot 'InstallLocationPolicy.cs'),
         (Join-Path $PSScriptRoot 'InstallTargetPolicy.cs'),
         (Join-Path $PSScriptRoot 'PostInstallLaunchPolicy.cs'),
+        (Join-Path $PSScriptRoot 'InstallSwapTransaction.cs'),
         (Join-Path $PSScriptRoot 'Bootstrapper.cs')
     )
 

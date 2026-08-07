@@ -148,8 +148,6 @@ internal static class Bootstrapper
         Directory.CreateDirectory(parent);
         string stagingRoot = Path.Combine(parent, ".HuahaiClipboard-install-" + Guid.NewGuid().ToString("N"));
         string backupRoot = Path.Combine(parent, ".HuahaiClipboard-backup-" + Guid.NewGuid().ToString("N"));
-        bool previousMoved = false;
-        bool candidateMoved = false;
         string activeStep = "准备安装目录";
 
         try
@@ -165,36 +163,30 @@ internal static class Bootstrapper
             activeStep = "关闭旧版本";
             StopInstalledProcesses(installRoot);
 
-            if (Directory.Exists(installRoot))
-            {
-                activeStep = "备份旧版本";
-                MoveDirectoryWithRetry(installRoot, backupRoot);
-                previousMoved = true;
-            }
+            InstallSwapResult swapResult = InstallSwapTransaction.Execute(
+                stagingRoot,
+                installRoot,
+                backupRoot,
+                Directory.Exists,
+                MoveDirectoryWithRetry,
+                TryDeleteDirectory,
+                delegate
+                {
+                    activeStep = "写入安装所有权标记";
+                    InstallTargetPolicy.WriteOwnerMarker(installRoot);
+                    activeStep = "创建快捷方式";
+                    CreateShortcuts(installRoot);
+                    activeStep = "注册卸载入口";
+                    RegisterUninstaller(installRoot);
+                });
 
-            activeStep = "启用新版本";
-            MoveDirectoryWithRetry(stagingRoot, installRoot);
-            candidateMoved = true;
-            activeStep = "写入安装所有权标记";
-            InstallTargetPolicy.WriteOwnerMarker(installRoot);
-            activeStep = "创建快捷方式";
-            CreateShortcuts(installRoot);
-            activeStep = "注册卸载入口";
-            RegisterUninstaller(installRoot);
-
-            if (previousMoved && Directory.Exists(backupRoot))
-                Directory.Delete(backupRoot, true);
+            if (swapResult.BackupCleanupPending)
+                Trace.WriteLine("Installation committed; old-version backup cleanup is pending: " + backupRoot);
         }
         catch (Exception ex)
         {
             if (Directory.Exists(stagingRoot))
                 TryDeleteDirectory(stagingRoot);
-
-            if (candidateMoved && Directory.Exists(installRoot))
-                TryDeleteDirectory(installRoot);
-
-            if (!Directory.Exists(installRoot) && previousMoved && Directory.Exists(backupRoot))
-                MoveDirectoryWithRetry(backupRoot, installRoot);
 
             throw new InvalidOperationException("安装步骤“" + activeStep + "”失败：" + ex.Message, ex);
         }
@@ -595,7 +587,7 @@ internal static class Bootstrapper
     }
 
     // 对短暂文件占用执行有限重试，不扩大删除范围。
-    private static void TryDeleteDirectory(string path)
+    private static bool TryDeleteDirectory(string path)
     {
         for (int attempt = 0; attempt < 15 && Directory.Exists(path); attempt++)
         {
@@ -603,6 +595,7 @@ internal static class Bootstrapper
             catch (IOException) { Thread.Sleep(200); }
             catch (UnauthorizedAccessException) { Thread.Sleep(200); }
         }
+        return !Directory.Exists(path);
     }
 
     // 使用不区分大小写的安装器命令行开关。
