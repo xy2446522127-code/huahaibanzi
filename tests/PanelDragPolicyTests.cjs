@@ -29,3 +29,14 @@ test('preview drag position is clamped inside the desktop surface', () => {
     { left: 750, top: 80 }
   );
 });
+
+test('native drag coordinates convert CSS screen pixels to physical pixels', () => {
+  assert.deepEqual(
+    dragPolicy.physicalScreenPoint({ screenX: 120, screenY: 80 }, 1.5),
+    { x: 180, y: 120 }
+  );
+  assert.deepEqual(
+    dragPolicy.physicalScreenPoint({ screenX: 120, screenY: 80 }, 0),
+    { x: 120, y: 80 }
+  );
+});

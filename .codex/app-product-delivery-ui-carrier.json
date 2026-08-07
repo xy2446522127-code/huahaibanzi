@@ -5,7 +5,7 @@
     "installer/**",
     "tests/**"
   ],
-  "approval_evidence": "User approved automatic GitHub Release updates while preserving the approved WebView liquid-glass UI; this derivative only adds update status, progress, and explicit install controls to About.",
+  "approval_evidence": "User approved automatic GitHub Release updates while preserving the approved WebView liquid-glass UI; this derivative adds the explicit install control, stable deep-link routing, and machine-readable interaction IDs without changing the approved visual direction.",
   "capability_matrix": {
     "clipboard": {
       "desktop": "desktop",
@@ -40,7 +40,7 @@
   "cross_target_evidence": "",
   "delivery_maturity": "release",
   "entrypoint": "Web/product-shell.html",
-  "entrypoint_sha256": "156b332918de18693090baec42350415d8ab682386845e5f83defe414e6e7c63",
+  "entrypoint_sha256": "1116a328486a72a18132bd1d545b42b59d1284bd0cfdd9d11b1415087907c110",
   "mock_status": "removed",
   "native_port": {
     "blockers": [],
@@ -48,7 +48,7 @@
     "machine_evidence": []
   },
   "parent_source_manifest_sha256": "1f19076d0d778bd60e5a4940f735601c50c8c08ba50867c63d3d61a2009d8881",
-  "parent_visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.2-r3",
+  "parent_visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.2-r4",
   "preserved_areas": [
     "src/HuahaiClipboard.App/Assets/Brand/**",
     "%LOCALAPPDATA%/HuahaiClipboard/history.dat",
@@ -56,7 +56,7 @@
     "%LOCALAPPDATA%/HuahaiClipboard/settings.json"
   ],
   "product_scale": "medium",
-  "project_revision": 8,
+  "project_revision": 9,
   "risk_level": "high",
   "rollback_commit": "a04d9fb68767d1de705965925742023cc0d815f0",
   "runtime_topology": "desktop-first",
@@ -86,16 +86,22 @@
       "size": 913
     },
     {
+      "logical_asset_id": "Web/interaction-contract.js",
+      "path": "Web/interaction-contract.js",
+      "sha256": "f1446baf2d653c2a501bd74a3853f6a6da2a56d0936ed1f81f5aae346f1e4461",
+      "size": 3381
+    },
+    {
       "logical_asset_id": "Web/panel-drag.js",
       "path": "Web/panel-drag.js",
-      "sha256": "9766e875fba941b75739327015e35a61921697a43d9e1efa5f0f323a87fe31ed",
-      "size": 3069
+      "sha256": "819c0e2119b3cd1c3545932c3be90ec3449994dae5568aea70a8f95a106d3e76",
+      "size": 3355
     },
     {
       "logical_asset_id": "Web/product-shell.html",
       "path": "Web/product-shell.html",
-      "sha256": "156b332918de18693090baec42350415d8ab682386845e5f83defe414e6e7c63",
-      "size": 58907
+      "sha256": "1116a328486a72a18132bd1d545b42b59d1284bd0cfdd9d11b1415087907c110",
+      "size": 60141
     },
     {
       "logical_asset_id": "Web/retention-policy.js",
@@ -104,13 +110,19 @@
       "size": 823
     },
     {
+      "logical_asset_id": "Web/shell-router.js",
+      "path": "Web/shell-router.js",
+      "sha256": "8cafd1b5f2446411d513861943e9dc86fa6ceb71d4b6b3537b38f4aa20c5c252",
+      "size": 879
+    },
+    {
       "logical_asset_id": "Web/shortcut-input.js",
       "path": "Web/shortcut-input.js",
       "sha256": "c0714b6493b5010c46bd0b0cd78f5a9f51f9787b3975f100c6444316727f3ff8",
       "size": 908
     }
   ],
-  "source_manifest_sha256": "6c81fb317c71b818e3e62f51926779be3c7a37f4d2287f2c6b40d85bc7ce12cc",
+  "source_manifest_sha256": "e563e88c913d05a4f816598ac52aed909d5b942ec991219fa329df66979b8693",
   "source_root": "src/HuahaiClipboard.App/Assets",
   "strategy": "retain-and-integrate",
   "surfaces": [
@@ -120,7 +132,7 @@
   ],
   "targets": {
     "desktop": {
-      "build_evidence": "VS Build Tools MSBuild Release x64 completed with 0 errors; Core 89/89 and Web update contract 7/7 passed.",
+      "build_evidence": "VS Build Tools MSBuild Release x64 completed with 0 errors; the 10-file Assets manifest exactly matches the approved source manifest; focused Web module and interaction tests passed.",
       "build_manifest": [
         {
           "logical_asset_id": "Brand/fox-icon-source.png",
@@ -147,16 +159,22 @@
           "size": 913
         },
         {
+          "logical_asset_id": "Web/interaction-contract.js",
+          "path": "Web/interaction-contract.js",
+          "sha256": "f1446baf2d653c2a501bd74a3853f6a6da2a56d0936ed1f81f5aae346f1e4461",
+          "size": 3381
+        },
+        {
           "logical_asset_id": "Web/panel-drag.js",
           "path": "Web/panel-drag.js",
-          "sha256": "9766e875fba941b75739327015e35a61921697a43d9e1efa5f0f323a87fe31ed",
-          "size": 3069
+          "sha256": "819c0e2119b3cd1c3545932c3be90ec3449994dae5568aea70a8f95a106d3e76",
+          "size": 3355
         },
         {
           "logical_asset_id": "Web/product-shell.html",
           "path": "Web/product-shell.html",
-          "sha256": "156b332918de18693090baec42350415d8ab682386845e5f83defe414e6e7c63",
-          "size": 58907
+          "sha256": "1116a328486a72a18132bd1d545b42b59d1284bd0cfdd9d11b1415087907c110",
+          "size": 60141
         },
         {
           "logical_asset_id": "Web/retention-policy.js",
@@ -165,13 +183,19 @@
           "size": 823
         },
         {
+          "logical_asset_id": "Web/shell-router.js",
+          "path": "Web/shell-router.js",
+          "sha256": "8cafd1b5f2446411d513861943e9dc86fa6ceb71d4b6b3537b38f4aa20c5c252",
+          "size": 879
+        },
+        {
           "logical_asset_id": "Web/shortcut-input.js",
           "path": "Web/shortcut-input.js",
           "sha256": "c0714b6493b5010c46bd0b0cd78f5a9f51f9787b3975f100c6444316727f3ff8",
           "size": 908
         }
       ],
-      "build_output": "dist/webview-build-1.1.2-audit",
+      "build_output": "dist/webview-build-1.1.2",
       "host": "WinUI 3 + WebView2 (.NET 8, unpackaged)",
       "install_evidence": "Final v1.1.2 installed update and data-preservation evidence pending release gate.",
       "load_target": "https://app.huahai.local/Web/product-shell.html",
@@ -202,22 +226,34 @@
           "size": 913
         },
         {
+          "logical_asset_id": "Web/interaction-contract.js",
+          "path": "Web/interaction-contract.js",
+          "sha256": "f1446baf2d653c2a501bd74a3853f6a6da2a56d0936ed1f81f5aae346f1e4461",
+          "size": 3381
+        },
+        {
           "logical_asset_id": "Web/panel-drag.js",
           "path": "Web/panel-drag.js",
-          "sha256": "9766e875fba941b75739327015e35a61921697a43d9e1efa5f0f323a87fe31ed",
-          "size": 3069
+          "sha256": "819c0e2119b3cd1c3545932c3be90ec3449994dae5568aea70a8f95a106d3e76",
+          "size": 3355
         },
         {
           "logical_asset_id": "Web/product-shell.html",
           "path": "Web/product-shell.html",
-          "sha256": "156b332918de18693090baec42350415d8ab682386845e5f83defe414e6e7c63",
-          "size": 58907
+          "sha256": "1116a328486a72a18132bd1d545b42b59d1284bd0cfdd9d11b1415087907c110",
+          "size": 60141
         },
         {
           "logical_asset_id": "Web/retention-policy.js",
           "path": "Web/retention-policy.js",
           "sha256": "df43c45d899083668da69788e75a4f5fa03d9871a05a206d8598817e776a0ffe",
           "size": 823
+        },
+        {
+          "logical_asset_id": "Web/shell-router.js",
+          "path": "Web/shell-router.js",
+          "sha256": "8cafd1b5f2446411d513861943e9dc86fa6ceb71d4b6b3537b38f4aa20c5c252",
+          "size": 879
         },
         {
           "logical_asset_id": "Web/shortcut-input.js",
@@ -230,5 +266,5 @@
   },
   "ui_class": "existing-production-shell",
   "version": 1,
-  "visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.2-r4"
+  "visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.2-r5-interactions"
 }

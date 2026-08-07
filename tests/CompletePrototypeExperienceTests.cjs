@@ -4,7 +4,9 @@ const fs = require('node:fs');
 
 const shellPath = 'src/HuahaiClipboard.App/Assets/Web/product-shell.html';
 const html = fs.readFileSync(shellPath, 'utf8');
+const interactionModule = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/interaction-contract.js', 'utf8');
 const count = (part) => html.split(part).length - 1;
+const interactionContract = JSON.parse(fs.readFileSync('.codex/app-product-delivery-interaction-contract.json', 'utf8'));
 
 test('formal product shell uses the approved A petal-flow wordmark in both brand locations', () => {
   assert.equal(count('class="petal-text"'), 2);
@@ -15,9 +17,9 @@ test('formal product shell uses the approved A petal-flow wordmark in both brand
 
 test('settings gear has one live entry and every settings page shares a return path', () => {
   assert.equal(count('id="settingsButton"'), 1);
-  assert.match(html, /hhQ\('#settingsButton'\)\.onclick=openSettings/);
+  assert.match(html, /hhQ\('#settingsButton'\)\.onclick=\(\)=>openSettings\('appearance'\)/);
   assert.equal(count('id="backButton"'), 1);
-  assert.match(html, /hhQ\('#backButton'\)\.onclick=closeSettings/);
+  assert.match(html, /hhQ\('#backButton'\)\.onclick=\(\)=>closeSettings\(\)/);
 
   for (const page of ['appearance', 'motion', 'input', 'storage', 'system', 'about']) {
     assert.match(html, new RegExp(`class="nav-button(?: active)?" data-page="${page}"`), `${page} nav`);
@@ -43,7 +45,7 @@ test('about page uses the production update bridge while keeping preview simulat
   assert.equal(count('id="updateStatus"'), 1);
   assert.equal(count('id="releaseButton"'), 1);
   assert.equal(count('id="installUpdateButton"'), 1);
-  assert.match(html, /版本 1\.1\.1/);
+  assert.match(html, /版本 1\.1\.2/);
   assert.match(html, /postNative\('setCheckUpdatesOnStartup'/);
   assert.match(html, /postNative\('checkUpdate'/);
   assert.match(html, /postNative\('installUpdate'/);
@@ -80,4 +82,22 @@ test('web preview uses the same panel drag policy for a real movable interaction
 test('localhost preview cannot be mistaken for the native WebView host', () => {
   assert.match(html, /window\.HuahaiHostScale\.isNativeShellHost\(window\.location,window\.chrome\)/);
   assert.doesNotMatch(html, /window\.chrome && window\.chrome\.webview \? window\.chrome\.webview : null/);
+});
+
+test('every WebView-visible contract control is tagged on the real product shell', () => {
+  const visibleControls = interactionContract.controls.filter(control =>
+    control.fixture.route.startsWith('https://app.huahai.local/Web/product-shell.html'),
+  );
+  assert.equal(visibleControls.length, 51);
+  assert.match(interactionModule, /data-apd-control-id/);
+  for (const control of visibleControls) {
+    assert.ok((html + interactionModule).includes(`'${control.control_id}'`), control.control_id);
+  }
+});
+
+test('panel and settings hashes are real deep links with browser history support', () => {
+  assert.match(html, /function applyRouteFromHash\(\)/);
+  assert.match(html, /window\.addEventListener\('hashchange',applyRouteFromHash\)/);
+  assert.match(html, /window\.HuahaiShellRouter\.settingsHash\(page\)/);
+  assert.match(html, /window\.HuahaiShellRouter\.panelHash\(\)/);
 });

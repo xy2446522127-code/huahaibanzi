@@ -85,10 +85,11 @@ $originalCursor = [HuahaiPointerInteractionProbe+Point]::new()
 [HuahaiPointerInteractionProbe]::GetCursorPos([ref]$originalCursor) | Out-Null
 $env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $testRoot
 $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$DebugPort"
-$process = Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru
+$process = Start-Process -FilePath $resolvedExe -ArgumentList '--background' -WorkingDirectory (Split-Path $resolvedExe) -PassThru
 
 try {
     $handle = [IntPtr]::Zero
+    $webViewReady = $false
     for ($attempt = 0; $attempt -lt 50; $attempt++) {
         Start-Sleep -Milliseconds 250
         $process.Refresh()
@@ -96,10 +97,25 @@ try {
         if ($process.MainWindowHandle -ne [IntPtr]::Zero) { $handle = $process.MainWindowHandle }
         try {
             $null = Invoke-RestMethod -UseBasicParsing "http://127.0.0.1:$DebugPort/json" -TimeoutSec 1
-            if ($handle -ne [IntPtr]::Zero) { break }
+            $webViewReady = $true
+            break
         } catch { }
     }
-    if ($handle -eq [IntPtr]::Zero) { throw 'Installed app did not expose a ready WebView window.' }
+    if (-not $webViewReady) { throw 'Installed app did not expose a ready WebView runtime.' }
+
+    $summon = Start-Process -FilePath $resolvedExe -WorkingDirectory (Split-Path $resolvedExe) -PassThru -WindowStyle Hidden
+    if (-not $summon.WaitForExit(10000) -or $summon.ExitCode -ne 0) {
+        throw 'The background panel could not be summoned for pointer interaction testing.'
+    }
+    for ($attempt = 0; $attempt -lt 40; $attempt++) {
+        Start-Sleep -Milliseconds 100
+        $process.Refresh()
+        if ($process.MainWindowHandle -ne [IntPtr]::Zero) {
+            $handle = $process.MainWindowHandle
+            break
+        }
+    }
+    if ($handle -eq [IntPtr]::Zero) { throw 'Summoning did not expose the WebView window handle.' }
 
     [HuahaiPointerInteractionProbe]::BringWindowToTop($handle) | Out-Null
     [HuahaiPointerInteractionProbe]::SetForegroundWindow($handle) | Out-Null
@@ -109,6 +125,15 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'The panel drag hit-test probe failed.' }
     $pointerAudit = node $webProbe $DebugPort arm-pointer-log | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0 -or -not $pointerAudit.armed) { throw 'The pointer event audit could not be armed.' }
+    $dragPoint = [HuahaiPointerInteractionProbe+Point]::new()
+    $dragPoint.X = $before.Left + 105
+    $dragPoint.Y = $before.Top + 34
+    $dragTarget = [HuahaiPointerInteractionProbe]::WindowFromPoint($dragPoint)
+    $dragTargetProcessId = [uint32]0
+    [HuahaiPointerInteractionProbe]::GetWindowThreadProcessId($dragTarget, [ref]$dragTargetProcessId) | Out-Null
+    if ($dragTargetProcessId -ne [uint32]$process.Id) {
+        throw "The panel drag point is covered by another process. TargetPid=$dragTargetProcessId TestPid=$($process.Id)"
+    }
     Invoke-LeftDrag ($before.Left + 105) ($before.Top + 34) ($before.Left - 15) ($before.Top + 94)
     Start-Sleep -Milliseconds 700
     $afterMove = Get-WindowRectValue $handle

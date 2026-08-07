@@ -26,6 +26,14 @@
     };
   }
 
+  function physicalScreenPoint(event, devicePixelRatio) {
+    const scale = Number(devicePixelRatio) > 0 ? Number(devicePixelRatio) : 1;
+    return {
+      x: Math.round(Number(event.screenX) * scale),
+      y: Math.round(Number(event.screenY) * scale)
+    };
+  }
+
   function install(root, beginDrag) {
     if (!root || typeof beginDrag !== 'function') return () => {};
     let pending = null;
@@ -65,5 +73,5 @@
     return cancel;
   }
 
-  return Object.freeze({ holdDurationMs, movementThresholdPx, isInteractiveTarget, shouldBegin, previewPosition, install });
+  return Object.freeze({ holdDurationMs, movementThresholdPx, isInteractiveTarget, shouldBegin, previewPosition, physicalScreenPoint, install });
 });

@@ -1,2428 +1,2566 @@
 {
-  "contract_revision": "huahai-webview-1.1.1-interactions-v1",
+  "version": 1,
+  "contract_revision": "huahai-webview-1.1.2-interactions-v2",
   "controls": [
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "panel.search",
+      "test_id": "webview.panel.search",
       "disposition": "interactive",
+      "user_intent": "搜索剪贴板历史",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
+      "trigger": {
+        "type": "text-input"
+      },
       "expected": {
         "type": "visible-items-filtered"
       },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
       "mock_behavior": {
         "behavior": "synthetic",
-        "observable_result": "???????????????????"
+        "observable_result": "输入关键字后只显示匹配记录；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
       },
-      "opens_surface": false,
       "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "输入关键字后只显示匹配记录，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },
       "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
         "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
         }
       },
-      "test_id": "webview.panel.search",
-      "trigger": {
-        "type": "text-input"
-      },
-      "user_intent": "??????"
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "panel.minimize",
+      "test_id": "webview.panel.minimize",
       "disposition": "interactive",
+      "user_intent": "隐藏面板但保持后台运行",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
       "expected": {
         "type": "window-hidden-process-alive"
       },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
       "mock_behavior": {
         "behavior": "synthetic",
-        "observable_result": "???????????????????"
+        "observable_result": "面板隐藏且后台监听继续工作；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
       },
-      "opens_surface": false,
       "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "面板隐藏且后台监听继续工作，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },
       "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
         "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
         }
       },
-      "test_id": "webview.panel.minimize",
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "panel.settings",
+      "test_id": "webview.panel.settings",
+      "disposition": "interactive",
+      "user_intent": "进入设置中心",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "???????????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "panel.settings",
-      "disposition": "interactive",
-      "exit_control_id": "settings.back",
       "expected": {
         "type": "settings-visible"
       },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
       "mock_behavior": {
         "behavior": "synthetic",
-        "observable_result": "???????????????????"
+        "observable_result": "设置界面打开并可返回面板；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
       },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "设置界面打开并可返回面板，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
       "opens_surface": true,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.panel.settings",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
+      "exit_control_id": "settings.back"
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "filter.all",
-      "disposition": "interactive",
-      "expected": {
-        "type": "list-filtered"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
       "test_id": "webview.filter.all",
+      "disposition": "interactive",
+      "user_intent": "查看全部记录",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "??????"
+      "expected": {
+        "type": "list-filtered"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "列表恢复显示全部类型；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "列表恢复显示全部类型，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "filter.text",
-      "disposition": "interactive",
-      "expected": {
-        "type": "list-filtered"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
       "test_id": "webview.filter.text",
+      "disposition": "interactive",
+      "user_intent": "只查看文本记录",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "????"
+      "expected": {
+        "type": "list-filtered"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "列表只显示文本记录；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "列表只显示文本记录，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "filter.link",
-      "disposition": "interactive",
-      "expected": {
-        "type": "list-filtered"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
       "test_id": "webview.filter.link",
+      "disposition": "interactive",
+      "user_intent": "只查看链接记录",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "????"
+      "expected": {
+        "type": "list-filtered"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "列表只显示链接记录；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "列表只显示链接记录，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "filter.image",
-      "disposition": "interactive",
-      "expected": {
-        "type": "list-filtered"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
       "test_id": "webview.filter.image",
+      "disposition": "interactive",
+      "user_intent": "只查看图片记录",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "????"
+      "expected": {
+        "type": "list-filtered"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "列表只显示图片记录；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "列表只显示图片记录，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "filter.file",
-      "disposition": "interactive",
-      "expected": {
-        "type": "list-filtered"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
       "test_id": "webview.filter.file",
+      "disposition": "interactive",
+      "user_intent": "只查看文件记录",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "filter.favorites",
-      "disposition": "interactive",
       "expected": {
         "type": "list-filtered"
       },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
       "mock_behavior": {
         "behavior": "synthetic",
-        "observable_result": "???????????????????"
+        "observable_result": "列表只显示文件记录；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
       },
-      "opens_surface": false,
       "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "列表只显示文件记录，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },
       "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
         "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
         }
       },
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "filter.favorites",
       "test_id": "webview.filter.favorites",
+      "disposition": "interactive",
+      "user_intent": "只查看收藏记录",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "records.scroll",
-      "disposition": "interactive",
       "expected": {
-        "type": "virtualized-list-scrolls"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
+        "type": "list-filtered"
       },
       "mock_behavior": {
         "behavior": "synthetic",
-        "observable_result": "???????????????????"
+        "observable_result": "列表只显示已收藏记录；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
       },
-      "opens_surface": false,
       "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "列表只显示已收藏记录，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },
       "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
         "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
         }
       },
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "records.scroll",
       "test_id": "webview.records.scroll",
+      "disposition": "interactive",
+      "user_intent": "滚动浏览较多历史",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
       "trigger": {
         "type": "mouse-wheel"
       },
-      "user_intent": "????????"
+      "expected": {
+        "type": "virtualized-list-scrolls"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "记录列表滚动且行内按钮仍可操作；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "记录列表滚动且行内按钮仍可操作，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "record.copy",
+      "test_id": "webview.record.copy",
       "disposition": "interactive",
+      "user_intent": "复制选中记录",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
       "expected": {
         "type": "clipboard-updated-window-hidden"
       },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
       "mock_behavior": {
         "behavior": "synthetic",
-        "observable_result": "???????????????????"
+        "observable_result": "系统剪贴板更新并按设置立即隐藏面板；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
       },
-      "opens_surface": false,
       "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "系统剪贴板更新并按设置立即隐藏面板，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },
       "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
         "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
         }
       },
-      "test_id": "webview.record.copy",
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "record.pin",
+      "test_id": "webview.record.pin",
+      "disposition": "interactive",
+      "user_intent": "置顶或取消置顶记录",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "???????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "record.pin",
-      "disposition": "interactive",
       "expected": {
         "type": "pin-state-persisted"
       },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
       "mock_behavior": {
         "behavior": "synthetic",
-        "observable_result": "???????????????????"
+        "observable_result": "置顶状态保存并重新排序；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
       },
-      "opens_surface": false,
       "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "置顶状态保存并重新排序，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },
       "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
         "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
         }
       },
-      "test_id": "webview.record.pin",
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "record.favorite",
+      "test_id": "webview.record.favorite",
+      "disposition": "interactive",
+      "user_intent": "收藏或取消收藏记录",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "record.favorite",
-      "disposition": "interactive",
       "expected": {
         "type": "favorite-state-persisted"
       },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
       "mock_behavior": {
         "behavior": "synthetic",
-        "observable_result": "???????????????????"
+        "observable_result": "收藏状态保存并可用收藏筛选查看；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
       },
-      "opens_surface": false,
       "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "收藏状态保存并可用收藏筛选查看，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },
       "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
         "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
         }
       },
-      "test_id": "webview.record.favorite",
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "record.delete",
+      "test_id": "webview.record.delete",
+      "disposition": "interactive",
+      "user_intent": "删除一条历史记录",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "record.delete",
-      "disposition": "interactive",
       "expected": {
         "type": "record-removed"
       },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
       "mock_behavior": {
         "behavior": "synthetic",
-        "observable_result": "???????????????????"
+        "observable_result": "目标记录从历史中移除；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
       },
-      "opens_surface": false,
       "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "目标记录从历史中移除，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },
       "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
         "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
         }
       },
-      "test_id": "webview.record.delete",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "????"
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "panel.autohide",
+      "test_id": "webview.panel.autohide",
       "disposition": "interactive",
+      "user_intent": "控制复制后是否隐藏",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#panel",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
+      "trigger": {
+        "type": "toggle"
+      },
       "expected": {
         "type": "autohide-state-updated"
       },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
       "mock_behavior": {
         "behavior": "synthetic",
-        "observable_result": "???????????????????"
+        "observable_result": "自动隐藏偏好立即保存；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
       },
-      "opens_surface": false,
       "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "自动隐藏偏好立即保存，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },
       "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
         "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
         }
       },
-      "test_id": "webview.panel.autohide",
-      "trigger": {
-        "type": "toggle"
-      },
-      "user_intent": "?????????"
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "panel.drag",
+      "test_id": "webview.panel.drag",
       "disposition": "interactive",
-      "expected": {
-        "type": "window-position-updated"
-      },
+      "user_intent": "拖动面板到需要的位置",
       "fixture": {
         "route": "https://app.huahai.local/Web/product-shell.html#panel",
-        "state": "production-data",
+        "state": "isolated-deterministic",
         "viewport": {
-          "height": 680,
-          "width": 820
+          "width": 430,
+          "height": 680
         }
       },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.panel.drag",
       "trigger": {
         "type": "pointer-drag"
       },
-      "user_intent": "??????"
+      "expected": {
+        "type": "window-position-updated"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "窗口位置更新并按显示器保存；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "窗口位置更新并按显示器保存，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "clipboard",
+        "encrypted-history",
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "settings.nav.appearance",
-      "disposition": "interactive",
-      "expected": {
-        "type": "settings-page-visible"
-      },
-      "fixture": {
-        "route": "native://settings",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
       "test_id": "webview.settings.nav.appearance",
+      "disposition": "interactive",
+      "user_intent": "打开外观与主题设置",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "?????"
+      "expected": {
+        "type": "settings-page-visible"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "外观与主题页面显示；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "外观与主题页面显示，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "settings.nav.motion",
-      "disposition": "interactive",
-      "expected": {
-        "type": "settings-page-visible"
-      },
-      "fixture": {
-        "route": "native://settings",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
       "test_id": "webview.settings.nav.motion",
+      "disposition": "interactive",
+      "user_intent": "打开动效设置",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "?????"
+      "expected": {
+        "type": "settings-page-visible"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "动效页面显示；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "动效页面显示，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "settings.nav.input",
-      "disposition": "interactive",
-      "expected": {
-        "type": "settings-page-visible"
-      },
-      "fixture": {
-        "route": "native://settings",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
       "test_id": "webview.settings.nav.input",
+      "disposition": "interactive",
+      "user_intent": "打开唤出与隐私设置",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "???????"
+      "expected": {
+        "type": "settings-page-visible"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "唤出与隐私页面显示；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "唤出与隐私页面显示，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "settings.nav.storage",
-      "disposition": "interactive",
-      "expected": {
-        "type": "settings-page-visible"
-      },
-      "fixture": {
-        "route": "native://settings",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
       "test_id": "webview.settings.nav.storage",
+      "disposition": "interactive",
+      "user_intent": "打开本机存储设置",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "?????"
+      "expected": {
+        "type": "settings-page-visible"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "本机存储页面显示；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "本机存储页面显示，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "settings.nav.system",
-      "disposition": "interactive",
-      "expected": {
-        "type": "settings-page-visible"
-      },
-      "fixture": {
-        "route": "native://settings",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
       "test_id": "webview.settings.nav.system",
+      "disposition": "interactive",
+      "user_intent": "打开系统设置",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "?????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "settings.nav.about",
-      "disposition": "interactive",
       "expected": {
         "type": "settings-page-visible"
       },
-      "fixture": {
-        "route": "native://settings",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
       "mock_behavior": {
         "behavior": "synthetic",
-        "observable_result": "???????????????????"
+        "observable_result": "系统页面显示；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
       },
-      "opens_surface": false,
       "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "系统页面显示，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },
       "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
         "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
         }
       },
+      "allowed_side_effects": [
+        "window-visibility"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "settings.nav.about",
       "test_id": "webview.settings.nav.about",
+      "disposition": "interactive",
+      "user_intent": "打开关于与更新设置",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
       "trigger": {
         "type": "click"
       },
-      "user_intent": "?????"
+      "expected": {
+        "type": "settings-page-visible"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "关于与更新页面显示；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "关于与更新页面显示，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "window-visibility"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
       "control_id": "settings.back",
-      "disposition": "interactive",
-      "expected": {
-        "type": "panel-visible"
-      },
-      "fixture": {
-        "route": "native://settings",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
       "test_id": "webview.settings.back",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "theme.rose",
       "disposition": "interactive",
-      "expected": {
-        "type": "theme-applied"
-      },
+      "user_intent": "从设置返回剪贴板面板",
       "fixture": {
         "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
-        "state": "production-data",
+        "state": "isolated-deterministic",
         "viewport": {
-          "height": 680,
-          "width": 820
+          "width": 820,
+          "height": 650
         }
       },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.theme.rose",
       "trigger": {
         "type": "click"
       },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "theme.cobalt",
-      "disposition": "interactive",
-      "expected": {
-        "type": "theme-applied"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.theme.cobalt",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "theme.emerald",
-      "disposition": "interactive",
-      "expected": {
-        "type": "theme-applied"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.theme.emerald",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "theme.amber",
-      "disposition": "interactive",
-      "expected": {
-        "type": "theme-applied"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.theme.amber",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "theme.aurora",
-      "disposition": "interactive",
-      "expected": {
-        "type": "theme-applied"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.theme.aurora",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "appearance.opacity",
-      "disposition": "interactive",
-      "expected": {
-        "type": "material-opacity-updated"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.appearance.opacity",
-      "trigger": {
-        "type": "slider"
-      },
-      "user_intent": "???????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "appearance.scale",
-      "disposition": "interactive",
-      "expected": {
-        "type": "panel-scale-updated"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.appearance.scale",
-      "trigger": {
-        "type": "slider"
-      },
-      "user_intent": "???????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "appearance.reset-scale",
-      "disposition": "interactive",
-      "expected": {
-        "type": "panel-scale-reset"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.appearance.reset-scale",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "motion.petals",
-      "disposition": "interactive",
-      "expected": {
-        "type": "petal-state-updated"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/motion",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.motion.petals",
-      "trigger": {
-        "type": "toggle"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "motion.reduced",
-      "disposition": "interactive",
-      "expected": {
-        "type": "motion-reduced"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/motion",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.motion.reduced",
-      "trigger": {
-        "type": "toggle"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "motion.duration",
-      "disposition": "interactive",
-      "expected": {
-        "type": "duration-updated"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/motion",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.motion.duration",
-      "trigger": {
-        "type": "slider"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "input.right-double",
-      "disposition": "interactive",
-      "expected": {
-        "type": "gesture-state-updated"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.input.right-double",
-      "trigger": {
-        "type": "toggle"
-      },
-      "user_intent": "????????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "input.capture-shortcut",
-      "disposition": "interactive",
-      "expected": {
-        "type": "shortcut-saved"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.input.capture-shortcut",
-      "trigger": {
-        "type": "capture-input"
-      },
-      "user_intent": "????????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "input.reset-shortcut",
-      "disposition": "interactive",
-      "expected": {
-        "type": "shortcut-reset"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.input.reset-shortcut",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "input.exclusions",
-      "disposition": "interactive",
-      "expected": {
-        "type": "draft-updated"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.input.exclusions",
-      "trigger": {
-        "type": "text-input"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "input.save-exclusions",
-      "disposition": "interactive",
-      "expected": {
-        "type": "exclusions-saved"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.input.save-exclusions",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "storage.open-folder",
-      "disposition": "interactive",
-      "expected": {
-        "type": "folder-opened"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.storage.open-folder",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "storage.retention-3",
-      "disposition": "interactive",
-      "expected": {
-        "type": "retention-saved"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.storage.retention-3",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "storage.retention-7",
-      "disposition": "interactive",
-      "expected": {
-        "type": "retention-saved"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.storage.retention-7",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "storage.retention-30",
-      "disposition": "interactive",
-      "expected": {
-        "type": "retention-saved"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.storage.retention-30",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "???????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "storage.clear-ordinary",
-      "disposition": "interactive",
-      "expected": {
-        "type": "ordinary-history-removed"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.storage.clear-ordinary",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "storage.clear-all",
-      "disposition": "interactive",
-      "expected": {
-        "type": "all-history-removed"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.storage.clear-all",
-      "trigger": {
-        "type": "double-click-confirm"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "system.startup",
-      "disposition": "interactive",
-      "expected": {
-        "type": "startup-updated"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/system",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.system.startup",
-      "trigger": {
-        "type": "toggle"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "system.background",
-      "disposition": "interactive",
-      "expected": {
-        "type": "background-updated"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/system",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.system.background",
-      "trigger": {
-        "type": "toggle"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "about.update-toggle",
-      "disposition": "interactive",
-      "expected": {
-        "type": "update-setting-saved"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/about",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.about.update-toggle",
-      "trigger": {
-        "type": "toggle"
-      },
-      "user_intent": "????????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "about.check-update",
-      "disposition": "interactive",
-      "expected": {
-        "type": "update-status-visible"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/about",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.about.check-update",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "about.open-release",
-      "disposition": "interactive",
-      "expected": {
-        "type": "browser-opened"
-      },
-      "fixture": {
-        "route": "https://app.huahai.local/Web/product-shell.html#settings/about",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.about.open-release",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "?????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "global.custom-shortcut",
-      "disposition": "interactive",
-      "expected": {
-        "type": "topmost-panel-visible"
-      },
-      "fixture": {
-        "route": "huahai://background",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.global.custom-shortcut",
-      "trigger": {
-        "type": "global-input"
-      },
-      "user_intent": "???????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "global.right-double-click",
-      "disposition": "interactive",
-      "expected": {
-        "type": "topmost-panel-visible"
-      },
-      "fixture": {
-        "route": "huahai://background",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.global.right-double-click",
-      "trigger": {
-        "type": "global-input"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "tray.open-panel",
-      "disposition": "interactive",
-      "expected": {
-        "type": "panel-visible"
-      },
-      "fixture": {
-        "route": "huahai://tray",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
-      "mock_behavior": {
-        "behavior": "synthetic",
-        "observable_result": "???????????????????"
-      },
-      "opens_surface": false,
-      "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
-      },
-      "targets": {
-        "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
-        }
-      },
-      "test_id": "webview.tray.open-panel",
-      "trigger": {
-        "type": "click"
-      },
-      "user_intent": "??????"
-    },
-    {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "tray.open-settings",
-      "disposition": "interactive",
-      "exit_control_id": "settings.back",
       "expected": {
         "type": "settings-visible"
       },
-      "fixture": {
-        "route": "huahai://tray",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "设置关闭并恢复面板尺寸；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "设置关闭并恢复面板尺寸，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
         }
+      },
+      "allowed_side_effects": [
+        "window-visibility"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "theme.rose",
+      "test_id": "webview.theme.rose",
+      "disposition": "interactive",
+      "user_intent": "切换玫瑰紫主题",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "theme-applied"
       },
       "mock_behavior": {
         "behavior": "synthetic",
-        "observable_result": "???????????????????"
+        "observable_result": "玫瑰紫主题立即应用并保存；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
       },
-      "opens_surface": true,
       "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "玫瑰紫主题立即应用并保存，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },
       "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
         "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
         }
       },
-      "test_id": "webview.tray.open-settings",
+      "allowed_side_effects": [
+        "local-settings",
+        "window-geometry"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "theme.cobalt",
+      "test_id": "webview.theme.cobalt",
+      "disposition": "interactive",
+      "user_intent": "切换钴蓝主题",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "theme-applied"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "钴蓝主题立即应用并保存；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "钴蓝主题立即应用并保存，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "window-geometry"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "theme.emerald",
+      "test_id": "webview.theme.emerald",
+      "disposition": "interactive",
+      "user_intent": "切换翡翠青主题",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "theme-applied"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "翡翠青主题立即应用并保存；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "翡翠青主题立即应用并保存，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "window-geometry"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "theme.amber",
+      "test_id": "webview.theme.amber",
+      "disposition": "interactive",
+      "user_intent": "切换琥珀橙主题",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "theme-applied"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "琥珀橙主题立即应用并保存；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "琥珀橙主题立即应用并保存，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "window-geometry"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "theme.aurora",
+      "test_id": "webview.theme.aurora",
+      "disposition": "interactive",
+      "user_intent": "切换极光青紫主题",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "theme-applied"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "极光青紫主题立即应用并保存；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "极光青紫主题立即应用并保存，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "window-geometry"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "appearance.opacity",
+      "test_id": "webview.appearance.opacity",
+      "disposition": "interactive",
+      "user_intent": "调节液态玻璃透明度",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "slider"
+      },
+      "expected": {
+        "type": "material-opacity-updated"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "面板材质透明度实时变化并保存；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "面板材质透明度实时变化并保存，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "window-geometry"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "appearance.scale",
+      "test_id": "webview.appearance.scale",
+      "disposition": "interactive",
+      "user_intent": "等比例缩放整个面板",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "slider"
+      },
+      "expected": {
+        "type": "panel-scale-updated"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "字体图标圆角和间距同步缩放；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "字体图标圆角和间距同步缩放，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "window-geometry"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "appearance.reset-scale",
+      "test_id": "webview.appearance.reset-scale",
+      "disposition": "interactive",
+      "user_intent": "恢复默认面板大小",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/appearance",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "panel-scale-reset"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "面板缩放恢复为百分之百；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "面板缩放恢复为百分之百，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "window-geometry"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "motion.petals",
+      "test_id": "webview.motion.petals",
+      "disposition": "interactive",
+      "user_intent": "开启或关闭背景花瓣",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/motion",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "toggle"
+      },
+      "expected": {
+        "type": "petal-state-updated"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "花瓣背景层状态立即更新并保存；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "花瓣背景层状态立即更新并保存，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "animation-state"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "motion.reduced",
+      "test_id": "webview.motion.reduced",
+      "disposition": "interactive",
+      "user_intent": "减少动态效果",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/motion",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "toggle"
+      },
+      "expected": {
+        "type": "motion-reduced"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "花瓣和液态反光动画按偏好暂停；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "花瓣和液态反光动画按偏好暂停，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "animation-state"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "motion.duration",
+      "test_id": "webview.motion.duration",
+      "disposition": "interactive",
+      "user_intent": "调整按钮反馈时长",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/motion",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "slider"
+      },
+      "expected": {
+        "type": "duration-updated"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "非复制按钮反馈时长更新并保存；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "非复制按钮反馈时长更新并保存，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "animation-state"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "input.right-double",
+      "test_id": "webview.input.right-double",
+      "disposition": "interactive",
+      "user_intent": "启用或关闭右键双击唤出",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "toggle"
+      },
+      "expected": {
+        "type": "gesture-state-updated"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "默认鼠标手势状态更新并保存；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "默认鼠标手势状态更新并保存，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "global-input-registration"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "input.capture-shortcut",
+      "test_id": "webview.input.capture-shortcut",
+      "disposition": "interactive",
+      "user_intent": "录入自定义键盘或鼠标唤出方式",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "capture-input"
+      },
+      "expected": {
+        "type": "shortcut-saved"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "输入被规范化显示并自动保存；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "输入被规范化显示并自动保存，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "global-input-registration"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "input.reset-shortcut",
+      "test_id": "webview.input.reset-shortcut",
+      "disposition": "interactive",
+      "user_intent": "清除自定义唤出方式",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "shortcut-reset"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "恢复仅使用默认右键双击；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "恢复仅使用默认右键双击，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "global-input-registration"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "input.exclusions",
+      "test_id": "webview.input.exclusions",
+      "disposition": "interactive",
+      "user_intent": "编辑不记录剪贴板的应用列表",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "text-input"
+      },
+      "expected": {
+        "type": "draft-updated"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "排除列表草稿可编辑；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "排除列表草稿可编辑，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "global-input-registration"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "input.save-exclusions",
+      "test_id": "webview.input.save-exclusions",
+      "disposition": "interactive",
+      "user_intent": "保存应用排除列表",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/input",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "exclusions-saved"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "排除列表保存到本机设置；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "排除列表保存到本机设置，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "global-input-registration"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "storage.open-folder",
+      "test_id": "webview.storage.open-folder",
+      "disposition": "interactive",
+      "user_intent": "打开本机数据目录",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "folder-opened"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "资源管理器打开真实数据目录；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "资源管理器打开真实数据目录，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "encrypted-history",
+        "local-settings",
+        "system-shell"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "storage.retention-3",
+      "test_id": "webview.storage.retention-3",
+      "disposition": "interactive",
+      "user_intent": "设置普通历史保留三天",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "retention-saved"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "期限保存且收藏和置顶不受清理影响；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "期限保存且收藏和置顶不受清理影响，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "encrypted-history",
+        "local-settings",
+        "system-shell"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "storage.retention-7",
+      "test_id": "webview.storage.retention-7",
+      "disposition": "interactive",
+      "user_intent": "设置普通历史保留七天",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "retention-saved"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "期限保存且收藏和置顶不受清理影响；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "期限保存且收藏和置顶不受清理影响，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "encrypted-history",
+        "local-settings",
+        "system-shell"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "storage.retention-30",
+      "test_id": "webview.storage.retention-30",
+      "disposition": "interactive",
+      "user_intent": "设置普通历史保留一个月",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "retention-saved"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "期限保存且收藏和置顶不受清理影响；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "期限保存且收藏和置顶不受清理影响，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "encrypted-history",
+        "local-settings",
+        "system-shell"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "storage.clear-ordinary",
+      "test_id": "webview.storage.clear-ordinary",
+      "disposition": "interactive",
+      "user_intent": "立即清空普通历史",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "ordinary-history-removed"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "普通记录删除但收藏和置顶保留；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "普通记录删除但收藏和置顶保留，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "encrypted-history",
+        "local-settings",
+        "system-shell"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "storage.clear-all",
+      "test_id": "webview.storage.clear-all",
+      "disposition": "interactive",
+      "user_intent": "确认后清空全部内容",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/storage",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "double-click-confirm"
+      },
+      "expected": {
+        "type": "all-history-removed"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "二次确认后普通收藏和置顶全部删除；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "二次确认后普通收藏和置顶全部删除，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "encrypted-history",
+        "local-settings",
+        "system-shell"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "system.startup",
+      "test_id": "webview.system.startup",
+      "disposition": "interactive",
+      "user_intent": "设置开机后台启动",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/system",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "toggle"
+      },
+      "expected": {
+        "type": "startup-updated"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "当前用户开机自启状态更新；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "当前用户开机自启状态更新，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "current-user-startup"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "system.background",
+      "test_id": "webview.system.background",
+      "disposition": "interactive",
+      "user_intent": "设置关闭面板后继续后台运行",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/system",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "toggle"
+      },
+      "expected": {
+        "type": "background-updated"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "后台运行偏好更新并保留唤出监听；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "后台运行偏好更新并保留唤出监听，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "current-user-startup"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "about.update-toggle",
+      "test_id": "webview.about.update-toggle",
+      "disposition": "interactive",
+      "user_intent": "设置启动时检查更新",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/about",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "toggle"
+      },
+      "expected": {
+        "type": "update-setting-saved"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "自动检查偏好保存到本机；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "自动检查偏好保存到本机，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "github-release-network",
+        "system-shell"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "about.check-update",
+      "test_id": "webview.about.check-update",
+      "disposition": "interactive",
+      "user_intent": "立即检查 GitHub Release 更新",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/about",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "update-status-visible"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "显示检查中最新版本可更新或错误状态；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "显示检查中最新版本可更新或错误状态，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "github-release-network",
+        "system-shell"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "about.install-update",
+      "test_id": "webview.about.install-update",
+      "disposition": "interactive",
+      "user_intent": "下载并安装已发现的新版本",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/about",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "update-install-started"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "显示下载校验安装进度并启动可回滚安装器；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "显示下载校验安装进度并启动可回滚安装器，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "github-release-network",
+        "system-shell"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "about.open-release",
+      "test_id": "webview.about.open-release",
+      "disposition": "interactive",
+      "user_intent": "在浏览器查看公开发布页",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/about",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "browser-opened"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "系统浏览器打开项目 Release 页面；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "系统浏览器打开项目 Release 页面，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "github-release-network",
+        "system-shell"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "global.custom-shortcut",
+      "test_id": "webview.global.custom-shortcut",
+      "disposition": "interactive",
+      "user_intent": "使用自定义按键在指针位置唤出",
+      "fixture": {
+        "route": "huahai://background",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
+      "trigger": {
+        "type": "global-input"
+      },
+      "expected": {
+        "type": "topmost-panel-visible"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "面板在指针位置置顶显示；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "面板在指针位置置顶显示，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "simulated-platform-capability",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "global-input",
+        "window-visibility"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "global.right-double-click",
+      "test_id": "webview.global.right-double-click",
+      "disposition": "interactive",
+      "user_intent": "使用默认右键双击在指针位置唤出",
+      "fixture": {
+        "route": "huahai://background",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
+      "trigger": {
+        "type": "global-input"
+      },
+      "expected": {
+        "type": "topmost-panel-visible"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "面板在指针位置置顶显示；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "面板在指针位置置顶显示，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "simulated-platform-capability",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "global-input",
+        "window-visibility"
+      ],
+      "opens_surface": false
+    },
+    {
+      "control_id": "tray.open-panel",
+      "test_id": "webview.tray.open-panel",
+      "disposition": "interactive",
+      "user_intent": "从托盘打开面板",
+      "fixture": {
+        "route": "huahai://tray",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
       "trigger": {
         "type": "menu-click"
       },
-      "user_intent": "??????"
+      "expected": {
+        "type": "panel-visible"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "面板置顶显示；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "面板置顶显示，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "simulated-platform-capability",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "tray-menu",
+        "window-visibility",
+        "process-lifecycle"
+      ],
+      "opens_surface": false
     },
     {
-      "allowed_side_effects": [
-        "local-settings",
-        "encrypted-history",
-        "clipboard",
-        "window-visibility",
-        "system-shell"
-      ],
-      "control_id": "tray.exit",
+      "control_id": "tray.open-settings",
+      "test_id": "webview.tray.open-settings",
       "disposition": "interactive",
+      "user_intent": "从托盘进入设置",
+      "fixture": {
+        "route": "huahai://tray",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
+      "trigger": {
+        "type": "menu-click"
+      },
+      "expected": {
+        "type": "settings-visible"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "设置界面置顶显示；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
+      },
+      "state_contract": {
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "设置界面置顶显示，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "simulated-platform-capability",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
+        }
+      },
+      "allowed_side_effects": [
+        "tray-menu",
+        "window-visibility",
+        "process-lifecycle"
+      ],
+      "opens_surface": true,
+      "exit_control_id": "settings.back"
+    },
+    {
+      "control_id": "tray.exit",
+      "test_id": "webview.tray.exit",
+      "disposition": "interactive",
+      "user_intent": "从托盘完全退出程序",
+      "fixture": {
+        "route": "huahai://tray",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 430,
+          "height": 680
+        }
+      },
+      "trigger": {
+        "type": "menu-click"
+      },
       "expected": {
         "type": "process-exited"
       },
-      "fixture": {
-        "route": "huahai://tray",
-        "state": "production-data",
-        "viewport": {
-          "height": 680,
-          "width": 820
-        }
-      },
       "mock_behavior": {
         "behavior": "synthetic",
-        "observable_result": "???????????????????"
+        "observable_result": "监听托盘和后台进程全部退出；网页预览只改变模拟状态，不读取真实剪贴板或系统设置。"
       },
-      "opens_surface": false,
       "state_contract": {
-        "disabled": "??????????????",
-        "error": "?????????????",
-        "loading": "????????????????????",
-        "success": "??????????????"
+        "loading": "需要等待时显示忙碌状态并阻止重复提交。",
+        "success": "监听托盘和后台进程全部退出，界面状态与保存结果保持一致。",
+        "error": "失败时保留原状态并显示可读错误信息。",
+        "disabled": "依赖不可用或当前状态不适用时禁用并说明原因。"
       },
       "targets": {
+        "web": {
+          "behavior": "simulated-platform-capability",
+          "adapter": "approved product-shell preview adapter"
+        },
         "desktop": {
-          "adapter": "WebView DOM event, C# bridge, and production service",
-          "behavior": "native"
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and production service"
         }
       },
-      "test_id": "webview.tray.exit",
-      "trigger": {
-        "type": "menu-click"
-      },
-      "user_intent": "????"
+      "allowed_side_effects": [
+        "tray-menu",
+        "window-visibility",
+        "process-lifecycle"
+      ],
+      "opens_surface": false
     }
-  ],
-  "version": 1
+  ]
 }

@@ -18,6 +18,9 @@ Add-Type @'
 using System;
 using System.Runtime.InteropServices;
 public static class HuahaiTransientWindowProbe {
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Rect { public int Left; public int Top; public int Right; public int Bottom; }
+
     public delegate bool EnumWindowsCallback(IntPtr windowHandle, IntPtr parameter);
 
     [DllImport("user32.dll")]
@@ -33,6 +36,13 @@ public static class HuahaiTransientWindowProbe {
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool IsWindowVisible(IntPtr windowHandle);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetWindowRect(IntPtr windowHandle, out Rect rect);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -86,6 +96,9 @@ try {
         throw 'Application did not expose a top-level window.'
     }
 
+    $beforeSummonRect = [HuahaiTransientWindowProbe+Rect]::new()
+    $null = [HuahaiTransientWindowProbe]::GetWindowRect($handle, [ref]$beforeSummonRect)
+
     # The WinUI handle exists before WebView2 and the single-instance activation path are ready.
     Start-Sleep -Seconds 3
     if ($StartHidden -and [HuahaiTransientWindowProbe]::IsWindowVisible($handle)) {
@@ -120,7 +133,10 @@ try {
     }
     if (-not $shownTopmost -or -not $shownVisible) {
         $process.Refresh()
-        throw "Summoning must show the panel as a topmost window. Handle=$handle MainHandle=$($process.MainWindowHandle) Visible=$shownVisible Topmost=$shownTopmost Style=0x$('{0:X}' -f $shownStyle) SecondExitCode=$summonExitCode"
+        $afterSummonRect = [HuahaiTransientWindowProbe+Rect]::new()
+        $null = [HuahaiTransientWindowProbe]::GetWindowRect($handle, [ref]$afterSummonRect)
+        $foregroundHandle = [HuahaiTransientWindowProbe]::GetForegroundWindow()
+        throw "Summoning must show the panel as a topmost window. Handle=$handle MainHandle=$($process.MainWindowHandle) Foreground=$foregroundHandle Visible=$shownVisible Topmost=$shownTopmost Style=0x$('{0:X}' -f $shownStyle) SecondExitCode=$summonExitCode Before=$($beforeSummonRect.Left),$($beforeSummonRect.Top) After=$($afterSummonRect.Left),$($afterSummonRect.Top)"
     }
 
     $null = [HuahaiTransientWindowProbe]::PostMessage(
