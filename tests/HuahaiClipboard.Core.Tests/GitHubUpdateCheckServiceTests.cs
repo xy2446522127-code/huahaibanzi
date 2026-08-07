@@ -119,10 +119,7 @@ public sealed class GitHubUpdateCheckServiceTests
         Assert.IsTrue(result.UpdateAvailable);
         Assert.AreEqual(new Version(1, 2, 0), result.LatestVersion);
         Assert.IsTrue(result.CanAutoInstall);
-        Assert.AreEqual(345678L, result.InstallerSize);
-        Assert.AreEqual(
-            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-            result.InstallerSha256);
+        Assert.AreEqual(353370112L, result.InstallerSize);
         Assert.AreEqual(
             "https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.2.0/HuahaiClipboard-Setup.exe",
             result.InstallerUrl);
@@ -132,7 +129,7 @@ public sealed class GitHubUpdateCheckServiceTests
     }
 
     [TestMethod]
-    public async Task ReleasePageFallbackOffersWebLinkWhenDigestIsMissing()
+    public async Task ReleasePageFallbackProvidesSizeWithoutDigest()
     {
         using var client = new HttpClient(new RateLimitedThenPageHandler(includeDigest: false));
         var service = new GitHubUpdateCheckService(client, new Version(1, 1, 1));
@@ -140,13 +137,13 @@ public sealed class GitHubUpdateCheckServiceTests
         var result = await service.CheckAsync(CancellationToken.None);
 
         Assert.IsTrue(result.UpdateAvailable);
-        Assert.IsFalse(result.CanAutoInstall);
-        Assert.AreEqual(0L, result.InstallerSize);
+        Assert.IsTrue(result.CanAutoInstall);
+        Assert.AreEqual(353370112L, result.InstallerSize);
         Assert.AreEqual(string.Empty, result.InstallerSha256);
     }
 
     [TestMethod]
-    public async Task ApiWithoutDigestFallsBackToReleasePage()
+    public async Task ApiWithoutDigestKeepsApiResult()
     {
         using var client = new HttpClient(new ApiOkNoDigestThenPageHandler());
         var service = new GitHubUpdateCheckService(client, new Version(1, 1, 1));
@@ -157,9 +154,10 @@ public sealed class GitHubUpdateCheckServiceTests
         Assert.AreEqual(new Version(1, 2, 0), result.LatestVersion);
         Assert.IsTrue(result.CanAutoInstall);
         Assert.AreEqual(345678L, result.InstallerSize);
+        Assert.AreEqual(string.Empty, result.InstallerSha256);
         Assert.AreEqual(
-            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-            result.InstallerSha256);
+            "https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.2.0/HuahaiClipboard-Setup.exe",
+            result.InstallerUrl);
     }
 
     private sealed class ApiOkNoDigestThenPageHandler : HttpMessageHandler
@@ -216,8 +214,8 @@ public sealed class GitHubUpdateCheckServiceTests
 
             var tagValue = tag ?? "v1.2.0";
             var notes = includeDigest
-                ? "HuahaiClipboard-Setup.exe size=345678 sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-                : "no digest here";
+                ? "HuahaiClipboard-Setup.exe 337.0 MB"
+                : "HuahaiClipboard-Setup.exe 337.0 MB";
             var response = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(

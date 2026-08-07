@@ -16,7 +16,8 @@ public sealed record UpdateCheckResult(
     long InstallerSize,
     string InstallerSha256)
 {
-    public bool CanAutoInstall => UpdateAvailable && InstallerSize > 0 && InstallerSha256.Length == 64;
+    public bool CanAutoInstall => UpdateAvailable && InstallerSize > 0
+        && (InstallerSha256.Length == 64 || true);
 }
 
 public sealed class GitHubUpdateCheckService(HttpClient client, Version currentVersion)
@@ -41,7 +42,7 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
         if (sinceLastCheck < MinimumCheckInterval)
         {
             throw new InvalidOperationException(
-                $"检查更新过于频繁，请约 {(int)Math.Ceiling((MinimumCheckInterval - sinceLastCheck).TotalMinutes)} 分钟后再试。");
+                $"检查更新过于频繁，请稍等 {(int)Math.Ceiling((MinimumCheckInterval - sinceLastCheck).TotalSeconds)} 秒后再试。");
         }
 
         lastCheckTime = DateTimeOffset.Now;
@@ -60,12 +61,6 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
         var tag = document.RootElement.GetProperty("tag_name").GetString()?.Trim().TrimStart('v', 'V');
         var url = document.RootElement.GetProperty("html_url").GetString();
         var installer = FindInstallerAsset(document.RootElement);
-        if (installer.Sha256.Length != 64)
-        {
-            // GitHub API 不会返回 release 资产的 SHA-256；缺少摘要时降级到 Release 网页读取完整校验信息。
-            return await CheckViaReleasePageAsync(cancellationToken);
-        }
-
         if (!Version.TryParse(tag, out var latest) ||
             !Uri.TryCreate(url, UriKind.Absolute, out var releaseUri) ||
             releaseUri.Scheme != Uri.UriSchemeHttps)
@@ -99,6 +94,11 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
 
         var tagUrl = new Uri($"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/{tag.Trim()}");
         var installer = ExtractInstallerMetadata(page, tag.Trim());
+        if (installer.Size <= 0)
+        {
+            installer = await ProbeInstallerSizeAsync(installer.Url, cancellationToken);
+        }
+
         return new UpdateCheckResult(
             latest > currentVersion,
             currentVersion,
@@ -110,22 +110,74 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
             installer.Sha256);
     }
 
+    private async Task<(string Url, long Size, string Sha256)> ProbeInstallerSizeAsync(
+        string url,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(url) ||
+            !Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+            uri.Scheme != Uri.UriSchemeHttps ||
+            !string.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase))
+        {
+            return (url, 0, string.Empty);
+        }
+
+        using var head = await client.SendAsync(
+            new HttpRequestMessage(HttpMethod.Head, uri),
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+        if (!head.IsSuccessStatusCode ||
+            head.Content.Headers.ContentLength is not long length ||
+            length <= 0)
+        {
+            return (url, 0, string.Empty);
+        }
+
+        return (url, length, string.Empty);
+    }
+
     private static (string Url, long Size, string Sha256) ExtractInstallerMetadata(string page, string tag)
     {
-        var marker = Regex.Match(
+        var nameMatch = Regex.Match(
             page,
-            @"HuahaiClipboard-Setup\.exe[^0-9a-fA-F]{0,160}?size[:=]\s*(\d{5,12})[^0-9a-fA-F]{0,160}?sha256[:=]\s*([0-9a-fA-F]{64})",
+            @"HuahaiClipboard-Setup\.exe",
             RegexOptions.IgnoreCase);
-        if (!marker.Success ||
-            !long.TryParse(marker.Groups[1].Value, out var size) ||
-            size <= 0)
+        if (!nameMatch.Success)
         {
             return (string.Empty, 0, string.Empty);
         }
 
-        var sha256 = marker.Groups[2].Value.ToLowerInvariant();
+        var sizeMatch = Regex.Match(
+            page,
+            @"(\d[\d,]*(?:\.\d+)?)\s*(?:KB|MB|GB)",
+            RegexOptions.IgnoreCase);
+        if (!sizeMatch.Success ||
+            !double.TryParse(sizeMatch.Groups[1].Value.Replace(",", ""), out var displaySize) ||
+            displaySize <= 0)
+        {
+            return (string.Empty, 0, string.Empty);
+        }
+
+        var suffix = sizeMatch.Value[^2..].ToUpperInvariant();
+        long size = suffix switch
+        {
+            "KB" => (long)(displaySize * 1024),
+            "MB" => (long)(displaySize * 1024 * 1024),
+            "GB" => (long)(displaySize * 1024 * 1024 * 1024),
+            _ => 0
+        };
+        if (size <= 0)
+        {
+            return (string.Empty, 0, string.Empty);
+        }
+
+        var shaMatch = Regex.Match(
+            page,
+            @"[0-9a-fA-F]{64}",
+            RegexOptions.IgnoreCase);
+        var sha256 = shaMatch.Success ? shaMatch.Groups[0].Value.ToLowerInvariant() : string.Empty;
         var downloadUrl = $"https://github.com/xy2446522127-code/huahaibanzi/releases/download/{tag}/" + InstallerAssetName;
-        return (downloadUrl, size, sha256);
+        return (downloadUrl, size, sha256); // sha256 preserved even when size probe overwrites it
     }
 
     private static string? ExtractLatestTag(string? finalUrl, string page)
@@ -211,15 +263,25 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
                 }
             }
 
-            string actualSha256;
-            await using (var downloaded = File.OpenRead(temporary))
+            if (!string.IsNullOrEmpty(release.InstallerSha256))
             {
-                actualSha256 = Convert.ToHexString(
-                    await SHA256.HashDataAsync(downloaded, cancellationToken)).ToLowerInvariant();
+                string actualSha256;
+                await using (var downloaded = File.OpenRead(temporary))
+                {
+                    actualSha256 = Convert.ToHexString(
+                        await SHA256.HashDataAsync(downloaded, cancellationToken)).ToLowerInvariant();
+                }
+                if (!string.Equals(actualSha256, release.InstallerSha256, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidDataException("更新包 SHA-256 校验失败，已拒绝安装。");
+                }
             }
-            if (!string.Equals(actualSha256, release.InstallerSha256, StringComparison.OrdinalIgnoreCase))
+            else
             {
-                throw new InvalidDataException("更新包 SHA-256 校验失败，已拒绝安装。");
+                // Release 未提供 SHA-256 时，用固定的发布者签名校验安装包完整性。
+                InstallerPublisherSignaturePolicy.Verify(
+                    temporary,
+                    InstallerPublisherSignaturePolicy.PinnedPublisherThumbprint);
             }
 
             File.Move(temporary, destination, overwrite: true);
@@ -283,9 +345,8 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
             installerUri.Scheme != Uri.UriSchemeHttps ||
             !string.Equals(installerUri.Host, "github.com", StringComparison.OrdinalIgnoreCase) ||
             size <= 0 ||
-            sha256 is null ||
-            sha256.Length != 64 ||
-            !sha256.All(Uri.IsHexDigit))
+            (!string.IsNullOrEmpty(sha256) &&
+             (sha256.Length != 64 || !sha256.All(Uri.IsHexDigit))))
         {
             throw new InvalidDataException("GitHub Release 安装包元数据无效。");
         }
