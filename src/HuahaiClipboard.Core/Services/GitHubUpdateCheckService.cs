@@ -93,10 +93,19 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
         }
 
         var tagUrl = new Uri($"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/{tag.Trim()}");
-        var installer = ExtractInstallerMetadata(page, tag.Trim());
+        var downloadUrl = $"https://github.com/xy2446522127-code/huahaibanzi/releases/download/{tag.Trim()}/" + InstallerAssetName;
+        var installer = await ProbeInstallerAsync(downloadUrl, cancellationToken);
         if (installer.Size <= 0)
         {
-            installer = await ProbeInstallerSizeAsync(installer.Url, cancellationToken);
+            return new UpdateCheckResult(
+                latest > currentVersion,
+                currentVersion,
+                latest,
+                tagUrl.AbsoluteUri,
+                InstallerAssetName,
+                string.Empty,
+                0,
+                string.Empty);
         }
 
         return new UpdateCheckResult(
@@ -110,7 +119,7 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
             installer.Sha256);
     }
 
-    private async Task<(string Url, long Size, string Sha256)> ProbeInstallerSizeAsync(
+    private async Task<(string Url, long Size, string Sha256)> ProbeInstallerAsync(
         string url,
         CancellationToken cancellationToken)
     {
@@ -122,18 +131,25 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
             return (url, 0, string.Empty);
         }
 
-        using var head = await client.SendAsync(
-            new HttpRequestMessage(HttpMethod.Head, uri),
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
-        if (!head.IsSuccessStatusCode ||
-            head.Content.Headers.ContentLength is not long length ||
-            length <= 0)
+        try
+        {
+            using var head = await client.SendAsync(
+                new HttpRequestMessage(HttpMethod.Head, uri),
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
+            if (!head.IsSuccessStatusCode ||
+                head.Content.Headers.ContentLength is not long length ||
+                length <= 0)
+            {
+                return (url, 0, string.Empty);
+            }
+
+            return (url, length, string.Empty);
+        }
+        catch
         {
             return (url, 0, string.Empty);
         }
-
-        return (url, length, string.Empty);
     }
 
     private static (string Url, long Size, string Sha256) ExtractInstallerMetadata(string page, string tag)

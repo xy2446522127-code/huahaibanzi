@@ -131,7 +131,7 @@ public sealed class GitHubUpdateCheckServiceTests
     [TestMethod]
     public async Task ReleasePageFallbackProvidesSizeWithoutDigest()
     {
-        using var client = new HttpClient(new RateLimitedThenPageHandler(includeDigest: false));
+        using var client = new HttpClient(new RateLimitedThenPageHandler());
         var service = new GitHubUpdateCheckService(client, new Version(1, 1, 1));
 
         var result = await service.CheckAsync(CancellationToken.None);
@@ -200,7 +200,7 @@ public sealed class GitHubUpdateCheckServiceTests
         Assert.AreEqual(new Version(1, 1, 1), result.LatestVersion);
     }
 
-    private sealed class RateLimitedThenPageHandler(string? tag = null, bool includeDigest = true) : HttpMessageHandler
+    private sealed class RateLimitedThenPageHandler(string? tag = null) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
@@ -213,18 +213,32 @@ public sealed class GitHubUpdateCheckServiceTests
             }
 
             var tagValue = tag ?? "v1.2.0";
-            var notes = includeDigest
-                ? "HuahaiClipboard-Setup.exe 337.0 MB"
-                : "HuahaiClipboard-Setup.exe 337.0 MB";
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            if (request.Method == HttpMethod.Head &&
+                request.RequestUri.AbsoluteUri.EndsWith(
+                    $"/releases/download/{tagValue}/HuahaiClipboard-Setup.exe",
+                    StringComparison.OrdinalIgnoreCase))
             {
-                Content = new StringContent(
-                    $"<html><a href=\"/xy2446522127-code/huahaibanzi/releases/tag/{tagValue}\">Release</a><div>{notes}</div></html>")
-            };
-            response.RequestMessage = new HttpRequestMessage(
-                HttpMethod.Get,
-                $"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/{tagValue}");
-            return Task.FromResult(response);
+                var response = new HttpResponseMessage(HttpStatusCode.OK);
+                response.Content = new ByteArrayContent(Array.Empty<byte>());
+                response.Content.Headers.ContentLength = 353370112L;
+                return Task.FromResult(response);
+            }
+
+            if (request.Method == HttpMethod.Get &&
+                request.RequestUri.AbsoluteUri.Contains("/releases/latest", StringComparison.OrdinalIgnoreCase))
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(
+                        $"<html><a href=\"/xy2446522127-code/huahaibanzi/releases/tag/{tagValue}\">Release</a></html>")
+                };
+                response.RequestMessage = new HttpRequestMessage(
+                    HttpMethod.Get,
+                    $"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/{tagValue}");
+                return Task.FromResult(response);
+            }
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
         }
     }
 
