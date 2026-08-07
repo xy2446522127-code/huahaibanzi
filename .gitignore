@@ -5,3 +5,4 @@
 # Local preview output
 dist/
 .vs/
+TestResults/

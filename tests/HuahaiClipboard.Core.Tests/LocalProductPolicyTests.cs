@@ -51,6 +51,7 @@ public sealed class LocalProductPolicyTests
     [DataRow("CON")]
     [DataRow("con.txt")]
     [DataRow("user.")]
+    [DataRow("user ")]
     public void LocalDataLayout_UnsafeWindowsUserKeysRemainDirectChildrenOfDataRoot(string userKey)
     {
         var layout = new LocalDataLayout(@"F:\HuahaiClipboard", userKey);

@@ -26,7 +26,8 @@
     "worktrees": 2
   },
   "profile": "medium",
+  "result": "v1.1.5 signed installer rebuilt, F-drive install verified, release review P0/P1 cleared, desktop interaction 60/60",
   "stage_id": "v1-1-5-portable-data-scale",
-  "status": "active",
+  "status": "closed",
   "version": 2
 }
