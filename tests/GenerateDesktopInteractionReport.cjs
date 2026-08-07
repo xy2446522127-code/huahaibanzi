@@ -57,7 +57,7 @@ const report = {
   console_errors: [],
   evidence_summary: {
     web_controls: web.results.length,
-    core_tests: 93,
+    core_tests: 94,
     tray_tests: 1,
     platform_smokes: [
       'HideButtonWindowSmoke',
