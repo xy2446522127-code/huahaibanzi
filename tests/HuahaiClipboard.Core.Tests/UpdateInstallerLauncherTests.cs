@@ -30,4 +30,25 @@ public sealed class UpdateInstallerLauncherTests
         Assert.ThrowsException<InvalidDataException>(() =>
             UpdateInstallerLauncher.CreateStartInfo(installer, @"F:\HuahaiClipboard"));
     }
+
+    [TestMethod]
+    public void RejectsAnUnsignedInstallerBeforeStartingAProcess()
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            $"HuahaiClipboard.UnsignedUpdateTests.{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+        var installer = Path.Combine(directory, "HuahaiClipboard-Setup.exe");
+        File.WriteAllText(installer, "unsigned fixture");
+        try
+        {
+            var error = Assert.ThrowsException<InvalidDataException>(() =>
+                UpdateInstallerLauncher.Start(installer, @"F:\HuahaiClipboard"));
+            StringAssert.Contains(error.Message, "publisher signature");
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
 }

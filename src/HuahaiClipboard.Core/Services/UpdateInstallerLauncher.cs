@@ -45,6 +45,10 @@ public static class UpdateInstallerLauncher
         if (!File.Exists(installerPath))
             throw new FileNotFoundException("已验证的更新安装包不存在。", installerPath);
 
+        InstallerPublisherSignaturePolicy.Verify(
+            installerPath,
+            InstallerPublisherSignaturePolicy.PinnedPublisherThumbprint);
+
         return Process.Start(CreateStartInfo(installerPath, installRoot))
             ?? throw new InvalidOperationException("无法启动更新安装程序。");
     }

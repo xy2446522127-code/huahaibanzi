@@ -18,7 +18,7 @@
 - 默认启用“启动时检查更新”时，程序会通过 HTTPS 请求 GitHub API（`api.github.com`）读取本仓库最新 Release；可在“关于与更新”中关闭。
 - 请求不会上传剪贴板历史、图片、排除列表、设置或账号数据。公网 IP、User-Agent 和当前版本号属于正常 HTTPS 请求元数据。
 - Git 仓库中的代码提交不会直接更新已安装用户。维护者必须创建新的 GitHub Release，并上传固定名称的 `HuahaiClipboard-Setup.exe` 及对应 SHA-256 文件。
-- 只有用户点击“立即更新”后，程序才会下载安装包；下载完成后校验资产大小和 SHA-256，失败时保留当前版本。
+- 只有用户点击“立即更新”后，程序才会下载安装包；下载完成后校验资产大小、SHA-256 和固定发布者证书指纹，任一不一致都会拒绝启动安装并保留当前版本。
 
 ## 安装
 
@@ -30,7 +30,7 @@ dist/HuahaiClipboard-Setup.exe
 
 安装程序支持选择安装位置，并按照当前产品要求拒绝安装到 C 盘。安装后会创建桌面、开始菜单和 Windows“应用和功能”卸载入口。
 
-当前安装程序没有商业代码签名证书，Windows SmartScreen 可能显示未知发布者提示。请从本仓库或可信发布页面获取安装包，并核对发布说明中的 SHA-256。
+正式 Release 安装包使用项目维护者的自签名开源发布证书进行 Authenticode 签名，应用内更新会固定核对该证书指纹。该证书不是付费商业信任证书，因此 Windows SmartScreen 仍可能显示未知发布者提示；请从本仓库或可信发布页面获取安装包，并核对发布说明中的 SHA-256。私钥只保存在维护者本机证书库，不进入 Git。
 
 ## 本机数据与隐私
 
@@ -59,8 +59,11 @@ dotnet test tests\HuahaiClipboard.Core.Tests\HuahaiClipboard.Core.Tests.csproj -
 .\installer\Build-Installer.ps1 `
   -PublishRoot dist\webview-build-1.1.2 `
   -PrerequisiteRoot dist\prerequisites `
-  -OutputPath dist\HuahaiClipboard-Setup.exe
+  -OutputPath dist\HuahaiClipboard-Setup.exe `
+  -SigningThumbprint CD06B727BD8811C3B59CE0A4F9384D68EC7431C2
 ```
+
+未持有发布私钥的贡献者可以省略 `-SigningThumbprint` 构建本地调试安装包；正式 GitHub Release 必须使用上述固定发布者证书签名。
 
 正式桌面入口位于 `src/HuahaiClipboard.App`，使用 WinUI 3 + WebView2 离线加载 `Assets/Web/product-shell.html`；安装后的程序不依赖 localhost 或开发服务器。`experiments/HuahaiClipboard.NativeUiSpike` 仅保留为 1.1.0 原生 WPF 回滚实现。
 

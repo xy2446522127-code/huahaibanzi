@@ -1,7 +1,8 @@
 ﻿param(
     [Parameter(Mandatory = $true)][string]$PublishRoot,
     [Parameter(Mandatory = $true)][string]$OutputPath,
-    [string]$PrerequisiteRoot
+    [string]$PrerequisiteRoot,
+    [string]$SigningThumbprint
 )
 
 $ErrorActionPreference = 'Stop'
@@ -136,6 +137,12 @@ try {
     & $csc @compilerArgs
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $outputPath)) {
         throw "Installer compilation failed with exit code $LASTEXITCODE"
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($SigningThumbprint)) {
+        & (Join-Path $PSScriptRoot 'Sign-ReleaseInstaller.ps1') `
+            -Path $outputPath `
+            -Thumbprint $SigningThumbprint | Out-Null
     }
 
     Get-Item -LiteralPath $outputPath
