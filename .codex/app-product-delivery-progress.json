@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "scope_revision": 9,
+  "scope_revision": 10,
   "product_scale": "medium",
   "change_scale": "medium",
   "risk_level": "high",
@@ -47,7 +47,7 @@
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": "The signed v1.1.5 scale-fix3 installer preserves HuahaiClipboard.App.exe with PRI/XBF resources, bundles Windows App SDK prerequisites, and passed payload identity, prerequisite integrity, architecture, and UI contract checks. WebView source and F-drive Assets match across 11 files."
+      "evidence": "The signed v1.1.5 scale-fix5 installer preserves HuahaiClipboard.App.exe with PRI/XBF resources, bundles Windows App SDK prerequisites, and passed payload identity, prerequisite integrity, architecture, and UI contract checks. WebView source and F-drive Assets match across 11 files."
     },
     {
       "id": "full-feature-audit",
@@ -56,7 +56,7 @@
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": ".NET solution tests passed 119 Core + 39 Native UI; 15 applicable Node tests passed; installed scale layout and real pointer drag smokes passed; corner geometry tests passed; Release x64 build, carrier hash match, installer payload, prerequisite, architecture, and UI contract checks passed."
+      "evidence": ".NET solution tests passed 119 Core + 39 Native UI; 15 applicable Node tests plus dimensional pin/favorite assertions passed; installed scale layout and repeated real pointer drag smokes passed; corner geometry and dynamic red/yellow glass style checks passed; Release x64 build, carrier hash match, installer payload, prerequisite, architecture, and UI contract checks passed."
     },
     {
       "id": "v1-1-5-local-delivery",
@@ -65,7 +65,7 @@
       "core": false,
       "status": "verified",
       "blocker": "",
-      "evidence": "F-drive overwrite install completed with exit 0, Data/<SID> and PanelScale=0.8 were preserved, source and installed Assets match across 11 files, and the signed installer is dist/HuahaiClipboard-Setup-v1.1.5-scale-fix3.exe. No push or GitHub Release was performed."
+      "evidence": "F-drive overwrite install completed with exit 0, Data/<SID> and PanelScale=0.8 were preserved, source and installed Assets match across 11 files, and the signed installer is dist/HuahaiClipboard-Setup-v1.1.5-scale-fix5.exe. No push or GitHub Release was performed."
     }
   ],
   "scope_changes": [
@@ -88,6 +88,10 @@
     {
       "revision": 9,
       "reason": "Real pointer dragging still jumped because native window resizing moved the slider under the cursor; preview now freezes geometry until commit, and native corner clipping uses CSS-radius geometry without DPI double-scaling."
+    },
+    {
+      "revision": 10,
+      "reason": "User requested pinned pins to become dimensional red glass and favorite stars dimensional yellow glass; both states now use gradient, inset highlight, depth shadow, and state-specific color while preserving the existing actions."
     }
   ],
   "updated_at": "2026-08-08T02:42:00+08:00"

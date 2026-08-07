@@ -42,6 +42,15 @@ test('appearance page exposes proportional panel scaling and a one-click reset',
   assert.match(html, /postNative\('commitPanelScale'/);
 });
 
+test('pinned records use a dimensional red glass pin state', () => {
+  assert.match(html, /\.row-action\.pin\.on\{[^}]*color:#ff6f7e/);
+  assert.match(html, /\.row-action\.pin\.on\{[^}]*linear-gradient\(/);
+  assert.match(html, /\.row-action\.pin\.on\{[^}]*inset 0 1px/);
+  assert.match(html, /\.row-action\.pin\.on \.pin-glyph\{[^}]*transform:rotate\(-12deg\)/);
+  assert.match(html, /\.row-action\.fav\.on\{[^}]*color:#ffd65a/);
+  assert.match(html, /\.row-action\.fav\.on\{[^}]*linear-gradient\(/);
+});
+
 test('about page uses the production update bridge while keeping preview simulation offline', () => {
   assert.equal(count('id="updateAutoToggle"'), 1);
   assert.equal(count('id="checkUpdateButton"'), 1);

@@ -283,6 +283,14 @@ async function run() {
         const favoriteBefore = await toggleAndRestore('.fav');
         return { id, text, countText, count, visibleRows, pinRestored: row().querySelector('.pin').classList.contains('on') === pinBefore, favoriteRestored: row().querySelector('.fav').classList.contains('on') === favoriteBefore };
       })()`
+    : operation === 'pin-fav-style'
+    ? `(() => {
+        const pin=document.querySelector('.row-action.pin.on');
+        const fav=document.querySelector('.row-action.fav.on');
+        if(!pin||!fav) throw new Error('pinned and favorite fixtures missing');
+        const pinStyle=getComputedStyle(pin),favStyle=getComputedStyle(fav);
+        return {pin:{color:pinStyle.color,backgroundImage:pinStyle.backgroundImage,boxShadow:pinStyle.boxShadow,transform:getComputedStyle(pin.querySelector('.pin-glyph')).transform},favorite:{color:favStyle.color,backgroundImage:favStyle.backgroundImage,boxShadow:favStyle.boxShadow}};
+      })()`
     : operation === 'wait-and-delete-text'
       ? `(async () => {
           const expected=${quoted};

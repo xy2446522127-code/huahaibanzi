@@ -40,7 +40,7 @@
   "cross_target_evidence": "",
   "delivery_maturity": "release",
   "entrypoint": "Web/product-shell.html",
-  "entrypoint_sha256": "c1e56e0d1ad9d2f486e96cf90c69ae0597ee8e1ab3edbe8b50f1e13d785fe8b1",
+  "entrypoint_sha256": "072bba31a048830decf087e06a4979caa8a34b91bf22e66799672a1c4f6ad3ec",
   "mock_status": "removed",
   "native_port": {
     "blockers": [],
@@ -56,7 +56,7 @@
     "<install-root>/Data/<Windows-SID>/settings.json"
   ],
   "product_scale": "medium",
-  "project_revision": 14,
+  "project_revision": 15,
   "risk_level": "high",
   "rollback_commit": "b29d7cfe31f4d3196099c3084c10e25ded83f2da",
   "runtime_topology": "desktop-first",
@@ -106,8 +106,8 @@
     {
       "logical_asset_id": "Web/product-shell.html",
       "path": "Web/product-shell.html",
-      "sha256": "c1e56e0d1ad9d2f486e96cf90c69ae0597ee8e1ab3edbe8b50f1e13d785fe8b1",
-      "size": 60497
+      "sha256": "072bba31a048830decf087e06a4979caa8a34b91bf22e66799672a1c4f6ad3ec",
+      "size": 61710
     },
     {
       "logical_asset_id": "Web/retention-policy.js",
@@ -128,7 +128,7 @@
       "size": 908
     }
   ],
-  "source_manifest_sha256": "26e6ba83ccd2b3198c5efeed4b4ebb9db1247a4a8975feaf49500700ad8e2f17",
+  "source_manifest_sha256": "8451fe08dea4ffc91bf1d2dcaf4041f7d075855f3c837232412efc5c9a13769b",
   "source_root": "src/HuahaiClipboard.App/Assets",
   "strategy": "retain-and-integrate",
   "surfaces": [
@@ -185,8 +185,8 @@
         {
           "logical_asset_id": "Web/product-shell.html",
           "path": "Web/product-shell.html",
-          "sha256": "c1e56e0d1ad9d2f486e96cf90c69ae0597ee8e1ab3edbe8b50f1e13d785fe8b1",
-          "size": 60497
+          "sha256": "072bba31a048830decf087e06a4979caa8a34b91bf22e66799672a1c4f6ad3ec",
+          "size": 61710
         },
         {
           "logical_asset_id": "Web/retention-policy.js",
@@ -284,5 +284,5 @@
   },
   "ui_class": "existing-production-shell",
   "version": 1,
-  "visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.5-r10-scale-pointer-corners-fix"
+  "visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.5-r11-dimensional-pin-favorite"
 }
