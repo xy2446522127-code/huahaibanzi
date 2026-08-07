@@ -197,7 +197,7 @@
       ],
       "build_output": "dist/webview-build-1.1.2",
       "host": "WinUI 3 + WebView2 (.NET 8, unpackaged)",
-      "install_evidence": "Final v1.1.2 installed update and data-preservation evidence pending release gate.",
+      "install_evidence": "v1.1.2 AMD64 setup upgraded the running F:\\HuahaiClipboard installation, restarted exactly one background process, preserved 68/68 local data files by SHA-256, registered version 1.1.2 and the uninstaller, and passed eight installed-app smokes.",
       "load_target": "https://app.huahai.local/Web/product-shell.html",
       "package": "dist/HuahaiClipboard-Setup.exe",
       "source_manifest": [

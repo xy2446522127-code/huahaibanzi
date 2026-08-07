@@ -13,6 +13,13 @@
 - 密码管理器、浏览器无痕窗口以及用户排除列表中的应用不会写入历史。
 - 可选开机自启、后台运行和 GitHub Release 更新检查。
 
+## 更新与联网说明
+
+- 默认启用“启动时检查更新”时，程序会通过 HTTPS 请求 GitHub API（`api.github.com`）读取本仓库最新 Release；可在“关于与更新”中关闭。
+- 请求不会上传剪贴板历史、图片、排除列表、设置或账号数据。公网 IP、User-Agent 和当前版本号属于正常 HTTPS 请求元数据。
+- Git 仓库中的代码提交不会直接更新已安装用户。维护者必须创建新的 GitHub Release，并上传固定名称的 `HuahaiClipboard-Setup.exe` 及对应 SHA-256 文件。
+- 只有用户点击“立即更新”后，程序才会下载安装包；下载完成后校验资产大小和 SHA-256，失败时保留当前版本。
+
 ## 安装
 
 正式安装程序为：
@@ -45,12 +52,12 @@ dotnet test tests\HuahaiClipboard.Core.Tests\HuahaiClipboard.Core.Tests.csproj -
 & 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe' `
   src\HuahaiClipboard.App\HuahaiClipboard.App.csproj `
   /t:Build /p:Configuration=Release /p:Platform=x64 `
-  /p:RuntimeIdentifier=win-x64 /p:SelfContained=false /p:Version=1.1.1 `
-  /p:OutDir="$PWD\dist\webview-build-1.1.1\" /restore /m
+  /p:RuntimeIdentifier=win-x64 /p:SelfContained=false /p:Version=1.1.2 `
+  /p:OutDir="$PWD\dist\webview-build-1.1.2\" /restore /m
 
 .\installer\Fetch-Prerequisites.ps1 -Destination dist\prerequisites
 .\installer\Build-Installer.ps1 `
-  -PublishRoot dist\webview-build-1.1.1 `
+  -PublishRoot dist\webview-build-1.1.2 `
   -PrerequisiteRoot dist\prerequisites `
   -OutputPath dist\HuahaiClipboard-Setup.exe
 ```

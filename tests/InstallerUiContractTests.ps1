@@ -8,7 +8,9 @@ if ($bootstrapper -notmatch 'ChooseInstallRoot') { throw 'Interactive setup must
 if ($bootstrapper -notmatch 'FolderBrowserDialog') { throw 'Interactive setup must provide a folder browser.' }
 if ($bootstrapper -notmatch 'dialog\.Description') { throw 'Interactive setup must visibly describe the install location.' }
 if ($bootstrapper -notmatch 'InstallLocationPolicy\.Resolve\(selectedRoot') { throw 'The selected folder must pass the C drive restriction policy.' }
-if ($bootstrapper -match 'SpecialFolder\.LocalApplicationData') { throw 'Setup must not default to LocalAppData on C.' }
+if ($bootstrapper -notmatch 'InstallLocationPolicy\.DefaultForRoots\(GetAvailableFixedDriveRoots\(\), ProductFolderName\)') {
+    throw 'Setup must derive its default install root from available fixed drives through the C-drive restriction policy.'
+}
 if ($buildScript -notmatch 'App\.xbf') { throw 'WebView setup must package WinUI compiled resources.' }
 if ($buildScript -notmatch 'WindowsAppRuntimeInstall') { throw 'WebView setup must package the Windows App Runtime prerequisite.' }
 if ($buildScript -notmatch 'MicrosoftEdgeWebView2RuntimeInstallerX64') { throw 'WebView setup must package the Evergreen WebView2 Runtime prerequisite.' }

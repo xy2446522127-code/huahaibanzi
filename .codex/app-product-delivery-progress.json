@@ -8,9 +8,9 @@
   "delivery_maturity": "release",
   "delivery_target": "release",
   "execution_mode": "autonomous_implementation",
-  "core_percent": 72.22,
-  "overall_percent": 65.0,
-  "current_milestone": "automatic-update",
+  "core_percent": 100.0,
+  "overall_percent": 90.0,
+  "current_milestone": "v1-1-2-release",
   "blockers": [],
   "milestones": [
     {
@@ -20,7 +20,7 @@
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": "v1.1.1 installed WebView carrier and drag/resize checkpoint fa767fe remain verified; no UI redesign authorized."
+      "evidence": "Installed v1.1.2 panel and settings captures preserve the approved WebView liquid-glass shell; source/build/installed Assets manifests match across 10 files."
     },
     {
       "id": "production-bridge",
@@ -29,7 +29,7 @@
       "core": true,
       "status": "verified",
       "blocker": "",
-      "evidence": "Prior Core/Web/installed smokes remain evidence for unchanged paths; release rerun pending after new changes."
+      "evidence": "Web 51/51 and desktop 56/56 interaction contracts pass; installed clipboard, hide, scale, DPI drag, global input and tray tests pass."
     },
     {
       "id": "installer-target-safety",
@@ -45,18 +45,18 @@
       "label": "In-app update downloads, verifies, installs, rolls back and restarts",
       "weight": 15,
       "core": true,
-      "status": "pending",
-      "blocker": "Implementation and end-to-end verification remain.",
-      "evidence": ""
+      "status": "verified",
+      "blocker": "",
+      "evidence": "Download size/SHA-256 and launcher tests pass; a running F-drive installation upgraded in place, restarted in background, and preserved 68/68 user-data files exactly."
     },
     {
       "id": "full-feature-audit",
       "label": "Approved production feature matrix passes on installed Windows x64 app",
       "weight": 10,
       "core": true,
-      "status": "pending",
-      "blocker": "Release matrix has not been rerun after new changes.",
-      "evidence": ""
+      "status": "verified",
+      "blocker": "",
+      "evidence": "Core 94 tests, all Node tests, tray test, installer policy matrix and eight installed Windows x64 smokes pass."
     },
     {
       "id": "v1-1-2-release",
@@ -64,7 +64,7 @@
       "weight": 10,
       "core": false,
       "status": "pending",
-      "blocker": "Depends on updater and full matrix.",
+      "blocker": "Public Git push and GitHub Release publication remain.",
       "evidence": ""
     }
   ],
@@ -78,5 +78,5 @@
       "reason": "User requested unattended full tuning; automatic update and exhaustive release verification expand the v1.1.1 scope and raise installer/update risk to high."
     }
   ],
-  "updated_at": "2026-08-07T02:20:00+08:00"
+  "updated_at": "2026-08-07T09:55:00+08:00"
 }

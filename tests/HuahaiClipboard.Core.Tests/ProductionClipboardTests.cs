@@ -178,6 +178,31 @@ public sealed class ProductionClipboardTests
     }
 
     [TestMethod]
+    public async Task History_PruneDoesNotRewriteEncryptedFileWhenNothingExpires()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-prune-unchanged-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "history.dat");
+        try
+        {
+            var protector = new CountingTextProtector();
+            var source = new JsonClipboardHistorySource(path, protector);
+            var copiedAt = DateTimeOffset.Parse("2026-08-07T09:00:00+08:00");
+            await source.UpsertAsync(CreateRecord("current", copiedAt), CancellationToken.None);
+
+            await source.PruneAsync(copiedAt.AddDays(-7), preserveProtected: true, CancellationToken.None);
+
+            Assert.AreEqual(1, protector.ProtectCalls);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
+    [TestMethod]
     public async Task History_ClearUnprotectedPreservesFavoriteAndPinnedRecords()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"huahai-clear-ordinary-{Guid.NewGuid():N}");
@@ -275,6 +300,19 @@ public sealed class ProductionClipboardTests
     {
         public string Protect(string value) => value;
         public string Unprotect(string value) => throw new FormatException("corrupt payload");
+    }
+
+    private sealed class CountingTextProtector : ITextProtector
+    {
+        public int ProtectCalls { get; private set; }
+
+        public string Protect(string value)
+        {
+            ProtectCalls++;
+            return value;
+        }
+
+        public string Unprotect(string value) => value;
     }
 
     private sealed class RecordingClipboardPlatform : IClipboardPlatform

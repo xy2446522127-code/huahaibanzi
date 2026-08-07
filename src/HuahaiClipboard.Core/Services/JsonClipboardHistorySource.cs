@@ -102,15 +102,28 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
             values => values.RemoveAll(value => !value.IsFavorite && !value.IsPinned),
             cancellationToken);
 
-    public Task PruneAsync(
+    public async Task PruneAsync(
         DateTimeOffset cutoff,
         bool preserveProtected,
-        CancellationToken cancellationToken) =>
-        MutateAsync(
-            values => values.RemoveAll(value =>
+        CancellationToken cancellationToken)
+    {
+        await gate.WaitAsync(cancellationToken);
+        try
+        {
+            await EnsureLoadedAsync(cancellationToken);
+            var removed = records!.RemoveAll(value =>
                 value.LastCopiedAt < cutoff &&
-                (!preserveProtected || !value.IsFavorite && !value.IsPinned)),
-            cancellationToken);
+                (!preserveProtected || !value.IsFavorite && !value.IsPinned));
+            if (removed > 0)
+            {
+                await SaveAsync(cancellationToken);
+            }
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
 
     private Task UpdateAsync(
         Guid recordId,

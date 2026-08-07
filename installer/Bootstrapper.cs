@@ -14,8 +14,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("HuahaiClipboard")]
 [assembly: AssemblyProduct("花海剪贴板")]
 [assembly: AssemblyCopyright("Copyright © 2026")]
-[assembly: AssemblyVersion("1.1.1.0")]
-[assembly: AssemblyFileVersion("1.1.1.0")]
+[assembly: AssemblyVersion("1.1.2.0")]
+[assembly: AssemblyFileVersion("1.1.2.0")]
 
 internal static class Bootstrapper
 {
@@ -69,11 +69,13 @@ internal static class Bootstrapper
             {
                 try
                 {
-                    Process.Start(new ProcessStartInfo(Path.Combine(installRoot, AppFileName))
+                    var startInfo = new ProcessStartInfo(Path.Combine(installRoot, AppFileName))
                     {
                         UseShellExecute = true,
                         WorkingDirectory = installRoot
-                    });
+                    };
+                    startInfo.Arguments = PostInstallLaunchPolicy.ArgumentsFor(silent);
+                    Process.Start(startInfo);
                 }
                 catch (Exception ex)
                 {
@@ -210,13 +212,14 @@ internal static class Bootstrapper
             }
             catch (IOException)
             {
-                if (attempt >= 14)
+                // WebView2 may keep its profile handle briefly after the parent app exits.
+                if (attempt >= 74)
                     throw;
                 Thread.Sleep(200);
             }
             catch (UnauthorizedAccessException)
             {
-                if (attempt >= 14)
+                if (attempt >= 74)
                     throw;
                 Thread.Sleep(200);
             }
@@ -563,7 +566,7 @@ internal static class Bootstrapper
                 throw new InvalidOperationException("无法创建卸载入口。");
 
             key.SetValue("DisplayName", ProductName, RegistryValueKind.String);
-            key.SetValue("DisplayVersion", "1.1.1", RegistryValueKind.String);
+            key.SetValue("DisplayVersion", "1.1.2", RegistryValueKind.String);
             key.SetValue("Publisher", "HuahaiClipboard", RegistryValueKind.String);
             key.SetValue("DisplayIcon", appPath + ",0", RegistryValueKind.String);
             key.SetValue("InstallLocation", installRoot, RegistryValueKind.String);
