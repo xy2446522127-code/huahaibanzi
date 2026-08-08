@@ -72,6 +72,26 @@ test('production shell exposes a hide-to-background button beside settings', () 
   assert.match(html, /\.toolbar\{[^}]*grid-template-columns:minmax\(0,1fr\) 42px 42px/);
 });
 
+test('optional update banner cannot reflow the list or bottom copy controls', () => {
+  const html = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
+  assert.match(
+    html,
+    /\.panel-main\{[^}]*grid-template-areas:"header"\s+"toolbar"\s+"update"\s+"filters"\s+"list"\s+"footer"/,
+  );
+  for (const [selector, area] of [
+    ['.panel-header', 'header'],
+    ['.toolbar', 'toolbar'],
+    ['.update-banner', 'update'],
+    ['.filters', 'filters'],
+    ['.record-list', 'list'],
+    ['.panel-footer', 'footer'],
+  ]) {
+    assert.match(html, new RegExp(`${selector.replace('.', '\\.') }\\{[^}]*grid-area:${area}`), `${selector} grid area`);
+  }
+  assert.match(html, /\.record-list\{[^}]*min-height:0[^}]*overflow-y:auto/);
+  assert.match(html, /\.panel-footer\{[^}]*align-self:end/);
+});
+
 test('toolbar hide button renders the approved accessible rounded svg line', () => {
   const html = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
 

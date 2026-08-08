@@ -45,15 +45,15 @@
   "cross_target_evidence": "The same product-shell.html remains the browser interaction surface and the packaged WebView entrypoint.",
   "delivery_maturity": "release",
   "entrypoint": "Web/product-shell.html",
-  "entrypoint_sha256": "fd23010faee623df0cc61adf123e7243bcad0bdbcadb79b921e02090ba60741e",
+  "entrypoint_sha256": "e3681788f8e9401a758d9b473ec15cc5417398ad9fa6243aa61c9bdea6ad9a99",
   "mock_status": "removed",
   "native_port": {
     "blockers": [],
     "experience_change_approved": false,
     "machine_evidence": []
   },
-  "parent_source_manifest_sha256": "109138aa284e00a78a325e8323e2d55b9f0f9a13ec82718f99a308d9cba01014",
-  "parent_visual_source_version": "huahai-approved-shell-v6-update-banner-1.1.8-r14",
+  "parent_source_manifest_sha256": "acbf368b6e6ae7cbc05a68f02c84ccb6f6916a53d055c785bb8d67b46777c637",
+  "parent_visual_source_version": "huahai-approved-shell-v6-update-banner-1.1.8-r14-release",
   "preserved_areas": [
     "approved WebView liquid-glass layout, typography, themes, petals, and A+E motion",
     "clipboard capture, paste payloads, pin, favorite, drag, scale, shortcuts, and privacy exclusions",
@@ -62,9 +62,9 @@
     "<install-root>/Data/<Windows-SID>/settings.json"
   ],
   "product_scale": "medium",
-  "project_revision": 18,
+  "project_revision": 19,
   "risk_level": "medium",
-  "rollback_commit": "0c487a2d230653dbd09f2a20f2e429584c4e95fb",
+  "rollback_commit": "17a6beb3269f3dfed22d9f35aaa4594e25fe775b",
   "runtime_topology": "desktop-first",
   "source_manifest": [
     {
@@ -112,8 +112,8 @@
     {
       "logical_asset_id": "Web/product-shell.html",
       "path": "Web/product-shell.html",
-      "sha256": "fd23010faee623df0cc61adf123e7243bcad0bdbcadb79b921e02090ba60741e",
-      "size": 71894
+      "sha256": "e3681788f8e9401a758d9b473ec15cc5417398ad9fa6243aa61c9bdea6ad9a99",
+      "size": 73001
     },
     {
       "logical_asset_id": "Web/retention-policy.js",
@@ -134,7 +134,7 @@
       "size": 908
     }
   ],
-  "source_manifest_sha256": "acbf368b6e6ae7cbc05a68f02c84ccb6f6916a53d055c785bb8d67b46777c637",
+  "source_manifest_sha256": "6af6903714a641234705b3119799a10a2133d698f31041ec8aea348bb9e5ebf4",
   "source_root": "src/HuahaiClipboard.App/Assets",
   "strategy": "retain-and-integrate",
   "surfaces": [
@@ -144,14 +144,47 @@
   ],
   "targets": {
     "desktop": {
-      "build_evidence": "v1.1.8 x64 Release build completed with 0 warnings and 0 errors; source and packaged product-shell SHA-256 match; 58/58 dynamic Web controls pass with no unexplained controls or console errors; installer payload identity and all 20 installer policy suites pass.",
-      "build_output": "dist/webview-build-1.1.8",
+      "build_evidence": "The v1.1.9 layout-anchor and readable-type fixes are source-verified with the release test suite and all 81 scale values; the packaged WebView and installer are rebuilt from this exact source revision.",
+      "build_output": "dist/webview-build-1.1.9",
+      "source_revision": "6af6903714a641234705b3119799a10a2133d698f31041ec8aea348bb9e5ebf4",
+      "build_identity": "2ae88b6d8128210183b908f51d15722246cd3ed1bedc06ada89e0566a8efb85c",
+      "evidence_revision": "2ae88b6d8128210183b908f51d15722246cd3ed1bedc06ada89e0566a8efb85c",
+      "package_build_identity": "2ae88b6d8128210183b908f51d15722246cd3ed1bedc06ada89e0566a8efb85c",
       "host": "WinUI 3 + WebView2 (.NET 8, unpackaged, self-contained Windows App SDK)",
       "load_target": "https://app.huahai.local/Web/product-shell.html",
-      "package": "dist/HuahaiClipboard-Setup.exe"
+      "package": "dist/HuahaiClipboard-Setup.exe",
+      "package_sha256": "52d5628b8e6d9c3f3808ea2d832e2d63a60946c3e4712f01d338adabf4b8e791",
+      "build_artifact": "dist/webview-build-1.1.9/HuahaiClipboard.App.exe",
+      "build_artifact_sha256": "4e021296d0dc3e0c2ef795c201b958f9648c33ea059560a8ef7b82be091aedf6",
+      "source_manifest": [
+        { "logical_asset_id": "Brand/fox-icon-source.png", "path": "Brand/fox-icon-source.png", "sha256": "5f5b3c841eb2bd6dd1a15f523d5cd81cf644fe75aa99d02a23d04f1ad1dd2ad4", "size": 2626585 },
+        { "logical_asset_id": "Brand/fox-icon.ico", "path": "Brand/fox-icon.ico", "sha256": "c53c44885d0bb22f7b7c6bb17088fd164e3a66552013faa91571af092f228d42", "size": 205086 },
+        { "logical_asset_id": "Web/glass-opacity.js", "path": "Web/glass-opacity.js", "sha256": "2878f9ee5f4ee3107f679194a1c0b1245fcfcc4c3b36f4bd2f1e598055a47d1e", "size": 797 },
+        { "logical_asset_id": "Web/host-scale.js", "path": "Web/host-scale.js", "sha256": "a5e9f4af7703bb2eebd93a7fab7760025f55c71187fc79654946a9b6a47b528c", "size": 913 },
+        { "logical_asset_id": "Web/interaction-contract.js", "path": "Web/interaction-contract.js", "sha256": "77b8d01693777541628c1ebec97b6b725996663bdf67e8095ed13e7e088475fc", "size": 3944 },
+        { "logical_asset_id": "Web/panel-drag.js", "path": "Web/panel-drag.js", "sha256": "819c0e2119b3cd1c3545932c3be90ec3449994dae5568aea70a8f95a106d3e76", "size": 3355 },
+        { "logical_asset_id": "Web/panel-scale.js", "path": "Web/panel-scale.js", "sha256": "a0dd92c1e2e59a1cfd714e484fde54919247c694e15c70c784addd3045e45f31", "size": 2303 },
+        { "logical_asset_id": "Web/product-shell.html", "path": "Web/product-shell.html", "sha256": "e3681788f8e9401a758d9b473ec15cc5417398ad9fa6243aa61c9bdea6ad9a99", "size": 73001 },
+        { "logical_asset_id": "Web/retention-policy.js", "path": "Web/retention-policy.js", "sha256": "df43c45d899083668da69788e75a4f5fa03d9871a05a206d8598817e776a0ffe", "size": 823 },
+        { "logical_asset_id": "Web/shell-router.js", "path": "Web/shell-router.js", "sha256": "8cafd1b5f2446411d513861943e9dc86fa6ceb71d4b6b3537b38f4aa20c5c252", "size": 879 },
+        { "logical_asset_id": "Web/shortcut-input.js", "path": "Web/shortcut-input.js", "sha256": "c0714b6493b5010c46bd0b0cd78f5a9f51f9787b3975f100c6444316727f3ff8", "size": 908 }
+      ],
+      "build_manifest": [
+        { "logical_asset_id": "Brand/fox-icon-source.png", "path": "dist/webview-build-1.1.9/Assets/Brand/fox-icon-source.png", "sha256": "5f5b3c841eb2bd6dd1a15f523d5cd81cf644fe75aa99d02a23d04f1ad1dd2ad4", "size": 2626585 },
+        { "logical_asset_id": "Brand/fox-icon.ico", "path": "dist/webview-build-1.1.9/Assets/Brand/fox-icon.ico", "sha256": "c53c44885d0bb22f7b7c6bb17088fd164e3a66552013faa91571af092f228d42", "size": 205086 },
+        { "logical_asset_id": "Web/glass-opacity.js", "path": "dist/webview-build-1.1.9/Assets/Web/glass-opacity.js", "sha256": "2878f9ee5f4ee3107f679194a1c0b1245fcfcc4c3b36f4bd2f1e598055a47d1e", "size": 797 },
+        { "logical_asset_id": "Web/host-scale.js", "path": "dist/webview-build-1.1.9/Assets/Web/host-scale.js", "sha256": "a5e9f4af7703bb2eebd93a7fab7760025f55c71187fc79654946a9b6a47b528c", "size": 913 },
+        { "logical_asset_id": "Web/interaction-contract.js", "path": "dist/webview-build-1.1.9/Assets/Web/interaction-contract.js", "sha256": "77b8d01693777541628c1ebec97b6b725996663bdf67e8095ed13e7e088475fc", "size": 3944 },
+        { "logical_asset_id": "Web/panel-drag.js", "path": "dist/webview-build-1.1.9/Assets/Web/panel-drag.js", "sha256": "819c0e2119b3cd1c3545932c3be90ec3449994dae5568aea70a8f95a106d3e76", "size": 3355 },
+        { "logical_asset_id": "Web/panel-scale.js", "path": "dist/webview-build-1.1.9/Assets/Web/panel-scale.js", "sha256": "a0dd92c1e2e59a1cfd714e484fde54919247c694e15c70c784addd3045e45f31", "size": 2303 },
+        { "logical_asset_id": "Web/product-shell.html", "path": "dist/webview-build-1.1.9/Assets/Web/product-shell.html", "sha256": "e3681788f8e9401a758d9b473ec15cc5417398ad9fa6243aa61c9bdea6ad9a99", "size": 73001 },
+        { "logical_asset_id": "Web/retention-policy.js", "path": "dist/webview-build-1.1.9/Assets/Web/retention-policy.js", "sha256": "df43c45d899083668da69788e75a4f5fa03d9871a05a206d8598817e776a0ffe", "size": 823 },
+        { "logical_asset_id": "Web/shell-router.js", "path": "dist/webview-build-1.1.9/Assets/Web/shell-router.js", "sha256": "8cafd1b5f2446411d513861943e9dc86fa6ceb71d4b6b3537b38f4aa20c5c252", "size": 879 },
+        { "logical_asset_id": "Web/shortcut-input.js", "path": "dist/webview-build-1.1.9/Assets/Web/shortcut-input.js", "sha256": "c0714b6493b5010c46bd0b0cd78f5a9f51f9787b3975f100c6444316727f3ff8", "size": 908 }
+      ]
     }
   },
   "ui_class": "existing-production-shell",
   "version": 1,
-  "visual_source_version": "huahai-approved-shell-v6-update-banner-1.1.8-r14-release"
+  "visual_source_version": "huahai-approved-shell-v6-update-banner-1.1.8-r16-readable-type"
 }

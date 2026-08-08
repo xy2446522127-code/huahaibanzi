@@ -180,7 +180,20 @@ finally {
     $resolvedTestRoot = [IO.Path]::GetFullPath($testRoot)
     if ($resolvedTestRoot.StartsWith($tempBase, [StringComparison]::OrdinalIgnoreCase) -and
         (Split-Path $resolvedTestRoot -Leaf).StartsWith('HuahaiClipboard.WebViewSmoke.')) {
-        Remove-Item -LiteralPath $resolvedTestRoot -Recurse -Force -ErrorAction SilentlyContinue
+        for ($attempt = 0; $attempt -lt 50; $attempt++) {
+            try {
+                Remove-Item -LiteralPath $resolvedTestRoot -Recurse -Force -ErrorAction Stop
+                break
+            }
+            catch [System.IO.IOException] {
+                if ($attempt -eq 49) { throw }
+                Start-Sleep -Milliseconds 100
+            }
+            catch [System.UnauthorizedAccessException] {
+                if ($attempt -eq 49) { throw }
+                Start-Sleep -Milliseconds 100
+            }
+        }
     }
     $userDataAfter = @{}
     if (Test-Path -LiteralPath $userDataRoot) {

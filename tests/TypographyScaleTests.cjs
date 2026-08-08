@@ -9,9 +9,9 @@ const files = [
 
 function fontSize(css, selector) {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = css.match(new RegExp(`${escaped}\\{[^}]*font-size:(\\d+(?:\\.\\d+)?)px`));
-  assert.ok(match, `Missing font size for ${selector}`);
-  return Number(match[1]);
+  const matches = [...css.matchAll(new RegExp(`${escaped}\\{[^}]*font-size:(\\d+(?:\\.\\d+)?)px`, 'g'))];
+  assert.ok(matches.length, `Missing font size for ${selector}`);
+  return Number(matches.at(-1)[1]);
 }
 
 for (const file of files) {
@@ -25,3 +25,19 @@ for (const file of files) {
     assert.ok(fontSize(html, '.capture') >= 11, 'Shortcut recorder text must be at least 11px.');
   });
 }
+
+test('production shell increases the standard readable type scale by one step', () => {
+  const html = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
+
+  assert.equal(fontSize(html, '.petal-text'), 27);
+  assert.equal(fontSize(html, '.count'), 16);
+  assert.equal(fontSize(html, '.filter'), 16);
+  assert.equal(fontSize(html, '.record-text'), 15);
+  assert.equal(fontSize(html, '.record-text small'), 12);
+  assert.equal(fontSize(html, '.panel-footer'), 15);
+  assert.equal(fontSize(html, '.spec-button'), 17);
+  assert.equal(fontSize(html, '.nav-button'), 17);
+  assert.equal(fontSize(html, '.setting-row'), 18);
+  assert.equal(fontSize(html, '.setting-row small'), 16);
+  assert.equal(fontSize(html, '.capture'), 17);
+});

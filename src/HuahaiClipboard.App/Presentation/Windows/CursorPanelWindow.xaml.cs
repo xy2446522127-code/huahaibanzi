@@ -38,7 +38,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private const int LeftMouseButton = 0x01;
     private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly IntPtr HwndNoTopmost = new(-2);
-    private static readonly Version CurrentVersion = new(1, 1, 8);
+    private static readonly Version CurrentVersion = new(1, 1, 9);
 
     private readonly CompositionRoot compositionRoot = new();
     private readonly WindowNavigator navigator = new();

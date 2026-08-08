@@ -140,7 +140,7 @@ const controls = definitions.map(([controlId, group, intent, result, trigger, ex
 
 const contract = {
   version: 1,
-  contract_revision: 'huahai-webview-1.1.8-update-banner-v1',
+  contract_revision: 'huahai-webview-1.1.9-layout-type-v1',
   controls,
 };
 
