@@ -13,7 +13,7 @@ test('desktop host owns one proactive coordinator and disposes it', () => {
 });
 
 test('startup check waits until both the Web shell and tray are ready', () => {
-  assert.match(windowHost, /if \(!shellReady \|\| trayService is null\)/);
+  assert.match(windowHost, /updateStartupGate\.TryBegin\(shellReady, trayService is not null\)/);
   assert.equal((windowHost.match(/TryStartUpdateCoordinator\(\);/g) || []).length, 3);
 });
 

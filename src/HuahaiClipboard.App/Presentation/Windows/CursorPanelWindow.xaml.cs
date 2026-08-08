@@ -49,6 +49,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private readonly TransientWindowVisibilityController visibilityController;
     private readonly GitHubUpdateCheckService updateCheckService = GitHubUpdateCheckService.CreateDefault(CurrentVersion);
     private readonly UpdateNotificationSession updateNotificationSession = new();
+    private readonly UpdateStartupGate updateStartupGate = new();
     private GlobalInputService? globalInputService;
     private TrayService? trayService;
     private ProactiveUpdateCoordinator? updateCoordinator;
@@ -521,7 +522,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     private void TryStartUpdateCoordinator()
     {
-        if (!shellReady || trayService is null)
+        if (!updateStartupGate.TryBegin(shellReady, trayService is not null))
         {
             return;
         }
