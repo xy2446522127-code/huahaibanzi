@@ -1,11 +1,12 @@
 {
+  "acceptance_required": false,
   "allowed_changes": [
     "src/HuahaiClipboard.App/**",
     "src/HuahaiClipboard.Core/**",
     "installer/**",
     "tests/**"
   ],
-  "approval_evidence": "The approved WebView liquid-glass shell is preserved; v1.1.5 changes only portable per-user storage, one-percent scale interaction, settings-home navigation, installer reliability, and their dynamic evidence.",
+  "approval_evidence": "The user approved proactive update reminders. This derivative preserves the approved liquid-glass shell and changes only a small settings-button update dot, the existing About update actions, and their shared runtime state.",
   "capability_matrix": {
     "clipboard": {
       "desktop": "desktop",
@@ -34,31 +35,36 @@
     "update_install": {
       "desktop": "desktop",
       "prototype": "simulated-platform-capability"
+    },
+    "update_notification": {
+      "desktop": "desktop",
+      "prototype": "simulated-platform-capability"
     }
   },
-  "change_scale": "medium",
-  "cross_target_evidence": "",
+  "change_scale": "small",
+  "cross_target_evidence": "The same product-shell.html remains the browser interaction surface and the packaged WebView entrypoint.",
   "delivery_maturity": "release",
   "entrypoint": "Web/product-shell.html",
-  "entrypoint_sha256": "072bba31a048830decf087e06a4979caa8a34b91bf22e66799672a1c4f6ad3ec",
+  "entrypoint_sha256": "5263ddf86f025733a6b5289322bdabc4bfcfa394d6f4692f219fb72bb30ea51b",
   "mock_status": "removed",
   "native_port": {
     "blockers": [],
     "experience_change_approved": false,
     "machine_evidence": []
   },
-  "parent_source_manifest_sha256": "a9c34bcb3486ce92165160b7b4a178c2e0a950a877d33b440c14645fb335d52a",
-  "parent_visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.5-r8-portable-data-scale",
+  "parent_source_manifest_sha256": "8451fe08dea4ffc91bf1d2dcaf4041f7d075855f3c837232412efc5c9a13769b",
+  "parent_visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.5-r11-dimensional-pin-favorite",
   "preserved_areas": [
     "approved WebView liquid-glass layout, typography, themes, petals, and A+E motion",
+    "clipboard capture, paste payloads, pin, favorite, drag, scale, shortcuts, and privacy exclusions",
     "<install-root>/Data/<Windows-SID>/history.dat",
     "<install-root>/Data/<Windows-SID>/images/**",
     "<install-root>/Data/<Windows-SID>/settings.json"
   ],
   "product_scale": "medium",
-  "project_revision": 15,
-  "risk_level": "high",
-  "rollback_commit": "b29d7cfe31f4d3196099c3084c10e25ded83f2da",
+  "project_revision": 16,
+  "risk_level": "medium",
+  "rollback_commit": "1093e6d5e3d2d97f34691b4d1244c0847ebb11fd",
   "runtime_topology": "desktop-first",
   "source_manifest": [
     {
@@ -88,8 +94,8 @@
     {
       "logical_asset_id": "Web/interaction-contract.js",
       "path": "Web/interaction-contract.js",
-      "sha256": "1223743f7a72226ef0614f26af93db2e0d762d0cae2c164c5663158e67f6ad11",
-      "size": 3808
+      "sha256": "7cf74a2992bac157360ae106d4ad1d9131dda5f4ee2eceab65839abbc16a3f3a",
+      "size": 3853
     },
     {
       "logical_asset_id": "Web/panel-drag.js",
@@ -106,8 +112,8 @@
     {
       "logical_asset_id": "Web/product-shell.html",
       "path": "Web/product-shell.html",
-      "sha256": "072bba31a048830decf087e06a4979caa8a34b91bf22e66799672a1c4f6ad3ec",
-      "size": 61710
+      "sha256": "5263ddf86f025733a6b5289322bdabc4bfcfa394d6f4692f219fb72bb30ea51b",
+      "size": 68617
     },
     {
       "logical_asset_id": "Web/retention-policy.js",
@@ -128,161 +134,24 @@
       "size": 908
     }
   ],
-  "source_manifest_sha256": "8451fe08dea4ffc91bf1d2dcaf4041f7d075855f3c837232412efc5c9a13769b",
+  "source_manifest_sha256": "53c847733c549ae9ee2c93ce0660824aae2ce001106d4d1b520b94ce58782895",
   "source_root": "src/HuahaiClipboard.App/Assets",
   "strategy": "retain-and-integrate",
   "surfaces": [
     "panel/default/windows/rose-purple",
-    "panel/settings/windows/rose-purple",
+    "panel/settings/about/windows/rose-purple",
     "tray/background/windows"
   ],
   "targets": {
     "desktop": {
-      "build_evidence": "Core 116/116, native-spike 39/39, tray 1/1, Node 57/57, installer policies 19/19, Web interaction 55/55, composed desktop interaction 60/60, Release x64 MSBuild, and installed data/scale/fox/clipboard/global-input/drag/hide smokes passed.",
-      "build_manifest": [
-        {
-          "logical_asset_id": "Brand/fox-icon-source.png",
-          "path": "Brand/fox-icon-source.png",
-          "sha256": "5f5b3c841eb2bd6dd1a15f523d5cd81cf644fe75aa99d02a23d04f1ad1dd2ad4",
-          "size": 2626585
-        },
-        {
-          "logical_asset_id": "Brand/fox-icon.ico",
-          "path": "Brand/fox-icon.ico",
-          "sha256": "c53c44885d0bb22f7b7c6bb17088fd164e3a66552013faa91571af092f228d42",
-          "size": 205086
-        },
-        {
-          "logical_asset_id": "Web/glass-opacity.js",
-          "path": "Web/glass-opacity.js",
-          "sha256": "2878f9ee5f4ee3107f679194a1c0b1245fcfcc4c3b36f4bd2f1e598055a47d1e",
-          "size": 797
-        },
-        {
-          "logical_asset_id": "Web/host-scale.js",
-          "path": "Web/host-scale.js",
-          "sha256": "a5e9f4af7703bb2eebd93a7fab7760025f55c71187fc79654946a9b6a47b528c",
-          "size": 913
-        },
-        {
-          "logical_asset_id": "Web/interaction-contract.js",
-          "path": "Web/interaction-contract.js",
-          "sha256": "1223743f7a72226ef0614f26af93db2e0d762d0cae2c164c5663158e67f6ad11",
-          "size": 3808
-        },
-        {
-          "logical_asset_id": "Web/panel-drag.js",
-          "path": "Web/panel-drag.js",
-          "sha256": "819c0e2119b3cd1c3545932c3be90ec3449994dae5568aea70a8f95a106d3e76",
-          "size": 3355
-        },
-        {
-          "logical_asset_id": "Web/panel-scale.js",
-          "path": "Web/panel-scale.js",
-          "sha256": "a0dd92c1e2e59a1cfd714e484fde54919247c694e15c70c784addd3045e45f31",
-          "size": 2303
-        },
-        {
-          "logical_asset_id": "Web/product-shell.html",
-          "path": "Web/product-shell.html",
-          "sha256": "072bba31a048830decf087e06a4979caa8a34b91bf22e66799672a1c4f6ad3ec",
-          "size": 61710
-        },
-        {
-          "logical_asset_id": "Web/retention-policy.js",
-          "path": "Web/retention-policy.js",
-          "sha256": "df43c45d899083668da69788e75a4f5fa03d9871a05a206d8598817e776a0ffe",
-          "size": 823
-        },
-        {
-          "logical_asset_id": "Web/shell-router.js",
-          "path": "Web/shell-router.js",
-          "sha256": "8cafd1b5f2446411d513861943e9dc86fa6ceb71d4b6b3537b38f4aa20c5c252",
-          "size": 879
-        },
-        {
-          "logical_asset_id": "Web/shortcut-input.js",
-          "path": "Web/shortcut-input.js",
-          "sha256": "c0714b6493b5010c46bd0b0cd78f5a9f51f9787b3975f100c6444316727f3ff8",
-          "size": 908
-        }
-      ],
-      "build_output": "dist/webview-build-1.1.5-scale-fix2",
+      "build_evidence": "Pending v1.1.7 release build after proactive-update Web and desktop integration tests.",
+      "build_output": "dist/webview-build-1.1.7",
       "host": "WinUI 3 + WebView2 (.NET 8, unpackaged, self-contained Windows App SDK)",
-      "install_evidence": "Signed v1.1.5 scale-fix2 installed transactionally to F:\\HuahaiClipboard with exit 0; install-root Data was preserved and installed Assets match the current UI source across all 11 files.",
       "load_target": "https://app.huahai.local/Web/product-shell.html",
-      "package": "dist/HuahaiClipboard-Setup-v1.1.5-scale-fix2.exe",
-      "source_manifest": [
-        {
-          "logical_asset_id": "Brand/fox-icon-source.png",
-          "path": "Brand/fox-icon-source.png",
-          "sha256": "5f5b3c841eb2bd6dd1a15f523d5cd81cf644fe75aa99d02a23d04f1ad1dd2ad4",
-          "size": 2626585
-        },
-        {
-          "logical_asset_id": "Brand/fox-icon.ico",
-          "path": "Brand/fox-icon.ico",
-          "sha256": "c53c44885d0bb22f7b7c6bb17088fd164e3a66552013faa91571af092f228d42",
-          "size": 205086
-        },
-        {
-          "logical_asset_id": "Web/glass-opacity.js",
-          "path": "Web/glass-opacity.js",
-          "sha256": "2878f9ee5f4ee3107f679194a1c0b1245fcfcc4c3b36f4bd2f1e598055a47d1e",
-          "size": 797
-        },
-        {
-          "logical_asset_id": "Web/host-scale.js",
-          "path": "Web/host-scale.js",
-          "sha256": "a5e9f4af7703bb2eebd93a7fab7760025f55c71187fc79654946a9b6a47b528c",
-          "size": 913
-        },
-        {
-          "logical_asset_id": "Web/interaction-contract.js",
-          "path": "Web/interaction-contract.js",
-          "sha256": "1223743f7a72226ef0614f26af93db2e0d762d0cae2c164c5663158e67f6ad11",
-          "size": 3808
-        },
-        {
-          "logical_asset_id": "Web/panel-drag.js",
-          "path": "Web/panel-drag.js",
-          "sha256": "819c0e2119b3cd1c3545932c3be90ec3449994dae5568aea70a8f95a106d3e76",
-          "size": 3355
-        },
-        {
-          "logical_asset_id": "Web/panel-scale.js",
-          "path": "Web/panel-scale.js",
-          "sha256": "a0dd92c1e2e59a1cfd714e484fde54919247c694e15c70c784addd3045e45f31",
-          "size": 2303
-        },
-        {
-          "logical_asset_id": "Web/product-shell.html",
-          "path": "Web/product-shell.html",
-          "sha256": "c1e56e0d1ad9d2f486e96cf90c69ae0597ee8e1ab3edbe8b50f1e13d785fe8b1",
-          "size": 60497
-        },
-        {
-          "logical_asset_id": "Web/retention-policy.js",
-          "path": "Web/retention-policy.js",
-          "sha256": "df43c45d899083668da69788e75a4f5fa03d9871a05a206d8598817e776a0ffe",
-          "size": 823
-        },
-        {
-          "logical_asset_id": "Web/shell-router.js",
-          "path": "Web/shell-router.js",
-          "sha256": "8cafd1b5f2446411d513861943e9dc86fa6ceb71d4b6b3537b38f4aa20c5c252",
-          "size": 879
-        },
-        {
-          "logical_asset_id": "Web/shortcut-input.js",
-          "path": "Web/shortcut-input.js",
-          "sha256": "c0714b6493b5010c46bd0b0cd78f5a9f51f9787b3975f100c6444316727f3ff8",
-          "size": 908
-        }
-      ]
+      "package": "dist/HuahaiClipboard-Setup.exe"
     }
   },
   "ui_class": "existing-production-shell",
   "version": 1,
-  "visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.5-r11-dimensional-pin-favorite"
+  "visual_source_version": "huahai-approved-shell-v6-proactive-update-1.1.7-r12"
 }

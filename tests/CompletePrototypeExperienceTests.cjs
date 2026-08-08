@@ -74,11 +74,23 @@ test('about page uses the production update bridge while keeping preview simulat
   assert.doesNotMatch(html, /XMLHttpRequest/);
 });
 
+test('new releases remain visible from the panel and can be snoozed for one day', () => {
+  assert.equal(count('id="updateBadge"'), 1);
+  assert.equal(count('id="snoozeUpdateButton"'), 1);
+  assert.match(html, /\.update-badge\{[^}]*background:#ff4968/);
+  assert.match(html, /postNative\('snoozeUpdate'\)/);
+  assert.match(html, /data\.updateAvailable===true/);
+  assert.match(html, /data\.notifyUser===true/);
+  assert.match(html, /lastPromptedUpdateVersion/);
+  assert.match(html, /hhQ\('#settingsButton'\)\.classList\.toggle\('update-available'/);
+});
+
 test('every visible prototype control has an explicit interaction binding', () => {
   for (const id of [
     'updateAutoToggle',
     'checkUpdateButton',
     'releaseButton',
+    'snoozeUpdateButton',
     'scaleRange',
     'resetScale'
   ]) {
@@ -103,7 +115,7 @@ test('every WebView-visible contract control is tagged on the real product shell
   const visibleControls = interactionContract.controls.filter(control =>
     control.fixture.route.startsWith('https://app.huahai.local/Web/product-shell.html'),
   );
-  assert.equal(visibleControls.length, 55);
+  assert.equal(visibleControls.length, 56);
   assert.match(interactionModule, /data-apd-control-id/);
   for (const control of visibleControls) {
     assert.ok((html + interactionModule).includes(`'${control.control_id}'`), control.control_id);

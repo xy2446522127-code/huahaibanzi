@@ -116,6 +116,7 @@ function interactionExpression(controlId) {
     if (id === 'system.startup' || id === 'system.background' || id === 'about.update-toggle') return toggleChanged(id);
     if (id === 'about.check-update') { click(id); await pause(750); return document.querySelector('#updateStatus').classList.contains('available') && !document.querySelector('#installUpdateButton').hidden; }
     if (id === 'about.install-update') { document.querySelector('#checkUpdateButton').click(); await pause(750); click(id); await pause(1000); return document.querySelector('#updateProgress').getAttribute('aria-valuenow') === '100' && document.querySelector('#updateStatus').textContent.includes('演示完成'); }
+    if (id === 'about.snooze-update') { document.querySelector('#checkUpdateButton').click(); await pause(750); click(id); return document.querySelector('#toast').classList.contains('show') && document.querySelector('#toast').textContent.includes('24 小时'); }
     if (id === 'about.open-release') { click(id); return document.querySelector('#toast').classList.contains('show') && document.querySelector('#toast').textContent.includes('GitHub Release'); }
     throw new Error('unsupported web interaction ' + id);
   }.toString()})(${JSON.stringify(controlId)})`;
@@ -139,7 +140,7 @@ async function main() {
       fixtureUrl.searchParams.set('apd-fixture', String(controlIndex));
       fixtureUrl.hash = hash;
       await command('Page.navigate', { url: fixtureUrl.href });
-      await waitFor(command, `document.readyState==='complete'&&new Set([...document.querySelectorAll('[data-apd-control-id]')].map(element=>element.getAttribute('data-apd-control-id'))).size===55`, `${control.control_id} route`);
+      await waitFor(command, `document.readyState==='complete'&&new Set([...document.querySelectorAll('[data-apd-control-id]')].map(element=>element.getAttribute('data-apd-control-id'))).size===56`, `${control.control_id} route`);
       const discovered = await evaluate(command, `[...document.querySelectorAll('[data-apd-control-id]')].map(element=>element.getAttribute('data-apd-control-id'))`);
       discovered.forEach(id => runtimeIds.add(id));
       const unexplained = await evaluate(command, `(() => {
