@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "contract_revision": "huahai-webview-1.1.5-interactions-v1",
+  "contract_revision": "huahai-webview-1.1.8-update-banner-v1",
   "controls": [
     {
       "control_id": "panel.search",

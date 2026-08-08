@@ -6,7 +6,7 @@
     "installer/**",
     "tests/**"
   ],
-  "approval_evidence": "The user approved proactive update reminders and the v1.1.7 release. This derivative changes only displayed/current version metadata while preserving the approved liquid-glass UI shell and update interactions.",
+  "approval_evidence": "The user approved update reminder B with no leading icon, higher liquid-glass transparency and isolated text/actions, plus minimize icon A as a larger rounded line for the v1.1.8 release.",
   "capability_matrix": {
     "clipboard": {
       "desktop": "desktop",
@@ -45,7 +45,7 @@
   "cross_target_evidence": "The same product-shell.html remains the browser interaction surface and the packaged WebView entrypoint.",
   "delivery_maturity": "release",
   "entrypoint": "Web/product-shell.html",
-  "entrypoint_sha256": "6f9820b31e116d5a6e48c56a889a0e6f856496447f9b8e3b5f793ebf4fbc5773",
+  "entrypoint_sha256": "fd23010faee623df0cc61adf123e7243bcad0bdbcadb79b921e02090ba60741e",
   "mock_status": "removed",
   "native_port": {
     "blockers": [],
@@ -53,7 +53,7 @@
     "machine_evidence": []
   },
   "parent_source_manifest_sha256": "53c847733c549ae9ee2c93ce0660824aae2ce001106d4d1b520b94ce58782895",
-  "parent_visual_source_version": "huahai-approved-shell-v6-proactive-update-1.1.7-r12",
+  "parent_visual_source_version": "huahai-approved-shell-v6-proactive-update-1.1.7-r13-release",
   "preserved_areas": [
     "approved WebView liquid-glass layout, typography, themes, petals, and A+E motion",
     "clipboard capture, paste payloads, pin, favorite, drag, scale, shortcuts, and privacy exclusions",
@@ -144,8 +144,8 @@
   ],
   "targets": {
     "desktop": {
-      "build_evidence": "Pending v1.1.7 release build after proactive-update Web and desktop integration tests.",
-      "build_output": "dist/webview-build-1.1.7",
+      "build_evidence": "Pending v1.1.8 release build after update-banner, minimize-glyph and desktop integration tests.",
+      "build_output": "dist/webview-build-1.1.8",
       "host": "WinUI 3 + WebView2 (.NET 8, unpackaged, self-contained Windows App SDK)",
       "load_target": "https://app.huahai.local/Web/product-shell.html",
       "package": "dist/HuahaiClipboard-Setup.exe"
@@ -153,5 +153,5 @@
   },
   "ui_class": "existing-production-shell",
   "version": 1,
-  "visual_source_version": "huahai-approved-shell-v6-proactive-update-1.1.7-r13-release"
+  "visual_source_version": "huahai-approved-shell-v6-update-banner-1.1.8-r14"
 }
