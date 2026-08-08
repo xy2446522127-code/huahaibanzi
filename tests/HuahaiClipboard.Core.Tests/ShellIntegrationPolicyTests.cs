@@ -90,7 +90,7 @@ public sealed class ShellIntegrationPolicyTests
 
         string[] actions =
         [
-            "ready", "hide", "resize", "copy", "togglePin", "toggleFavorite", "delete",
+            "ready", "hide", "resize", "copy", "requestThumbnail", "togglePin", "toggleFavorite", "delete",
             "setRetentionDays", "clearOrdinary", "clearAll", "setTheme", "setOpacity",
             "setPetals", "setReduceMotion", "setClickDuration", "setRightDoubleClick",
             "setShortcut", "resetShortcut", "setExclusions", "openDataFolder", "setStartup",

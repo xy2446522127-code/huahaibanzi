@@ -71,3 +71,35 @@ test('production shell exposes a hide-to-background button beside settings', () 
   assert.match(html, /hhQ\('#minimizeButton'\)\.onclick=hidePanel/);
   assert.match(html, /\.toolbar\{[^}]*grid-template-columns:minmax\(0,1fr\) 42px 42px/);
 });
+
+test('production shell renders lazy square image thumbnails and the approved original-shape ruby pin', () => {
+  const html = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
+  const bridge = fs.readFileSync(
+    'src/HuahaiClipboard.App/Presentation/Windows/CursorPanelWindow.xaml.cs',
+    'utf8'
+  );
+
+  assert.match(html, /id="pinOutlinePath"/);
+  assert.match(html, /id="pinSolidPath"/);
+  assert.match(html, /id="rubyPinFill"/);
+  assert.match(html, /href="\$\{item\.pin\?'#pinSolidPath':'#pinOutlinePath'\}"/);
+  assert.match(html, /\.row-action\.pin\.on\{[^}]*background:transparent/);
+  assert.match(html, /\.row-action\.fav\.on\{[^}]*background:transparent/);
+  assert.match(html, /\.record-thumbnail\{[^}]*width:33px[^}]*height:33px[^}]*aspect-ratio:1[^}]*object-fit:cover/);
+  assert.match(html, /postNative\('requestThumbnail',\{id\}\)/);
+  assert.match(html, /data\.type==='thumbnail'/);
+  assert.match(html, /thumbnail-fallback/);
+  assert.match(bridge, /ClipboardRecordDisplay\.From\(record\)/);
+  assert.match(bridge, /thumbnailAvailable = display\.HasThumbnail/);
+  assert.match(bridge, /type = "thumbnail"/);
+  assert.doesNotMatch(bridge, /thumbnailAvailable\s*=\s*record\.PreviewAssetPath/);
+});
+
+test('production pin keeps the approved silhouette while mirroring and rotating clockwise 130 degrees', () => {
+  const html = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
+
+  assert.match(html, /\.pin-glyph\{[^}]*transform:rotate\(130deg\) scaleX\(-1\)/);
+  assert.doesNotMatch(html, /\.pin-glyph\{[^}]*rotate\(-12deg\)/);
+  assert.match(html, /id="pinSolidPath"/);
+  assert.match(html, /id="pinOutlinePath"/);
+});

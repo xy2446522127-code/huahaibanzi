@@ -6,3 +6,13 @@
 dist/
 .vs/
 TestResults/
+
+# Runtime user data and transactional installer directories (never commit)
+**/Data/
+**/.HuahaiClipboard-install-*/
+**/.HuahaiClipboard-backup-*/
+
+# Local delivery and Codex scratch artifacts
+HuahaiClipboard-Setup-*.exe
+.codex/tmp/
+.codex_tmp_skill.txt

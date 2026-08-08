@@ -257,6 +257,9 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                     HideTransientPanel();
                 }
                 return;
+            case "requestThumbnail":
+                await PostThumbnailAsync(FindRecord(request.Id));
+                return;
             case "togglePin":
                 await panelViewModel.TogglePinnedAsync(FindRecord(request.Id));
                 break;
@@ -434,15 +437,20 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         var message = new
         {
             type = "state",
-            history = panelViewModel.AllRecords.Select(record => new
+            history = panelViewModel.AllRecords.Select(record =>
             {
-                id = record.Id.ToString("D"),
-                kind = KindName(record.Kind),
-                text = record.PrimaryText,
-                meta = $"{FormatRelativeTime(record.LastCopiedAt)} · {record.SecondaryText}",
-                fav = record.IsFavorite,
-                pin = record.IsPinned,
-                available = record.IsAvailable
+                var display = ClipboardRecordDisplay.From(record);
+                return new
+                {
+                    id = record.Id.ToString("D"),
+                    kind = KindName(record.Kind),
+                    text = display.Title,
+                    meta = $"{FormatRelativeTime(record.LastCopiedAt)} · {display.Detail}",
+                    fav = record.IsFavorite,
+                    pin = record.IsPinned,
+                    available = record.IsAvailable,
+                    thumbnailAvailable = display.HasThumbnail
+                };
             }),
             settings = new
             {
@@ -465,6 +473,24 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         };
         ProductWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(message));
         return Task.CompletedTask;
+    }
+
+    private async Task PostThumbnailAsync(ClipboardRecord record)
+    {
+        if (!shellReady || ProductWebView.CoreWebView2 is null)
+        {
+            return;
+        }
+
+        var dataUrl = await compositionRoot.ImagePreviewSource.CreateDataUrlAsync(
+            record,
+            CancellationToken.None);
+        ProductWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new
+        {
+            type = "thumbnail",
+            id = record.Id.ToString("D"),
+            dataUrl
+        }));
     }
 
     private Task PostShellToastAsync(string message, bool isError)

@@ -297,7 +297,8 @@ public sealed class PanelViewModel : ObservableObject
 
     private static bool MatchesSearch(ClipboardRecord record, string query) =>
         record.PrimaryText.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-        record.SecondaryText.Contains(query, StringComparison.OrdinalIgnoreCase);
+        record.SecondaryText.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+        record.SourcePath?.Contains(query, StringComparison.OrdinalIgnoreCase) == true;
 
     private static int IndexOf(IReadOnlyList<ClipboardRecord> records, Guid id)
     {

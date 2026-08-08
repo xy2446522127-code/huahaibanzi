@@ -7,35 +7,40 @@ const value = process.argv[4] || '';
 if (!Number.isInteger(port) || port <= 0) throw new Error('A valid WebView2 debugging port is required.');
 
 async function connect() {
-  let page;
+  let lastError;
   for (let attempt = 0; attempt < 50; attempt += 1) {
-    const targets = await fetch(`http://127.0.0.1:${port}/json`).then(response => response.json());
-    page = targets.find(target => target.type === 'page' && String(target.url || '').startsWith('https://app.huahai.local/Web/product-shell.html'));
-    if (page) break;
+    try {
+      const targets = await fetch(`http://127.0.0.1:${port}/json`).then(response => response.json());
+      const page = targets.find(target => target.type === 'page' && String(target.url || '').startsWith('https://app.huahai.local/Web/product-shell.html'));
+      if (page) {
+        const socket = new WebSocket(page.webSocketDebuggerUrl);
+        const pending = new Map();
+        let nextId = 1;
+        socket.addEventListener('message', event => {
+          const message = JSON.parse(event.data);
+          const request = pending.get(message.id);
+          if (!request) return;
+          pending.delete(message.id);
+          if (message.error) request.reject(new Error(message.error.message));
+          else request.resolve(message.result);
+        });
+        await new Promise((resolve, reject) => {
+          socket.addEventListener('open', resolve, { once: true });
+          socket.addEventListener('error', reject, { once: true });
+        });
+        const command = (method, params = {}) => new Promise((resolve, reject) => {
+          const id = nextId++;
+          pending.set(id, { resolve, reject });
+          socket.send(JSON.stringify({ id, method, params }));
+        });
+        return { socket, command };
+      }
+    } catch (error) {
+      lastError = error;
+    }
     await new Promise(resolve => setTimeout(resolve, 100));
   }
-  if (!page) throw new Error('The Huahai product-shell WebView2 target was not ready.');
-  const socket = new WebSocket(page.webSocketDebuggerUrl);
-  const pending = new Map();
-  let nextId = 1;
-  socket.addEventListener('message', event => {
-    const message = JSON.parse(event.data);
-    const request = pending.get(message.id);
-    if (!request) return;
-    pending.delete(message.id);
-    if (message.error) request.reject(new Error(message.error.message));
-    else request.resolve(message.result);
-  });
-  await new Promise((resolve, reject) => {
-    socket.addEventListener('open', resolve, { once: true });
-    socket.addEventListener('error', reject, { once: true });
-  });
-  const command = (method, params = {}) => new Promise((resolve, reject) => {
-    const id = nextId++;
-    pending.set(id, { resolve, reject });
-    socket.send(JSON.stringify({ id, method, params }));
-  });
-  return { socket, command };
+  throw new Error('The Huahai product-shell WebView2 target was not ready.', { cause: lastError });
 }
 
 async function run() {
@@ -89,6 +94,13 @@ async function run() {
         }
         throw new Error('settings surface timeout');
       })()`
+    : operation === 'hide-panel'
+    ? `(() => {
+        const button=document.querySelector('#minimizeButton');
+        if (!button) throw new Error('minimize button missing');
+        button.click();
+        return { hidden:true };
+      })()`
     : operation === 'settings-home'
     ? `(async () => {
         document.querySelector('#settingsButton')?.click();
@@ -126,7 +138,7 @@ async function run() {
           ['文本','Favorites and pinned records survive cleanup','12 min ago · Test fixture','&#xE8D2;'],
           ['图片','fox-icon-preview.png','15 min ago · Test fixture','&#xE8B9;']
         ];
-        list.innerHTML=fixtures.map((item,index)=>'<div class="record" data-id="fixture-'+index+'"><div class="kind" title="'+item[0]+'"><span class="kind-glyph" aria-hidden="true">'+item[3]+'</span></div><div class="record-text"><strong>'+item[1]+'</strong><small>'+(index===0?'置顶 · ':'')+item[2]+'</small></div><div class="row-actions"><button class="row-action pin '+(index===0?'on':'')+'" title="置顶"><span class="pin-glyph" aria-hidden="true">&#xE718;</span></button><button class="row-action fav '+(index===4?'on':'')+'" title="收藏">★</button><button class="row-action del" title="删除">×</button></div></div>').join('');
+        list.innerHTML=fixtures.map((item,index)=>'<div class="record" data-id="fixture-'+index+'"><div class="kind" title="'+item[0]+'"><span class="kind-glyph" aria-hidden="true">'+item[3]+'</span></div><div class="record-text"><strong>'+item[1]+'</strong><small>'+(index===0?'置顶 · ':'')+item[2]+'</small></div><div class="row-actions"><button class="row-action pin '+(index===0?'on':'')+'" title="置顶"><svg class="pin-glyph" viewBox="0 -52 64 36" aria-hidden="true"><use class="pin-surface" href="'+(index===0?'#pinSolidPath':'#pinOutlinePath')+'"></use></svg></button><button class="row-action fav '+(index===4?'on':'')+'" title="收藏"><span class="fav-glyph">★</span></button><button class="row-action del" title="删除">×</button></div></div>').join('');
         count.textContent='最近 7 天 · '+fixtures.length+' 条';
         return {seeded:true,count:fixtures.length};
       })()`
@@ -288,8 +300,22 @@ async function run() {
         const pin=document.querySelector('.row-action.pin.on');
         const fav=document.querySelector('.row-action.fav.on');
         if(!pin||!fav) throw new Error('pinned and favorite fixtures missing');
-        const pinStyle=getComputedStyle(pin),favStyle=getComputedStyle(fav);
-        return {pin:{color:pinStyle.color,backgroundImage:pinStyle.backgroundImage,boxShadow:pinStyle.boxShadow,transform:getComputedStyle(pin.querySelector('.pin-glyph')).transform},favorite:{color:favStyle.color,backgroundImage:favStyle.backgroundImage,boxShadow:favStyle.boxShadow}};
+        const pinStyle=getComputedStyle(pin),favStyle=getComputedStyle(fav),pinGlyph=pin.querySelector('.pin-glyph'),pinSurface=pin.querySelector('.pin-surface'),favGlyph=fav.querySelector('.fav-glyph');
+        return {pin:{color:pinStyle.color,backgroundImage:pinStyle.backgroundImage,boxShadow:pinStyle.boxShadow,transform:getComputedStyle(pinGlyph).transform,fill:getComputedStyle(pinSurface).fill},favorite:{color:favStyle.color,backgroundImage:favStyle.backgroundImage,boxShadow:favStyle.boxShadow,textShadow:getComputedStyle(favGlyph).textShadow}};
+      })()`
+    : operation === 'wait-thumbnail'
+    ? `(async () => {
+        for (let i=0;i<100;i++) {
+          const image=document.querySelector('.record-thumbnail');
+          const row=image?.closest('.record');
+          if (image?.src.startsWith('data:image/png;base64,') && image.complete && image.naturalWidth>0 && row) {
+            const rect=image.getBoundingClientRect();
+            return {loaded:true,title:row.querySelector('.record-text strong')?.textContent||'',slotWidth:rect.width,slotHeight:rect.height,naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight,objectFit:getComputedStyle(image).objectFit};
+          }
+          await new Promise(resolve=>setTimeout(resolve,100));
+        }
+        const rows=[...document.querySelectorAll('.record')].map(row=>{const image=row.querySelector('.record-thumbnail'),slot=row.querySelector('.thumbnail-slot');return {title:row.querySelector('.record-text strong')?.textContent||'',kindTitle:row.querySelector('.kind')?.title||'',hasSlot:Boolean(slot),requestedId:slot?.dataset.thumbnailId||'',hasSrc:image?.hasAttribute('src')||false,srcPrefix:image?.src.slice(0,28)||'',slotClass:slot?.className||''}});
+        throw new Error('image thumbnail did not load from the native bridge: '+JSON.stringify(rows));
       })()`
     : operation === 'wait-and-delete-text'
       ? `(async () => {

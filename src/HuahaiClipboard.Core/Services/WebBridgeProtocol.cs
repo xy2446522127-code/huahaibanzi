@@ -9,6 +9,7 @@ public static class WebBridgeProtocol
         "resize",
         "beginNativeDrag",
         "copy",
+        "requestThumbnail",
         "togglePin",
         "toggleFavorite",
         "delete",

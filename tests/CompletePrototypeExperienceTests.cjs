@@ -42,13 +42,16 @@ test('appearance page exposes proportional panel scaling and a one-click reset',
   assert.match(html, /postNative\('commitPanelScale'/);
 });
 
-test('pinned records use a dimensional red glass pin state', () => {
-  assert.match(html, /\.row-action\.pin\.on\{[^}]*color:#ff6f7e/);
-  assert.match(html, /\.row-action\.pin\.on\{[^}]*linear-gradient\(/);
-  assert.match(html, /\.row-action\.pin\.on\{[^}]*inset 0 1px/);
-  assert.match(html, /\.row-action\.pin\.on \.pin-glyph\{[^}]*transform:rotate\(-12deg\)/);
+test('pinned records use the approved original-shape ruby glyph without coloring the button', () => {
+  assert.match(html, /id="pinOutlinePath"/);
+  assert.match(html, /id="pinSolidPath"/);
+  assert.match(html, /id="rubyPinFill"/);
+  assert.match(html, /\.row-action\.pin\.on\{[^}]*color:#ff4968[^}]*background:transparent/);
+  assert.match(html, /\.row-action\.pin\.on \.pin-surface\{[^}]*fill:url\(#rubyPinFill\)/);
+  assert.match(html, /\.pin-glyph\{[^}]*transform:rotate\(130deg\) scaleX\(-1\)/);
   assert.match(html, /\.row-action\.fav\.on\{[^}]*color:#ffd65a/);
-  assert.match(html, /\.row-action\.fav\.on\{[^}]*linear-gradient\(/);
+  assert.match(html, /\.row-action\.fav\.on\{[^}]*background:transparent/);
+  assert.match(html, /\.fav-glyph\{[^}]*text-shadow:/);
 });
 
 test('about page uses the production update bridge while keeping preview simulation offline', () => {

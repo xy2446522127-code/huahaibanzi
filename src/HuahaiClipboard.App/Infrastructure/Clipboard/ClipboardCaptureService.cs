@@ -128,7 +128,8 @@ public sealed class ClipboardCaptureService(
                         false,
                         false,
                         true,
-                        imagePath);
+                        imagePath,
+                        files[0]);
                 }
                 catch (Exception)
                 {

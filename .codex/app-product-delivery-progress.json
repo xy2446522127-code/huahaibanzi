@@ -1,98 +1,105 @@
 {
-  "version": 2,
-  "scope_revision": 10,
-  "product_scale": "medium",
-  "change_scale": "medium",
-  "risk_level": "high",
-  "runtime_topology": "desktop-first",
-  "delivery_maturity": "release",
-  "delivery_target": "local-installed-release",
-  "execution_mode": "autonomous_implementation",
-  "core_percent": 100.0,
-  "overall_percent": 100.0,
-  "current_milestone": "v1-1-5-scale-layout-bugfix",
   "blockers": [],
+  "change_scale": "small",
+  "core_percent": 100,
+  "current_milestone": "git-synchronized-update",
+  "delivery_maturity": "usable",
+  "delivery_target": "usable",
+  "execution_mode": "autonomous_implementation",
   "milestones": [
     {
-      "id": "webview-carrier",
-      "label": "Approved WebView liquid-glass UI remains the formal desktop carrier",
-      "weight": 20,
-      "core": true,
-      "status": "verified",
       "blocker": "",
-      "evidence": "Current source and v1.1.5 build Assets match across 11 files; build carrier gate passed, Web interaction passed 55/55, and composed desktop interaction passed 60/60 with zero unexplained controls or console errors."
+      "core": true,
+      "evidence": "Verified baseline at 387df07: 119 Core + 39 Native UI tests, Web interaction contracts, x64 build and installed F-drive evidence.",
+      "id": "verified-v115-baseline",
+      "label": "Existing v1.1.5 clipboard, UI, scaling, packaging and installed behavior remains protected",
+      "status": "verified",
+      "weight": 60
     },
     {
-      "id": "install-root-data",
-      "label": "Per-user clipboard data lives beneath the chosen install root",
-      "weight": 20,
-      "core": true,
-      "status": "verified",
       "blocker": "",
-      "evidence": "The final installed app wrote settings to <install-root>/Data/<Windows-SID>/settings.json without overrides; the old LocalAppData path was absent and transactional reinstall preserved all Data files by SHA-256."
+      "core": true,
+      "evidence": "ClipboardRecordDisplay projection and 128/128 Core tests verify readable file/image titles while preserving paste payloads.",
+      "id": "file-image-display-semantics",
+      "label": "Files and image files show a readable title above their real path without changing paste payloads",
+      "status": "verified",
+      "weight": 15
     },
     {
-      "id": "fluid-scale-and-navigation",
-      "label": "Scale is 80-160 percent at one-percent precision with preview/commit separation and settings-home navigation",
-      "weight": 20,
-      "core": true,
-      "status": "verified",
       "blocker": "",
-      "evidence": "Installed SettingsScaleLayoutSmoke passes 80%, 100%, and 160% with identical helper-text line signatures. ScalePointerInteractionSmoke reproduces real pointer dragging across 20 samples with 0 regressions (80 to 160); pointer preview freezes geometry and commit resizes once."
+      "core": true,
+      "evidence": "ClipboardImagePreviewSourceService, Web bridge requestThumbnail flow, 1:1 cover-crop shell contract, and 128/128 Core plus 11/11 Web shell tests pass.",
+      "id": "lazy-image-thumbnails",
+      "label": "Image records render a 1:1 thumbnail in the existing type-icon slot with safe fallback",
+      "status": "verified",
+      "weight": 15
     },
     {
-      "id": "installer-runtime-and-identity",
-      "label": "Single EXE installer carries required runtime policy and preserves WinUI resource identity",
-      "weight": 20,
-      "core": true,
-      "status": "verified",
       "blocker": "",
-      "evidence": "The signed v1.1.5 scale-fix5 installer preserves HuahaiClipboard.App.exe with PRI/XBF resources, bundles Windows App SDK prerequisites, and passed payload identity, prerequisite integrity, architecture, and UI contract checks. WebView source and F-drive Assets match across 11 files."
+      "core": true,
+      "evidence": "The production shell preserves the E718 silhouette with D ruby fill, horizontal mirror, clockwise 130-degree rotation, transparent button surface, and passing Web contracts.",
+      "id": "ruby-pin-material",
+      "label": "Pinned state uses the approved D ruby material on the original E718 silhouette only",
+      "status": "verified",
+      "weight": 5
     },
     {
-      "id": "full-feature-audit",
-      "label": "Affected production and packaging feature matrix passes",
-      "weight": 10,
-      "core": true,
-      "status": "verified",
       "blocker": "",
-      "evidence": ".NET solution tests passed 119 Core + 39 Native UI; 15 applicable Node tests plus dimensional pin/favorite assertions passed; installed scale layout and repeated real pointer drag smokes passed; corner geometry and dynamic red/yellow glass style checks passed; Release x64 build, carrier hash match, installer payload, prerequisite, architecture, and UI contract checks passed."
-    },
-    {
-      "id": "v1-1-5-local-delivery",
-      "label": "v1.1.5 is cleanly installed to the authorized F drive and a signed installer is ready to share",
-      "weight": 10,
       "core": false,
+      "evidence": "Fresh validation: 128 Core tests, 2 Git privacy tests, 11 production shell contracts, and 10 complete prototype interaction contracts pass with zero failures.",
+      "id": "integrated-usable-build",
+      "label": "Focused regressions, Web interaction and x64 runnable build pass together",
       "status": "verified",
-      "blocker": "",
-      "evidence": "F-drive overwrite install completed with exit 0, Data/<SID> and PanelScale=0.8 were preserved, source and installed Assets match across 11 files, and the signed installer is dist/HuahaiClipboard-Setup-v1.1.5-scale-fix5.exe. No push or GitHub Release was performed."
+      "weight": 5
     }
   ],
+  "overall_percent": 100,
+  "product_scale": "medium",
+  "project_scale": "medium",
+  "risk_level": "medium",
+  "runtime_topology": "desktop-first",
+  "scale_evidence": {},
   "scope_changes": [
     {
-      "revision": 5,
-      "reason": "User approved restoring the previous WebView UI and accepting its higher memory usage while preserving all production behavior and local data."
+      "reason": "User approved restoring the previous WebView UI and accepting its higher memory usage while preserving all production behavior and local data.",
+      "revision": 5
     },
     {
-      "revision": 6,
-      "reason": "User requested automatic update and exhaustive release verification, expanding installer/update risk."
+      "reason": "User requested automatic update and exhaustive release verification, expanding installer/update risk.",
+      "revision": 6
     },
     {
-      "revision": 7,
-      "reason": "User required self-contained dependency handling, install-root per-user data, continuous one-percent scaling without blank frames, global fox navigation, full local data removal, and clean F-drive reinstall."
+      "reason": "User required self-contained dependency handling, install-root per-user data, continuous one-percent scaling without blank frames, global fox navigation, full local data removal, and clean F-drive reinstall.",
+      "revision": 7
     },
     {
-      "revision": 8,
-      "reason": "User reported proportional scaling still reflowed the settings helper text; root cause was intrinsic scale-label width plus active size transitions, so the fix was limited to the approved WebView shell and its installed regression evidence."
+      "reason": "User reported proportional scaling still reflowed the settings helper text; root cause was intrinsic scale-label width plus active size transitions, so the fix was limited to the approved WebView shell and its installed regression evidence.",
+      "revision": 8
     },
     {
-      "revision": 9,
-      "reason": "Real pointer dragging still jumped because native window resizing moved the slider under the cursor; preview now freezes geometry until commit, and native corner clipping uses CSS-radius geometry without DPI double-scaling."
+      "reason": "Real pointer dragging still jumped because native window resizing moved the slider under the cursor; preview now freezes geometry until commit, and native corner clipping uses CSS-radius geometry without DPI double-scaling.",
+      "revision": 9
     },
     {
-      "revision": 10,
-      "reason": "User requested pinned pins to become dimensional red glass and favorite stars dimensional yellow glass; both states now use gradient, inset highlight, depth shadow, and state-specific color while preserving the existing actions."
+      "reason": "User requested pinned pins to become dimensional red glass and favorite stars dimensional yellow glass; both states now use gradient, inset highlight, depth shadow, and state-specific color while preserving the existing actions.",
+      "revision": 10
+    },
+    {
+      "at": "2026-08-07T20:03:25.819851Z",
+      "previous_classification": {
+        "change_scale": "medium",
+        "delivery_maturity": "release",
+        "delivery_target": "release",
+        "product_scale": "medium",
+        "project_scale": "medium",
+        "risk_level": "high",
+        "runtime_topology": "desktop-first"
+      },
+      "previous_percent": 100,
+      "reason": "User approved original E718 D ruby pin material and added file/image title-path semantics plus 1:1 image thumbnails; prior verified v1.1.5 behavior remains protected."
     }
   ],
-  "updated_at": "2026-08-08T02:42:00+08:00"
+  "scope_revision": 11,
+  "updated_at": "2026-08-08T13:07:39.8415628+08:00",
+  "version": 2
 }

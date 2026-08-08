@@ -11,6 +11,7 @@ public sealed class CompositionRoot
     private readonly LocalDataLayout dataLayout;
     private readonly JsonClipboardHistorySource historySource;
     private readonly ProtectedClipboardImageStore imageStore;
+    private readonly ClipboardImagePreviewSourceService imagePreviewSource;
     private readonly WindowsClipboardPlatform clipboardPlatform;
     private readonly ClipboardPanelActionSink actionSink;
     private readonly JsonSettingsStore settingsStore;
@@ -30,6 +31,7 @@ public sealed class CompositionRoot
             dataLayout.HistoryFile,
             protector);
         imageStore = new ProtectedClipboardImageStore(dataLayout.ImageDirectory, protector);
+        imagePreviewSource = new ClipboardImagePreviewSourceService(imageStore);
         clipboardPlatform = new WindowsClipboardPlatform(imageStore);
         actionSink = new ClipboardPanelActionSink(historySource, clipboardPlatform);
         captureService = new ClipboardCaptureService(
@@ -54,6 +56,8 @@ public sealed class CompositionRoot
     public WindowsClipboardPlatform ClipboardPlatform => clipboardPlatform;
 
     public ProtectedClipboardImageStore ImageStore => imageStore;
+
+    public ClipboardImagePreviewSourceService ImagePreviewSource => imagePreviewSource;
 
     public LocalDataLayout DataLayout => dataLayout;
 }
