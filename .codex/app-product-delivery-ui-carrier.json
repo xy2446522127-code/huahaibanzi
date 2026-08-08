@@ -6,7 +6,7 @@
     "installer/**",
     "tests/**"
   ],
-  "approval_evidence": "The user approved proactive update reminders. This derivative preserves the approved liquid-glass shell and changes only a small settings-button update dot, the existing About update actions, and their shared runtime state.",
+  "approval_evidence": "The user approved proactive update reminders and the v1.1.7 release. This derivative changes only displayed/current version metadata while preserving the approved liquid-glass UI shell and update interactions.",
   "capability_matrix": {
     "clipboard": {
       "desktop": "desktop",
@@ -45,15 +45,15 @@
   "cross_target_evidence": "The same product-shell.html remains the browser interaction surface and the packaged WebView entrypoint.",
   "delivery_maturity": "release",
   "entrypoint": "Web/product-shell.html",
-  "entrypoint_sha256": "5263ddf86f025733a6b5289322bdabc4bfcfa394d6f4692f219fb72bb30ea51b",
+  "entrypoint_sha256": "6f9820b31e116d5a6e48c56a889a0e6f856496447f9b8e3b5f793ebf4fbc5773",
   "mock_status": "removed",
   "native_port": {
     "blockers": [],
     "experience_change_approved": false,
     "machine_evidence": []
   },
-  "parent_source_manifest_sha256": "8451fe08dea4ffc91bf1d2dcaf4041f7d075855f3c837232412efc5c9a13769b",
-  "parent_visual_source_version": "huahai-approved-shell-v6-safe-update-1.1.5-r11-dimensional-pin-favorite",
+  "parent_source_manifest_sha256": "53c847733c549ae9ee2c93ce0660824aae2ce001106d4d1b520b94ce58782895",
+  "parent_visual_source_version": "huahai-approved-shell-v6-proactive-update-1.1.7-r12",
   "preserved_areas": [
     "approved WebView liquid-glass layout, typography, themes, petals, and A+E motion",
     "clipboard capture, paste payloads, pin, favorite, drag, scale, shortcuts, and privacy exclusions",
@@ -62,9 +62,9 @@
     "<install-root>/Data/<Windows-SID>/settings.json"
   ],
   "product_scale": "medium",
-  "project_revision": 16,
+  "project_revision": 17,
   "risk_level": "medium",
-  "rollback_commit": "1093e6d5e3d2d97f34691b4d1244c0847ebb11fd",
+  "rollback_commit": "5417e9527d377b244a2fbe7932efb5b2cda3658c",
   "runtime_topology": "desktop-first",
   "source_manifest": [
     {
@@ -112,7 +112,7 @@
     {
       "logical_asset_id": "Web/product-shell.html",
       "path": "Web/product-shell.html",
-      "sha256": "5263ddf86f025733a6b5289322bdabc4bfcfa394d6f4692f219fb72bb30ea51b",
+      "sha256": "6f9820b31e116d5a6e48c56a889a0e6f856496447f9b8e3b5f793ebf4fbc5773",
       "size": 68617
     },
     {
@@ -134,7 +134,7 @@
       "size": 908
     }
   ],
-  "source_manifest_sha256": "53c847733c549ae9ee2c93ce0660824aae2ce001106d4d1b520b94ce58782895",
+  "source_manifest_sha256": "109138aa284e00a78a325e8323e2d55b9f0f9a13ec82718f99a308d9cba01014",
   "source_root": "src/HuahaiClipboard.App/Assets",
   "strategy": "retain-and-integrate",
   "surfaces": [
@@ -153,5 +153,5 @@
   },
   "ui_class": "existing-production-shell",
   "version": 1,
-  "visual_source_version": "huahai-approved-shell-v6-proactive-update-1.1.7-r12"
+  "visual_source_version": "huahai-approved-shell-v6-proactive-update-1.1.7-r13-release"
 }
