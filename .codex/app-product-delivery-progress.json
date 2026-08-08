@@ -2,7 +2,7 @@
   "blockers": [],
   "change_scale": "small",
   "core_percent": 100,
-  "current_milestone": "v1-1-7-proactive-update-release",
+  "current_milestone": "v1-1-8-main-panel-update-reminder-release",
   "delivery_maturity": "release",
   "delivery_target": "release",
   "execution_mode": "autonomous_implementation",
@@ -41,7 +41,16 @@
       "id": "ruby-pin-material",
       "label": "Pinned state uses the approved D ruby material on the original E718 silhouette only",
       "status": "verified",
-      "weight": 5
+      "weight": 3
+    },
+    {
+      "blocker": "",
+      "core": false,
+      "evidence": "v1.1.8 source verified at 478a4d9 plus the dynamic-gate correction: 141 Core, 39 native fallback, 1 tray, 73 Node, 20 installer-policy suites, 58/58 dynamic Web controls, 0 unexplained controls, 0 console errors, x64 build with 0 warnings/errors, matching source/package UI digest, and signed installer SHA-256 ab4a13d4d6ffc16e8e0986018ffc8177916d7b8e1e30fabc26d885f195a95a97.",
+      "id": "main-panel-update-reminder-release",
+      "label": "Main-panel liquid-glass update reminder and larger rounded minimize glyph are packaged as v1.1.8",
+      "status": "verified",
+      "weight": 2
     },
     {
       "blocker": "",
@@ -113,7 +122,7 @@
       "reason": "User approved proactive background GitHub Release checks and multi-surface update reminders; release verification added concurrency, startup-order and same-process snooze-expiry evidence."
     }
   ],
-  "scope_revision": 12,
-  "updated_at": "2026-08-08T14:46:00+08:00",
+  "scope_revision": 13,
+  "updated_at": "2026-08-08T16:29:33+08:00",
   "version": 2
 }

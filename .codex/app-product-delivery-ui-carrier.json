@@ -52,8 +52,8 @@
     "experience_change_approved": false,
     "machine_evidence": []
   },
-  "parent_source_manifest_sha256": "53c847733c549ae9ee2c93ce0660824aae2ce001106d4d1b520b94ce58782895",
-  "parent_visual_source_version": "huahai-approved-shell-v6-proactive-update-1.1.7-r13-release",
+  "parent_source_manifest_sha256": "109138aa284e00a78a325e8323e2d55b9f0f9a13ec82718f99a308d9cba01014",
+  "parent_visual_source_version": "huahai-approved-shell-v6-update-banner-1.1.8-r14",
   "preserved_areas": [
     "approved WebView liquid-glass layout, typography, themes, petals, and A+E motion",
     "clipboard capture, paste payloads, pin, favorite, drag, scale, shortcuts, and privacy exclusions",
@@ -62,9 +62,9 @@
     "<install-root>/Data/<Windows-SID>/settings.json"
   ],
   "product_scale": "medium",
-  "project_revision": 17,
+  "project_revision": 18,
   "risk_level": "medium",
-  "rollback_commit": "5417e9527d377b244a2fbe7932efb5b2cda3658c",
+  "rollback_commit": "0c487a2d230653dbd09f2a20f2e429584c4e95fb",
   "runtime_topology": "desktop-first",
   "source_manifest": [
     {
@@ -94,8 +94,8 @@
     {
       "logical_asset_id": "Web/interaction-contract.js",
       "path": "Web/interaction-contract.js",
-      "sha256": "7cf74a2992bac157360ae106d4ad1d9131dda5f4ee2eceab65839abbc16a3f3a",
-      "size": 3853
+      "sha256": "77b8d01693777541628c1ebec97b6b725996663bdf67e8095ed13e7e088475fc",
+      "size": 3944
     },
     {
       "logical_asset_id": "Web/panel-drag.js",
@@ -112,8 +112,8 @@
     {
       "logical_asset_id": "Web/product-shell.html",
       "path": "Web/product-shell.html",
-      "sha256": "6f9820b31e116d5a6e48c56a889a0e6f856496447f9b8e3b5f793ebf4fbc5773",
-      "size": 68617
+      "sha256": "fd23010faee623df0cc61adf123e7243bcad0bdbcadb79b921e02090ba60741e",
+      "size": 71894
     },
     {
       "logical_asset_id": "Web/retention-policy.js",
@@ -134,7 +134,7 @@
       "size": 908
     }
   ],
-  "source_manifest_sha256": "109138aa284e00a78a325e8323e2d55b9f0f9a13ec82718f99a308d9cba01014",
+  "source_manifest_sha256": "acbf368b6e6ae7cbc05a68f02c84ccb6f6916a53d055c785bb8d67b46777c637",
   "source_root": "src/HuahaiClipboard.App/Assets",
   "strategy": "retain-and-integrate",
   "surfaces": [
@@ -144,7 +144,7 @@
   ],
   "targets": {
     "desktop": {
-      "build_evidence": "Pending v1.1.8 release build after update-banner, minimize-glyph and desktop integration tests.",
+      "build_evidence": "v1.1.8 x64 Release build completed with 0 warnings and 0 errors; source and packaged product-shell SHA-256 match; 58/58 dynamic Web controls pass with no unexplained controls or console errors; installer payload identity and all 20 installer policy suites pass.",
       "build_output": "dist/webview-build-1.1.8",
       "host": "WinUI 3 + WebView2 (.NET 8, unpackaged, self-contained Windows App SDK)",
       "load_target": "https://app.huahai.local/Web/product-shell.html",
@@ -153,5 +153,5 @@
   },
   "ui_class": "existing-production-shell",
   "version": 1,
-  "visual_source_version": "huahai-approved-shell-v6-update-banner-1.1.8-r14"
+  "visual_source_version": "huahai-approved-shell-v6-update-banner-1.1.8-r14-release"
 }

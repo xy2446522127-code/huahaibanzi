@@ -1,4 +1,5 @@
 const fs = require('node:fs');
+const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
 const port = Number(process.argv[2]);
@@ -8,6 +9,14 @@ const outputPath = process.argv[5];
 if (!Number.isInteger(port) || !contractPath || !shellPath || !outputPath) {
   throw new Error('Usage: node WebInteractionContractSmoke.cjs <port> <contract> <shell> <output>');
 }
+
+const interaction = require(path.join(path.dirname(shellPath), 'interaction-contract.js'));
+const expectedRuntimeControlIds = [...new Set([
+  ...Object.keys(interaction.staticControls),
+  ...Object.values(interaction.filterControls),
+  ...Object.values(interaction.recordControls),
+  ...Object.values(interaction.exclusionControls),
+])];
 
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
@@ -82,6 +91,8 @@ function interactionExpression(controlId) {
     if (id === 'panel.minimize') { click(id); return document.querySelector('#glassPanel').classList.contains('hidden') && document.querySelector('#launcher').classList.contains('show'); }
     if (id === 'panel.summon') { document.querySelector('#minimizeButton').click(); click(id); return !document.querySelector('#glassPanel').classList.contains('hidden') && document.activeElement === document.querySelector('#searchInput'); }
     if (id === 'panel.settings') { click(id); await pause(0); return document.querySelector('#glassPanel').classList.contains('settings-mode') && location.hash === '#settings/appearance'; }
+    if (id === 'panel.update-later') { const banner=document.querySelector('#updateBanner');banner.hidden=false;click(id);return banner.hidden&&!document.querySelector('#glassPanel').classList.contains('settings-mode'); }
+    if (id === 'panel.update-install') { const banner=document.querySelector('#updateBanner');banner.hidden=false;click(id);await pause(0);return banner.hidden&&document.querySelector('#glassPanel').classList.contains('settings-mode')&&location.hash==='#settings/about'; }
     const filterKinds = { 'filter.text': '文本', 'filter.link': '链接', 'filter.image': '图片', 'filter.file': '文件' };
     if (id === 'filter.all') { click(id); return rows().length === 12; }
     if (filterKinds[id]) { click(id); return rows().length > 0 && kinds().every(kind => kind === filterKinds[id]); }
@@ -140,7 +151,7 @@ async function main() {
       fixtureUrl.searchParams.set('apd-fixture', String(controlIndex));
       fixtureUrl.hash = hash;
       await command('Page.navigate', { url: fixtureUrl.href });
-      await waitFor(command, `document.readyState==='complete'&&new Set([...document.querySelectorAll('[data-apd-control-id]')].map(element=>element.getAttribute('data-apd-control-id'))).size===56`, `${control.control_id} route`);
+      await waitFor(command, `document.readyState==='complete'&&${JSON.stringify(expectedRuntimeControlIds)}.every(id=>document.querySelector('[data-apd-control-id="'+id+'"]'))`, `${control.control_id} route`);
       const discovered = await evaluate(command, `[...document.querySelectorAll('[data-apd-control-id]')].map(element=>element.getAttribute('data-apd-control-id'))`);
       discovered.forEach(id => runtimeIds.add(id));
       const unexplained = await evaluate(command, `(() => {
