@@ -52,12 +52,12 @@ dotnet test tests\HuahaiClipboard.Core.Tests\HuahaiClipboard.Core.Tests.csproj -
 & 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe' `
   src\HuahaiClipboard.App\HuahaiClipboard.App.csproj `
   /t:Build /p:Configuration=Release /p:Platform=x64 `
-  /p:RuntimeIdentifier=win-x64 /p:SelfContained=false /p:WindowsAppSDKSelfContained=true /p:Version=1.1.5 `
-  /p:OutDir="$PWD\dist\webview-build-1.1.5\" /restore /m
+  /p:RuntimeIdentifier=win-x64 /p:SelfContained=false /p:WindowsAppSDKSelfContained=true /p:Version=1.1.6 `
+  /p:OutDir="$PWD\dist\webview-build-1.1.6\" /restore /m
 
 .\installer\Fetch-Prerequisites.ps1 -Destination dist\prerequisites
 .\installer\Build-Installer.ps1 `
-  -PublishRoot dist\webview-build-1.1.5 `
+  -PublishRoot dist\webview-build-1.1.6 `
   -PrerequisiteRoot dist\prerequisites `
   -OutputPath dist\HuahaiClipboard-Setup.exe `
   -SigningThumbprint CD06B727BD8811C3B59CE0A4F9384D68EC7431C2

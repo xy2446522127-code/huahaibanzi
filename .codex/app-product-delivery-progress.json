@@ -2,7 +2,7 @@
   "blockers": [],
   "change_scale": "small",
   "core_percent": 100,
-  "current_milestone": "git-synchronized-update",
+  "current_milestone": "v1-1-6-release",
   "delivery_maturity": "usable",
   "delivery_target": "usable",
   "execution_mode": "autonomous_implementation",
@@ -46,7 +46,7 @@
     {
       "blocker": "",
       "core": false,
-      "evidence": "Fresh validation: 128 Core tests, 2 Git privacy tests, 11 production shell contracts, and 10 complete prototype interaction contracts pass with zero failures.",
+      "evidence": "Fresh v1.1.6 validation: 128 Core tests, 2 Git privacy tests, 11 production shell contracts, 10 complete prototype interaction contracts, x64 package checks, matching UI carrier hash, and valid pinned publisher signature all pass.",
       "id": "integrated-usable-build",
       "label": "Focused regressions, Web interaction and x64 runnable build pass together",
       "status": "verified",
@@ -100,6 +100,6 @@
     }
   ],
   "scope_revision": 11,
-  "updated_at": "2026-08-08T13:07:39.8415628+08:00",
+  "updated_at": "2026-08-08T13:23:33.4643536+08:00",
   "version": 2
 }

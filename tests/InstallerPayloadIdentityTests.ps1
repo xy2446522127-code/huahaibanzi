@@ -1,5 +1,5 @@
 param(
-    [string]$InstallerPath = (Join-Path $PSScriptRoot '..\dist\HuahaiClipboard-Setup-v1.1.5.exe')
+    [string]$InstallerPath = (Join-Path $PSScriptRoot '..\dist\HuahaiClipboard-Setup.exe')
 )
 
 $ErrorActionPreference = 'Stop'
