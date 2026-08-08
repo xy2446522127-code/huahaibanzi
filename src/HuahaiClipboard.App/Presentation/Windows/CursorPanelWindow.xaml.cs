@@ -48,6 +48,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private readonly JsonWindowPlacementStore windowPlacementStore;
     private readonly TransientWindowVisibilityController visibilityController;
     private readonly GitHubUpdateCheckService updateCheckService = GitHubUpdateCheckService.CreateDefault(CurrentVersion);
+    private readonly UpdateNotificationSession updateNotificationSession = new();
     private GlobalInputService? globalInputService;
     private TrayService? trayService;
     private ProactiveUpdateCoordinator? updateCoordinator;
@@ -68,7 +69,6 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private int webContentActivityVersion;
     private UpdateCheckResult? availableUpdate;
     private bool updateInstallationInProgress;
-    private string? lastNotifiedUpdateVersion;
     private bool notifyUpdateOnNextSummon;
 
     public CursorPanelWindow()
@@ -118,6 +118,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             }),
             () => DispatcherQueue.TryEnqueue(ShowUpdatePane),
             () => DispatcherQueue.TryEnqueue(ExitApplication));
+        TryStartUpdateCoordinator();
         await PostShellStateAsync();
     }
 
@@ -213,7 +214,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                     {
                         await ExecuteShellScriptAsync("document.querySelector('#settingsButton')?.click()");
                     }
-                    EnsureUpdateCoordinatorStarted();
+                    TryStartUpdateCoordinator();
                     break;
                 case "hide":
                     // 工具栏“隐藏”是显式后台动作，不受“关闭后退出”偏好影响。
@@ -391,7 +392,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                     settingsViewModel.Draft.Behavior with { CheckUpdatesOnStartup = request.Enabled == true });
                 if (request.Enabled == true)
                 {
-                    EnsureUpdateCoordinatorStarted();
+                    TryStartUpdateCoordinator();
                     _ = CheckForUpdatesAsync();
                 }
                 break;
@@ -518,8 +519,13 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         return Task.CompletedTask;
     }
 
-    private void EnsureUpdateCoordinatorStarted()
+    private void TryStartUpdateCoordinator()
     {
+        if (!shellReady || trayService is null)
+        {
+            return;
+        }
+
         updateCoordinator ??= new ProactiveUpdateCoordinator(
             _ => Task.FromResult(settingsViewModel.Draft.Behavior.CheckUpdatesOnStartup),
             cancellationToken => updateCheckService.CheckAsync(cancellationToken),
@@ -574,19 +580,17 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         availableUpdate = result.UpdateAvailable ? result : null;
         trayService?.SetUpdateAvailable(availableUpdate?.LatestVersion);
 
-        var versionKey = result.LatestVersion.ToString(3);
         var behavior = settingsViewModel.Draft.Behavior;
         var shouldNotify = result.UpdateAvailable &&
             allowNotification &&
-            !string.Equals(lastNotifiedUpdateVersion, versionKey, StringComparison.Ordinal) &&
-            UpdateReminderPolicy.ShouldNotify(
+            updateNotificationSession.ShouldNotify(
                 result.LatestVersion,
                 behavior.SnoozedUpdateVersion,
                 behavior.UpdateSnoozeUntil,
                 DateTimeOffset.UtcNow);
         if (shouldNotify)
         {
-            lastNotifiedUpdateVersion = versionKey;
+            updateNotificationSession.MarkNotified(result.LatestVersion);
             notifyUpdateOnNextSummon = true;
             trayService?.NotifyUpdateAvailable(result.LatestVersion);
         }
@@ -614,6 +618,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                 SnoozedUpdateVersion = release.LatestVersion.ToString(3),
                 UpdateSnoozeUntil = snoozedUntil,
             });
+        updateNotificationSession.MarkSnoozed(release.LatestVersion);
         notifyUpdateOnNextSummon = false;
         await PostUpdateStatusAsync(
             "available",

@@ -27,6 +27,7 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
     private const string LatestReleaseApi = "https://api.github.com/repos/xy2446522127-code/huahaibanzi/releases/latest";
     private const string LatestReleasePage = "https://github.com/xy2446522127-code/huahaibanzi/releases/latest";
     private static readonly TimeSpan MinimumCheckInterval = TimeSpan.FromSeconds(10);
+    private readonly SemaphoreSlim checkGate = new(1, 1);
     private DateTimeOffset lastCheckTime = DateTimeOffset.MinValue;
     private EntityTagHeaderValue? latestReleaseEtag;
     private UpdateCheckResult? lastSuccessfulResult;
@@ -40,57 +41,65 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
 
     public async Task<UpdateCheckResult> CheckAsync(CancellationToken cancellationToken)
     {
-        var sinceLastCheck = DateTimeOffset.Now - lastCheckTime;
-        if (sinceLastCheck < MinimumCheckInterval)
+        await checkGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            throw new InvalidOperationException(
-                $"检查更新过于频繁，请稍等 {(int)Math.Ceiling((MinimumCheckInterval - sinceLastCheck).TotalSeconds)} 秒后再试。");
-        }
+            var sinceLastCheck = DateTimeOffset.Now - lastCheckTime;
+            if (sinceLastCheck < MinimumCheckInterval && lastSuccessfulResult is not null)
+            {
+                return lastSuccessfulResult;
+            }
 
-        lastCheckTime = DateTimeOffset.Now;
-        using var request = new HttpRequestMessage(HttpMethod.Get, LatestReleaseApi);
-        if (latestReleaseEtag is not null)
-        {
-            request.Headers.IfNoneMatch.Add(latestReleaseEtag);
-        }
-        using var response = await client.SendAsync(request, cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotModified && lastSuccessfulResult is not null)
-        {
-            return lastSuccessfulResult;
-        }
-        if (response.StatusCode == HttpStatusCode.NotFound)
-        {
-            throw new InvalidOperationException("GitHub 仓库尚未发布可下载版本，请先创建 Release 后再检查。");
-        }
-        if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
-        {
-            return await CheckViaReleasePageAsync(cancellationToken);
-        }
-        response.EnsureSuccessStatusCode();
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-        var tag = document.RootElement.GetProperty("tag_name").GetString()?.Trim().TrimStart('v', 'V');
-        var url = document.RootElement.GetProperty("html_url").GetString();
-        var installer = FindInstallerAsset(document.RootElement);
-        if (!Version.TryParse(tag, out var latest) ||
-            !Uri.TryCreate(url, UriKind.Absolute, out var releaseUri) ||
-            releaseUri.Scheme != Uri.UriSchemeHttps)
-        {
-            throw new InvalidDataException("GitHub Release 返回了无法识别的版本信息。");
-        }
+            lastCheckTime = DateTimeOffset.Now;
+            using var request = new HttpRequestMessage(HttpMethod.Get, LatestReleaseApi);
+            if (latestReleaseEtag is not null)
+            {
+                request.Headers.IfNoneMatch.Add(latestReleaseEtag);
+            }
+            using var response = await client.SendAsync(request, cancellationToken);
+            if (response.StatusCode == HttpStatusCode.NotModified && lastSuccessfulResult is not null)
+            {
+                return lastSuccessfulResult;
+            }
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                throw new InvalidOperationException("GitHub 仓库尚未发布可下载版本，请先创建 Release 后再检查。");
+            }
+            if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
+            {
+                lastSuccessfulResult = await CheckViaReleasePageAsync(cancellationToken).ConfigureAwait(false);
+                return lastSuccessfulResult;
+            }
+            response.EnsureSuccessStatusCode();
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            var tag = document.RootElement.GetProperty("tag_name").GetString()?.Trim().TrimStart('v', 'V');
+            var url = document.RootElement.GetProperty("html_url").GetString();
+            var installer = FindInstallerAsset(document.RootElement);
+            if (!Version.TryParse(tag, out var latest) ||
+                !Uri.TryCreate(url, UriKind.Absolute, out var releaseUri) ||
+                releaseUri.Scheme != Uri.UriSchemeHttps)
+            {
+                throw new InvalidDataException("GitHub Release 返回了无法识别的版本信息。");
+            }
 
-        var result = new UpdateCheckResult(
-            latest > currentVersion,
-            currentVersion,
-            latest,
-            releaseUri.AbsoluteUri,
-            InstallerAssetName,
-            installer.Url,
-            installer.Size,
-            installer.Sha256);
-        latestReleaseEtag = response.Headers.ETag;
-        lastSuccessfulResult = result;
-        return result;
+            var result = new UpdateCheckResult(
+                latest > currentVersion,
+                currentVersion,
+                latest,
+                releaseUri.AbsoluteUri,
+                InstallerAssetName,
+                installer.Url,
+                installer.Size,
+                installer.Sha256);
+            latestReleaseEtag = response.Headers.ETag;
+            lastSuccessfulResult = result;
+            return result;
+        }
+        finally
+        {
+            checkGate.Release();
+        }
     }
 
     private async Task<UpdateCheckResult> CheckViaReleasePageAsync(CancellationToken cancellationToken)

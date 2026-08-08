@@ -8,8 +8,13 @@ const windowHost = fs.readFileSync(
 
 test('desktop host owns one proactive coordinator and disposes it', () => {
   assert.match(windowHost, /ProactiveUpdateCoordinator\? updateCoordinator/);
-  assert.match(windowHost, /EnsureUpdateCoordinatorStarted\(\)/);
+  assert.match(windowHost, /TryStartUpdateCoordinator\(\)/);
   assert.match(windowHost, /updateCoordinator\?\.DisposeAsync\(\)/);
+});
+
+test('startup check waits until both the Web shell and tray are ready', () => {
+  assert.match(windowHost, /if \(!shellReady \|\| trayService is null\)/);
+  assert.equal((windowHost.match(/TryStartUpdateCoordinator\(\);/g) || []).length, 3);
 });
 
 test('all update results share tray badge and notification state', () => {

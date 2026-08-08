@@ -10,6 +10,21 @@ namespace HuahaiClipboard.Core.Tests;
 public sealed class GitHubUpdateCheckServiceTests
 {
     [TestMethod]
+    public async Task AdjacentChecksReuseTheSuccessfulResultWithoutAThrottleFailure()
+    {
+        var handler = new CountingJsonHandler(
+            "{\"tag_name\":\"v1.1.7\",\"html_url\":\"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/v1.1.7\",\"assets\":[{\"name\":\"HuahaiClipboard-Setup.exe\",\"browser_download_url\":\"https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.1.7/HuahaiClipboard-Setup.exe\",\"size\":123456}]}");
+        using var client = new HttpClient(handler);
+        var service = new GitHubUpdateCheckService(client, new Version(1, 1, 6));
+
+        var first = await service.CheckAsync(CancellationToken.None);
+        var second = await service.CheckAsync(CancellationToken.None);
+
+        Assert.AreEqual(first, second);
+        Assert.AreEqual(1, handler.RequestCount);
+    }
+
+    [TestMethod]
     public async Task ReusesTheLastSuccessfulReleaseWhenGitHubReturnsNotModified()
     {
         var handler = new EtagThenNotModifiedHandler();
@@ -269,6 +284,22 @@ public sealed class GitHubUpdateCheckServiceTests
             {
                 Content = new StringContent(json)
             });
+    }
+
+    private sealed class CountingJsonHandler(string json) : HttpMessageHandler
+    {
+        public int RequestCount { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            RequestCount++;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(json)
+            });
+        }
     }
 
     private sealed class EtagThenNotModifiedHandler : HttpMessageHandler
