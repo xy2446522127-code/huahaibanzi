@@ -2,9 +2,9 @@
   "blockers": [],
   "change_scale": "small",
   "core_percent": 100,
-  "current_milestone": "v1-1-6-release",
-  "delivery_maturity": "usable",
-  "delivery_target": "usable",
+  "current_milestone": "v1-1-7-proactive-update-release",
+  "delivery_maturity": "release",
+  "delivery_target": "release",
   "execution_mode": "autonomous_implementation",
   "milestones": [
     {
@@ -46,9 +46,9 @@
     {
       "blocker": "",
       "core": false,
-      "evidence": "Fresh v1.1.6 validation: 128 Core tests, 2 Git privacy tests, 11 production shell contracts, 10 complete prototype interaction contracts, x64 package checks, matching UI carrier hash, and valid pinned publisher signature all pass.",
-      "id": "integrated-usable-build",
-      "label": "Focused regressions, Web interaction and x64 runnable build pass together",
+      "evidence": "v1.1.7 release verified at 81ed01e: 141 Core, 39 native fallback, 1 tray, 67 Node, 20 installer-policy suites, 56/56 dynamic Web controls, 11/11 packaged UI assets, valid publisher signature, and public GitHub Release asset digest cd9c4776aaa235711256fc52c980b34f773c7b7a06bbd2b7ec8f6c30c39308b4. The unchanged installed v1.1.6 update service discovered v1.1.7 with updateAvailable=true and canAutoInstall=true.",
+      "id": "proactive-update-release",
+      "label": "Background update checks, multi-surface reminders, snooze, retry, signed packaging and public Release are verified",
       "status": "verified",
       "weight": 5
     }
@@ -97,9 +97,23 @@
       },
       "previous_percent": 100,
       "reason": "User approved original E718 D ruby pin material and added file/image title-path semantics plus 1:1 image thumbnails; prior verified v1.1.5 behavior remains protected."
+    },
+    {
+      "at": "2026-08-08T14:46:00+08:00",
+      "previous_classification": {
+        "change_scale": "small",
+        "delivery_maturity": "usable",
+        "delivery_target": "usable",
+        "product_scale": "medium",
+        "project_scale": "medium",
+        "risk_level": "medium",
+        "runtime_topology": "desktop-first"
+      },
+      "previous_percent": 100,
+      "reason": "User approved proactive background GitHub Release checks and multi-surface update reminders; release verification added concurrency, startup-order and same-process snooze-expiry evidence."
     }
   ],
-  "scope_revision": 11,
-  "updated_at": "2026-08-08T13:23:33.4643536+08:00",
+  "scope_revision": 12,
+  "updated_at": "2026-08-08T14:46:00+08:00",
   "version": 2
 }
