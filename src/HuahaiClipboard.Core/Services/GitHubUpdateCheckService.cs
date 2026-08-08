@@ -28,6 +28,8 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
     private const string LatestReleasePage = "https://github.com/xy2446522127-code/huahaibanzi/releases/latest";
     private static readonly TimeSpan MinimumCheckInterval = TimeSpan.FromSeconds(10);
     private DateTimeOffset lastCheckTime = DateTimeOffset.MinValue;
+    private EntityTagHeaderValue? latestReleaseEtag;
+    private UpdateCheckResult? lastSuccessfulResult;
 
     public static GitHubUpdateCheckService CreateDefault(Version currentVersion)
     {
@@ -46,7 +48,16 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
         }
 
         lastCheckTime = DateTimeOffset.Now;
-        using var response = await client.GetAsync(LatestReleaseApi, cancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Get, LatestReleaseApi);
+        if (latestReleaseEtag is not null)
+        {
+            request.Headers.IfNoneMatch.Add(latestReleaseEtag);
+        }
+        using var response = await client.SendAsync(request, cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotModified && lastSuccessfulResult is not null)
+        {
+            return lastSuccessfulResult;
+        }
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             throw new InvalidOperationException("GitHub 仓库尚未发布可下载版本，请先创建 Release 后再检查。");
@@ -68,7 +79,7 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
             throw new InvalidDataException("GitHub Release 返回了无法识别的版本信息。");
         }
 
-        return new UpdateCheckResult(
+        var result = new UpdateCheckResult(
             latest > currentVersion,
             currentVersion,
             latest,
@@ -77,6 +88,9 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
             installer.Url,
             installer.Size,
             installer.Sha256);
+        latestReleaseEtag = response.Headers.ETag;
+        lastSuccessfulResult = result;
+        return result;
     }
 
     private async Task<UpdateCheckResult> CheckViaReleasePageAsync(CancellationToken cancellationToken)

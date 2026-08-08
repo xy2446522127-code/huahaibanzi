@@ -10,6 +10,24 @@ namespace HuahaiClipboard.Core.Tests;
 public sealed class GitHubUpdateCheckServiceTests
 {
     [TestMethod]
+    public async Task ReusesTheLastSuccessfulReleaseWhenGitHubReturnsNotModified()
+    {
+        var handler = new EtagThenNotModifiedHandler();
+        using var client = new HttpClient(handler);
+        var service = new GitHubUpdateCheckService(client, new Version(1, 1, 6));
+
+        var first = await service.CheckAsync(CancellationToken.None);
+        typeof(GitHubUpdateCheckService)
+            .GetField("lastCheckTime", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .SetValue(service, DateTimeOffset.MinValue);
+        var second = await service.CheckAsync(CancellationToken.None);
+
+        Assert.AreEqual(first, second);
+        Assert.AreEqual(2, handler.RequestCount);
+        Assert.AreEqual("\"release-v1.1.7\"", handler.SecondRequestEtag);
+    }
+
+    [TestMethod]
     public async Task ReportsANewerReleaseWithoutDownloadingIt()
     {
         using var client = new HttpClient(new JsonHandler(
@@ -251,6 +269,32 @@ public sealed class GitHubUpdateCheckServiceTests
             {
                 Content = new StringContent(json)
             });
+    }
+
+    private sealed class EtagThenNotModifiedHandler : HttpMessageHandler
+    {
+        public int RequestCount { get; private set; }
+        public string? SecondRequestEtag { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            RequestCount++;
+            if (RequestCount == 1)
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(
+                        "{\"tag_name\":\"v1.1.7\",\"html_url\":\"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/v1.1.7\",\"assets\":[{\"name\":\"HuahaiClipboard-Setup.exe\",\"browser_download_url\":\"https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.1.7/HuahaiClipboard-Setup.exe\",\"size\":123456}]}"),
+                };
+                response.Headers.ETag = new System.Net.Http.Headers.EntityTagHeaderValue("\"release-v1.1.7\"");
+                return Task.FromResult(response);
+            }
+
+            SecondRequestEtag = request.Headers.IfNoneMatch.SingleOrDefault()?.ToString();
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotModified));
+        }
     }
 
     private sealed class StatusHandler(HttpStatusCode statusCode) : HttpMessageHandler
