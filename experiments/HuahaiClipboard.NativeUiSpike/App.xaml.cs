@@ -70,6 +70,7 @@ public partial class App : Application
                 WpfGlobalInputService.GetForegroundTarget(),
                 WindowCompositionService.GetCursorPosition())),
             () => Dispatcher.BeginInvoke(ShowSettingsFromTray),
+            () => Dispatcher.BeginInvoke(ShowSettingsFromTray),
             () => Dispatcher.BeginInvoke(ExitApplication));
         compositionRoot.CaptureService.HistoryChanged += CaptureService_HistoryChanged;
 
