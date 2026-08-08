@@ -72,6 +72,14 @@ test('production shell exposes a hide-to-background button beside settings', () 
   assert.match(html, /\.toolbar\{[^}]*grid-template-columns:minmax\(0,1fr\) 42px 42px/);
 });
 
+test('toolbar hide button renders the approved accessible rounded svg line', () => {
+  const html = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
+
+  assert.match(html, /id="minimizeButton"[^>]*aria-label="隐藏到后台"/);
+  assert.match(html, /<svg class="minimize-glyph"[^>]*viewBox="0 0 24 24"[^>]*aria-hidden="true"><path d="M4 12h16"\/><\/svg>/);
+  assert.match(html, /\.minimize-glyph path\{[^}]*stroke-linecap:round/);
+});
+
 test('production shell renders lazy square image thumbnails and the approved original-shape ruby pin', () => {
   const html = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
   const bridge = fs.readFileSync(

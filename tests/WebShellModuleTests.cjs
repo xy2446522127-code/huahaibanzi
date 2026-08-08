@@ -6,7 +6,7 @@ const router = require('../src/HuahaiClipboard.App/Assets/Web/shell-router.js');
 
 test('interaction adapter exposes every WebView-visible control exactly once', () => {
   const staticIds = Object.keys(interaction.staticControls);
-  assert.equal(staticIds.length, 45);
+  assert.equal(staticIds.length, 47);
   assert.deepEqual(Object.values(interaction.filterControls).sort(), [
     'filter.all', 'filter.favorites', 'filter.file', 'filter.image', 'filter.link', 'filter.text',
   ].sort());
@@ -17,7 +17,7 @@ test('interaction adapter exposes every WebView-visible control exactly once', (
     delete: 'record.delete',
   });
   assert.deepEqual(interaction.exclusionControls, { remove: 'input.remove-exclusion' });
-  assert.equal(staticIds.length + Object.keys(interaction.filterControls).length + Object.keys(interaction.recordControls).length + Object.keys(interaction.exclusionControls).length, 56);
+  assert.equal(staticIds.length + Object.keys(interaction.filterControls).length + Object.keys(interaction.recordControls).length + Object.keys(interaction.exclusionControls).length, 58);
 });
 
 test('shell router accepts only approved settings pages and returns stable hashes', () => {

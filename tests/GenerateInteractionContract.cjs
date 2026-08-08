@@ -7,6 +7,8 @@ const definitions = [
   ['panel.search', 'panel', '搜索剪贴板历史', '输入关键字后只显示匹配记录', 'text-input', 'visible-items-filtered'],
   ['panel.minimize', 'panel', '隐藏面板但保持后台运行', '面板隐藏且后台监听继续工作', 'click', 'window-hidden-process-alive'],
   ['panel.settings', 'panel', '进入设置中心', '设置界面打开并可返回面板', 'click', 'settings-visible'],
+  ['panel.update-later', 'panel', '暂缓当前版本更新提醒', '通知条收起且齿轮更新红点继续显示', 'click', 'update-reminder-snoozed'],
+  ['panel.update-install', 'panel', '从主面板开始安全更新', '关于与更新页面打开并开始经过校验的安装流程', 'click', 'update-install-started'],
   ['panel.summon', 'panel', '从网页预览的隐藏状态重新唤出面板', '面板恢复显示并聚焦搜索框', 'click', 'panel-visible'],
   ['filter.all', 'panel', '查看全部记录', '列表恢复显示全部类型', 'click', 'list-filtered'],
   ['filter.text', 'panel', '只查看文本记录', '列表只显示文本记录', 'click', 'list-filtered'],
@@ -65,6 +67,7 @@ const definitions = [
   ['about.update-toggle', 'about', '设置启动时检查更新', '自动检查偏好保存到本机', 'toggle', 'update-setting-saved'],
   ['about.check-update', 'about', '立即检查 GitHub Release 更新', '显示检查中最新版本可更新或错误状态', 'click', 'update-status-visible'],
   ['about.install-update', 'about', '下载并安装已发现的新版本', '显示下载校验安装进度并启动可回滚安装器', 'click', 'update-install-started'],
+  ['about.snooze-update', 'about', '将当前版本更新提醒延后一天', '本版本的主动提醒静默二十四小时但更新状态仍可查看', 'click', 'update-reminder-snoozed'],
   ['about.open-release', 'about', '在浏览器查看公开发布页', '系统浏览器打开项目 Release 页面', 'click', 'browser-opened'],
 
   ['global.custom-shortcut', 'global', '使用自定义按键在指针位置唤出', '面板在指针位置置顶显示', 'global-input', 'topmost-panel-visible'],

@@ -17,7 +17,7 @@ test('formal product shell uses the approved A petal-flow wordmark in both brand
 
 test('settings gear has one live entry and every settings page shares a return path', () => {
   assert.equal(count('id="settingsButton"'), 1);
-  assert.match(html, /hhQ\('#settingsButton'\)\.onclick=\(\)=>openSettings\('appearance'\)/);
+  assert.match(html, /hhQ\('#settingsButton'\)\.onclick=\(\)=>openSettings\(hhQ\('#settingsButton'\)\.classList\.contains\('update-available'\)\?'about':'appearance'\)/);
   assert.equal(count('id="backButton"'), 1);
   assert.match(html, /hhQ\('#backButton'\)\.onclick=\(\)=>closeSettings\(\)/);
   assert.equal(count('id="settingsHome"'), 1);
@@ -85,6 +85,39 @@ test('new releases remain visible from the panel and can be snoozed for one day'
   assert.match(html, /hhQ\('#settingsButton'\)\.classList\.toggle\('update-available'/);
 });
 
+test('main panel exposes the approved update banner actions without a leading icon', () => {
+  assert.equal(count('id="updateBanner"'), 1);
+  assert.equal(count('id="updateBannerVersion"'), 1);
+  assert.equal(count('id="updateBannerLater"'), 1);
+  assert.equal(count('id="updateBannerInstall"'), 1);
+  assert.doesNotMatch(html, /class="update-banner-icon"/);
+});
+
+test('update banner isolates text from actions and keeps the approved transparent glass material', () => {
+  assert.match(html, /\.update-banner\{[^}]*grid-template-columns:minmax\(0,1fr\) auto auto/);
+  assert.match(html, /\.update-banner\{[^}]*overflow:hidden/);
+  assert.match(html, /\.update-banner\{[^}]*backdrop-filter:blur\(18px\) saturate\(1\.28\)/);
+  assert.match(html, /\.update-banner-copy strong\{[^}]*text-overflow:ellipsis[^}]*white-space:nowrap/);
+  assert.match(html, /\.update-banner-action\{[^}]*white-space:nowrap/);
+});
+
+test('update banner actions reuse secure install and snooze bridges', () => {
+  assert.match(html, /hhQ\('#updateBannerLater'\)\.onclick=/);
+  assert.match(html, /hhQ\('#updateBannerInstall'\)\.onclick=/);
+  assert.match(html, /postNative\('snoozeUpdate'\)/);
+  assert.match(html, /openSettings\('about'\)/);
+  assert.match(html, /hhQ\('#settingsButton'\)\.classList\.contains\('update-available'\)/);
+  assert.match(interactionModule, /'panel\.update-later': '#updateBannerLater'/);
+  assert.match(interactionModule, /'panel\.update-install': '#updateBannerInstall'/);
+});
+
+test('minimize button uses the approved large rounded line glyph', () => {
+  assert.equal(count('class="minimize-glyph"'), 1);
+  assert.match(html, /\.minimize-glyph\{[^}]*width:23px/);
+  assert.match(html, /\.minimize-glyph path\{[^}]*stroke-width:2\.8/);
+  assert.doesNotMatch(html, /id="minimizeButton"[^>]*>−<\/button>/);
+});
+
 test('every visible prototype control has an explicit interaction binding', () => {
   for (const id of [
     'updateAutoToggle',
@@ -115,7 +148,7 @@ test('every WebView-visible contract control is tagged on the real product shell
   const visibleControls = interactionContract.controls.filter(control =>
     control.fixture.route.startsWith('https://app.huahai.local/Web/product-shell.html'),
   );
-  assert.equal(visibleControls.length, 56);
+  assert.equal(visibleControls.length, 58);
   assert.match(interactionModule, /data-apd-control-id/);
   for (const control of visibleControls) {
     assert.ok((html + interactionModule).includes(`'${control.control_id}'`), control.control_id);

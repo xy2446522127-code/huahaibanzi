@@ -8,7 +8,7 @@ const controls = contract.controls;
 
 test('interaction contract covers the complete approved control set without placeholders', () => {
   assert.equal(contract.version, 1);
-  assert.equal(controls.length, 61);
+  assert.equal(controls.length, 63);
   assert.ok(controls.some(control => control.control_id === 'settings.home'));
   assert.ok(controls.some(control => control.control_id === 'about.install-update'));
   assert.ok(controls.some(control => control.control_id === 'about.snooze-update'));
