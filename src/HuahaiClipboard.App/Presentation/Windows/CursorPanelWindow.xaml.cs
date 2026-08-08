@@ -50,6 +50,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private readonly GitHubUpdateCheckService updateCheckService = GitHubUpdateCheckService.CreateDefault(CurrentVersion);
     private GlobalInputService? globalInputService;
     private TrayService? trayService;
+    private ProactiveUpdateCoordinator? updateCoordinator;
     private InputSettingsSnapshot? inputSettingsSnapshot;
     private AppWindow? appWindow;
     private Microsoft.UI.Dispatching.DispatcherQueueTimer? dragTimer;
@@ -67,6 +68,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private int webContentActivityVersion;
     private UpdateCheckResult? availableUpdate;
     private bool updateInstallationInProgress;
+    private string? lastNotifiedUpdateVersion;
+    private bool notifyUpdateOnNextSummon;
 
     public CursorPanelWindow()
     {
@@ -113,6 +116,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                 ShowAtCurrentCursor();
                 ShowSettingsPane();
             }),
+            () => DispatcherQueue.TryEnqueue(ShowUpdatePane),
             () => DispatcherQueue.TryEnqueue(ExitApplication));
         await PostShellStateAsync();
     }
@@ -209,10 +213,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                     {
                         await ExecuteShellScriptAsync("document.querySelector('#settingsButton')?.click()");
                     }
-                    if (settingsViewModel.Draft.Behavior.CheckUpdatesOnStartup)
-                    {
-                        _ = CheckForUpdatesAsync();
-                    }
+                    EnsureUpdateCoordinatorStarted();
                     break;
                 case "hide":
                     // 工具栏“隐藏”是显式后台动作，不受“关闭后退出”偏好影响。
@@ -388,9 +389,17 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             case "setCheckUpdatesOnStartup":
                 await settingsViewModel.UpdateBehaviorAsync(
                     settingsViewModel.Draft.Behavior with { CheckUpdatesOnStartup = request.Enabled == true });
+                if (request.Enabled == true)
+                {
+                    EnsureUpdateCoordinatorStarted();
+                    _ = CheckForUpdatesAsync();
+                }
                 break;
             case "checkUpdate":
                 await CheckForUpdatesAsync();
+                return;
+            case "snoozeUpdate":
+                await SnoozeUpdateAsync();
                 return;
             case "installUpdate":
                 await InstallUpdateAsync();
@@ -509,30 +518,109 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         return Task.CompletedTask;
     }
 
+    private void EnsureUpdateCoordinatorStarted()
+    {
+        updateCoordinator ??= new ProactiveUpdateCoordinator(
+            _ => Task.FromResult(settingsViewModel.Draft.Behavior.CheckUpdatesOnStartup),
+            cancellationToken => updateCheckService.CheckAsync(cancellationToken),
+            (result, _) => EnqueueUpdateAsync(() => HandleUpdateResultAsync(result, allowNotification: true)),
+            (exception, _) => EnqueueUpdateAsync(() => PostUpdateStatusAsync(
+                "error",
+                $"后台检查暂时不可用：{exception.Message}",
+                GitHubUpdateCheckService.ReleasesPage)));
+        updateCoordinator.Start();
+    }
+
+    private Task EnqueueUpdateAsync(Func<Task> action)
+    {
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!DispatcherQueue.TryEnqueue(async () =>
+        {
+            try
+            {
+                await action();
+                completion.TrySetResult();
+            }
+            catch (Exception exception)
+            {
+                completion.TrySetException(exception);
+            }
+        }))
+        {
+            completion.TrySetResult();
+        }
+
+        return completion.Task;
+    }
+
     private async Task CheckForUpdatesAsync()
     {
         try
         {
             var result = await updateCheckService.CheckAsync(CancellationToken.None);
-            availableUpdate = result.UpdateAvailable ? result : null;
-            await PostUpdateStatusAsync(
-                result.UpdateAvailable ? "available" : "current",
-                result.UpdateAvailable
-                    ? result.CanAutoInstall
-                        ? $"发现新版本 {result.LatestVersion}，可以安全下载并更新。"
-                        : $"发现新版本 {result.LatestVersion}。GitHub 接口暂时限流，可在网页下载，或稍后再试自动安装。"
-                    : $"当前已是最新版本 {result.CurrentVersion}。",
-                result.ReleaseUrl,
-                canInstall: result.UpdateAvailable && result.CanAutoInstall);
+            await HandleUpdateResultAsync(result, allowNotification: false);
         }
         catch (Exception exception)
         {
-            availableUpdate = null;
             await PostUpdateStatusAsync(
                 "error",
                 $"暂时无法检查更新：{exception.Message}",
                 GitHubUpdateCheckService.ReleasesPage);
         }
+    }
+
+    private async Task HandleUpdateResultAsync(UpdateCheckResult result, bool allowNotification)
+    {
+        availableUpdate = result.UpdateAvailable ? result : null;
+        trayService?.SetUpdateAvailable(availableUpdate?.LatestVersion);
+
+        var versionKey = result.LatestVersion.ToString(3);
+        var behavior = settingsViewModel.Draft.Behavior;
+        var shouldNotify = result.UpdateAvailable &&
+            allowNotification &&
+            !string.Equals(lastNotifiedUpdateVersion, versionKey, StringComparison.Ordinal) &&
+            UpdateReminderPolicy.ShouldNotify(
+                result.LatestVersion,
+                behavior.SnoozedUpdateVersion,
+                behavior.UpdateSnoozeUntil,
+                DateTimeOffset.UtcNow);
+        if (shouldNotify)
+        {
+            lastNotifiedUpdateVersion = versionKey;
+            notifyUpdateOnNextSummon = true;
+            trayService?.NotifyUpdateAvailable(result.LatestVersion);
+        }
+
+        await PostUpdateStatusAsync(
+            result.UpdateAvailable ? "available" : "current",
+            result.UpdateAvailable
+                ? result.CanAutoInstall
+                    ? $"发现新版本 {result.LatestVersion}，可以安全下载并更新。"
+                    : $"发现新版本 {result.LatestVersion}。GitHub 接口暂时限流，可在网页下载，或稍后再试自动安装。"
+                : $"当前已是最新版本 {result.CurrentVersion}。",
+            result.ReleaseUrl,
+            canInstall: result.UpdateAvailable && result.CanAutoInstall,
+            notifyUser: false);
+    }
+
+    private async Task SnoozeUpdateAsync()
+    {
+        var release = availableUpdate
+            ?? throw new InvalidOperationException("当前没有可稍后提醒的新版本。");
+        var snoozedUntil = DateTimeOffset.UtcNow.Add(UpdateReminderPolicy.SnoozeDuration);
+        await settingsViewModel.UpdateBehaviorAsync(
+            settingsViewModel.Draft.Behavior with
+            {
+                SnoozedUpdateVersion = release.LatestVersion.ToString(3),
+                UpdateSnoozeUntil = snoozedUntil,
+            });
+        notifyUpdateOnNextSummon = false;
+        await PostUpdateStatusAsync(
+            "available",
+            $"已稍后提醒：v{release.LatestVersion.ToString(3)} 将在 24 小时后再次提醒。",
+            release.ReleaseUrl,
+            canInstall: release.CanAutoInstall,
+            notifyUser: false);
     }
 
     private async Task InstallUpdateAsync()
@@ -598,7 +686,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         string message,
         string releaseUrl,
         bool canInstall = false,
-        int? progress = null)
+        int? progress = null,
+        bool notifyUser = false)
     {
         if (!shellReady || ProductWebView.CoreWebView2 is null)
         {
@@ -612,7 +701,11 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             message,
             releaseUrl,
             canInstall,
-            progress
+            progress,
+            updateAvailable = availableUpdate is not null,
+            latestVersion = availableUpdate?.LatestVersion.ToString(3),
+            notifyUser,
+            snoozedUntil = settingsViewModel.Draft.Behavior.UpdateSnoozeUntil
         }));
         return Task.CompletedTask;
     }
@@ -652,6 +745,14 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         settingsSurfaceVisible = true;
         ResizeWindow(SettingsWidth, SettingsHeight);
         _ = ExecuteShellScriptAsync("document.querySelector('#settingsButton')?.click()");
+    }
+
+    private void ShowUpdatePane()
+    {
+        ShowAtCurrentCursor();
+        ShowSettingsPane();
+        _ = ExecuteShellScriptAsync(
+            "document.querySelector('.nav-button[data-page=\"about\"]')?.click()");
     }
 
     private void HideTransientPanel()
@@ -706,6 +807,16 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         _ = SetForegroundWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));
         _ = ExecuteShellScriptAsync(
             "document.querySelector('#glassPanel')?.classList.remove('hidden','settings-mode');document.querySelector('#petals')?.classList.remove('paused');document.querySelector('#searchInput')?.focus()");
+        if (notifyUpdateOnNextSummon && availableUpdate is { } release)
+        {
+            notifyUpdateOnNextSummon = false;
+            _ = PostUpdateStatusAsync(
+                "available",
+                $"发现新版本 {release.LatestVersion}，可在“关于与更新”中查看。",
+                release.ReleaseUrl,
+                canInstall: release.CanAutoInstall,
+                notifyUser: true);
+        }
     }
 
     private async Task ExecuteShellScriptAsync(string script)
@@ -918,6 +1029,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         compositionRoot.CaptureService.HistoryChanged -= CaptureService_HistoryChanged;
         globalInputService?.Dispose();
         globalInputService = null;
+        _ = updateCoordinator?.DisposeAsync();
+        updateCoordinator = null;
         trayService?.Dispose();
         trayService = null;
     }

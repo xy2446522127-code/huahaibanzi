@@ -18,7 +18,12 @@ public sealed class JsonSettingsStoreTests
             {
                 Appearance = ShellSettings.Default.Appearance with { ThemeId = "cobalt-blue" },
                 Input = new InputSettings(false, true, ["secret.exe"]),
-                Behavior = new BehaviorSettings(false, 30)
+                Behavior = new BehaviorSettings(
+                    false,
+                    30,
+                    true,
+                    "1.1.7",
+                    new DateTimeOffset(2026, 8, 9, 12, 0, 0, TimeSpan.Zero))
             };
             var first = new JsonSettingsStore(path);
 
@@ -32,6 +37,10 @@ public sealed class JsonSettingsStoreTests
             CollectionAssert.AreEqual(new[] { "secret.exe" }, actual.Input.ExcludedApplications);
             Assert.IsFalse(actual.Behavior.BackgroundEnabled);
             Assert.AreEqual(30, actual.Behavior.AutoCleanupDays);
+            Assert.AreEqual("1.1.7", actual.Behavior.SnoozedUpdateVersion);
+            Assert.AreEqual(
+                new DateTimeOffset(2026, 8, 9, 12, 0, 0, TimeSpan.Zero),
+                actual.Behavior.UpdateSnoozeUntil);
         }
         finally
         {
