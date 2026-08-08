@@ -8,7 +8,7 @@ namespace HuahaiClipboard.App.TrayTests;
 public sealed class TrayServiceTests
 {
     [TestMethod]
-    public void MenuItemsDispatchPanelSettingsAndExitCommands()
+    public void MenuAndUpdateNotificationDispatchAllCommands()
     {
         Exception? threadFailure = null;
         var thread = new Thread(() =>
@@ -17,10 +17,12 @@ public sealed class TrayServiceTests
             {
                 var panelCalls = 0;
                 var settingsCalls = 0;
+                var updateCalls = 0;
                 var exitCalls = 0;
                 using var service = new TrayService(
                     () => panelCalls++,
                     () => settingsCalls++,
+                    () => updateCalls++,
                     () => exitCalls++);
                 var field = typeof(TrayService).GetField(
                     "notifyIcon",
@@ -32,18 +34,30 @@ public sealed class TrayServiceTests
 
                 var items = icon.ContextMenuStrip?.Items;
                 Assert.IsNotNull(items);
-                Assert.AreEqual(4, items.Count);
+                Assert.AreEqual(5, items.Count);
                 Assert.AreEqual("显示面板", items[0].Text);
                 Assert.AreEqual("设置", items[1].Text);
-                Assert.AreEqual("退出", items[3].Text);
+                Assert.IsFalse(items[2].Available);
+                Assert.AreEqual("退出", items[4].Text);
+
+                service.NotifyUpdateAvailable(new Version(1, 1, 7));
+                Assert.IsTrue(items[2].Available);
+                Assert.AreEqual("发现新版本 v1.1.7", items[2].Text);
+                Assert.AreEqual("花海剪贴板有新版本", icon.BalloonTipTitle);
+                StringAssert.Contains(icon.BalloonTipText, "v1.1.7");
 
                 items[0].PerformClick();
                 items[1].PerformClick();
-                items[3].PerformClick();
+                items[2].PerformClick();
+                items[4].PerformClick();
 
                 Assert.AreEqual(1, panelCalls);
                 Assert.AreEqual(1, settingsCalls);
+                Assert.AreEqual(1, updateCalls);
                 Assert.AreEqual(1, exitCalls);
+
+                service.SetUpdateAvailable(null);
+                Assert.IsFalse(items[2].Available);
             }
             catch (Exception error)
             {
