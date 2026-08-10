@@ -10,6 +10,7 @@
 - Classification: keep product scale and change scale separate; persist classification before UI or architecture work.
 - UI carrier: preserve the approved executable UI shell as the source for Web, desktop, and later packaging targets.
 - Interaction contract: every approved visible control requires dynamic evidence or a disabled-with-reason state.
+- Desktop update: when enabled, preserve the tracked update contract and block install/release if it is missing or stale.
 - Compatibility review: migrate stale plans before dispatching workers or continuing feature development.
 - Tokens: enforce the bounded token budget; freeze optional scope at 70% and stop nonessential work at 100%.
 - Stage delivery: use minimum sufficient concurrency; available slots alone never justify another worker.
