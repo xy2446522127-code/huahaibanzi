@@ -24,7 +24,8 @@ foreach ($required in @('workflow_dispatch:', 'runs-on: windows-latest', 'v1.1.1
 }
 foreach ($required in @('RUNNER_ENVIRONMENT', 'github-hosted', '--silent', '--no-launch', '--install-dir',
     'representative-data.json', 'Get-AuthenticodeSignature', 'PinnedPublisherThumbprint',
-    'UIAutomationClient', 'MainWindowHandle', 'startup_succeeded', 'user_data_preserved')) {
+    'SignatureStatus]::Valid', 'SignatureStatus]::NotTrusted', 'UIAutomationClient',
+    'MainWindowHandle', 'startup_succeeded', 'user_data_preserved')) {
     if (-not $adapter.Contains($required)) { throw "Installed-upgrade adapter contract is missing: $required" }
 }
 

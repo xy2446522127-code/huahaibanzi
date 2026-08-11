@@ -31,9 +31,9 @@ function Assert-Package {
     $thumbprint = if ($null -eq $signature.SignerCertificate) { '' } else {
         ($signature.SignerCertificate.Thumbprint -replace '[^0-9A-Fa-f]', '').ToUpperInvariant()
     }
-    if ($signature.Status -in @(
-            [System.Management.Automation.SignatureStatus]::NotSigned,
-            [System.Management.Automation.SignatureStatus]::HashMismatch
+    if ($signature.Status -notin @(
+            [System.Management.Automation.SignatureStatus]::Valid,
+            [System.Management.Automation.SignatureStatus]::NotTrusted
         ) -or $thumbprint -ne $PinnedPublisherThumbprint) {
         throw "Package signature or pinned publisher mismatch: $Path"
     }
