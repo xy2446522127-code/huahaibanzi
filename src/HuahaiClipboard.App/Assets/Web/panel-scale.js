@@ -70,11 +70,14 @@
     });
   }
 
-  function bindRange(element, controller, onSaved = () => {}) {
+  function bindRange(element, controller, onSaved = () => {}, onCancelled = () => {}) {
     if (!element || !controller) return () => {};
     const pointerDown = () => {};
     const pointerUp = () => {};
-    const pointerCancel = () => controller.cancel();
+    const pointerCancel = () => {
+      controller.cancel();
+      onCancelled();
+    };
     const input = event => controller.preview(Number(event.target.value));
     const change = event => {
       const value = normalizePercent(event.target.value);

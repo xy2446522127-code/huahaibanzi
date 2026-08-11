@@ -116,6 +116,27 @@ test('range binding previews continuously while pointer is held and commits only
   assert.deepEqual(saved, [137]);
 });
 
+test('pointer cancellation restores the committed scale and clears native preview state', () => {
+  const listeners = new Map();
+  const element = {
+    addEventListener(type, listener) { listeners.set(type, listener); },
+    removeEventListener(type) { listeners.delete(type); },
+  };
+  let restored = 0;
+  let nativeCancelled = 0;
+  const controller = {
+    preview() {},
+    commit() {},
+    cancel() { restored += 1; },
+  };
+
+  scale.bindRange(element, controller, () => {}, () => { nativeCancelled += 1; });
+  listeners.get('pointercancel')();
+
+  assert.equal(restored, 1);
+  assert.equal(nativeCancelled, 1);
+});
+
 test('native preview keeps a rounded window region instead of exposing square corners', () => {
   const preview = windowHost.slice(
     windowHost.indexOf('private void PreviewPanelScale'),

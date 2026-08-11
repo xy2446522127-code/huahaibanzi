@@ -36,7 +36,7 @@ test('appearance page exposes proportional panel scaling and a one-click reset',
   assert.equal(count('id="scaleValue"'), 1);
   assert.equal(count('id="resetScale"'), 1);
   assert.equal(count('id="resizeHandle"'), 1);
-  assert.match(html, /hhQ\('#scaleRange'\)\.oninput=/);
+  assert.match(html, /window\.HuahaiPanelScale\.bindRange\(hhQ\('#scaleRange'\)/);
   assert.match(html, /hhQ\('#resetScale'\)\.onclick=/);
   assert.match(html, /window\.HuahaiPanelScale\.createController/);
   assert.match(html, /postNative\('previewPanelScale'/);
@@ -125,7 +125,6 @@ test('every visible prototype control has an explicit interaction binding', () =
     'checkUpdateButton',
     'releaseButton',
     'snoozeUpdateButton',
-    'scaleRange',
     'resetScale'
   ]) {
     assert.match(html, new RegExp(`hhQ\\('#${id}'\\)\\.(?:onclick|oninput)=`), id);

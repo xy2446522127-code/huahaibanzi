@@ -259,7 +259,7 @@
   hhQ('#searchInput').addEventListener('input',()=>{recordList.scrollTop=0;renderItems()});hhQ('#minimizeButton').onclick=hidePanel;hhQ('#settingsButton').onclick=()=>openSettings(hhQ('#settingsButton').classList.contains('update-available')?'about':'appearance');hhQ('#updateBannerLater').onclick=()=>{updateBannerVisible=false;hhQ('#updateBanner').hidden=true;postNative('snoozeUpdate')};hhQ('#updateBannerInstall').onclick=()=>{updateBannerVisible=false;hhQ('#updateBanner').hidden=true;openSettings('about');if(updateCanInstall)hhQ('#installUpdateButton').click()};hhQ('#backButton').onclick=()=>closeSettings();hhQ('#settingsHome').onclick=()=>closeSettings();hhQ('#summonButton').onclick=showPanel;
   hhQA('.nav-button').forEach(btn=>btn.onclick=()=>showPage(btn.dataset.page,true));
   hhQA('.theme').forEach(btn=>btn.onclick=()=>{applyTheme(btn.dataset.theme);postNative('setTheme',{text:btn.dataset.theme});toast(`已切换为${btn.textContent.trim()}`)});
-  window.HuahaiPanelScale.bindRange(hhQ('#scaleRange'),scaleController,value=>toast('已保存 '+value+'%'));
+  window.HuahaiPanelScale.bindRange(hhQ('#scaleRange'),scaleController,value=>toast('已保存 '+value+'%'),()=>{if(nativeHost)postNative('cancelPanelScale')});
   hhQ('#resetScale').onclick=()=>{scaleController.commit(100);toast('面板已缩放为 100%')};
   hhQ('#opacityRange').oninput=e=>{const value=e.target.value;window.HuahaiGlassOpacity.apply(document.documentElement.style,Number(value));hhQ('#opacityValue').textContent=value+'%'};
   hhQ('#opacityRange').onchange=e=>postNative('setOpacity',{number:Number(e.target.value)/100});
