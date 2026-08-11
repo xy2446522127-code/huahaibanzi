@@ -121,6 +121,7 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
         var tagUrl = new Uri($"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/{tag.Trim()}");
         var downloadUrl = $"https://github.com/xy2446522127-code/huahaibanzi/releases/download/{tag.Trim()}/" + InstallerAssetName;
         var installer = await ProbeInstallerAsync(downloadUrl, cancellationToken);
+        var installerSha256 = ExtractInstallerSha256(page);
         if (installer.Size <= 0)
         {
             return new UpdateCheckResult(
@@ -142,7 +143,7 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
             InstallerAssetName,
             installer.Url,
             installer.Size,
-            installer.Sha256);
+            installerSha256);
     }
 
     private async Task<(string Url, long Size, string Sha256)> ProbeInstallerAsync(
@@ -178,48 +179,13 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
         }
     }
 
-    private static (string Url, long Size, string Sha256) ExtractInstallerMetadata(string page, string tag)
+    private static string ExtractInstallerSha256(string page)
     {
-        var nameMatch = Regex.Match(
+        var match = Regex.Match(
             page,
-            @"HuahaiClipboard-Setup\.exe",
+            @"HuahaiClipboard-Setup\.exe[\s\S]{0,4096}?SHA-?256\s*[:：]\s*(?:<[^>]+>\s*)*([0-9a-fA-F]{64})",
             RegexOptions.IgnoreCase);
-        if (!nameMatch.Success)
-        {
-            return (string.Empty, 0, string.Empty);
-        }
-
-        var sizeMatch = Regex.Match(
-            page,
-            @"(\d[\d,]*(?:\.\d+)?)\s*(?:KB|MB|GB)",
-            RegexOptions.IgnoreCase);
-        if (!sizeMatch.Success ||
-            !double.TryParse(sizeMatch.Groups[1].Value.Replace(",", ""), out var displaySize) ||
-            displaySize <= 0)
-        {
-            return (string.Empty, 0, string.Empty);
-        }
-
-        var suffix = sizeMatch.Value[^2..].ToUpperInvariant();
-        long size = suffix switch
-        {
-            "KB" => (long)(displaySize * 1024),
-            "MB" => (long)(displaySize * 1024 * 1024),
-            "GB" => (long)(displaySize * 1024 * 1024 * 1024),
-            _ => 0
-        };
-        if (size <= 0)
-        {
-            return (string.Empty, 0, string.Empty);
-        }
-
-        var shaMatch = Regex.Match(
-            page,
-            @"[0-9a-fA-F]{64}",
-            RegexOptions.IgnoreCase);
-        var sha256 = shaMatch.Success ? shaMatch.Groups[0].Value.ToLowerInvariant() : string.Empty;
-        var downloadUrl = $"https://github.com/xy2446522127-code/huahaibanzi/releases/download/{tag}/" + InstallerAssetName;
-        return (downloadUrl, size, sha256); // sha256 preserved even when size probe overwrites it
+        return match.Success ? match.Groups[1].Value.ToLowerInvariant() : string.Empty;
     }
 
     private static string? ExtractLatestTag(string? finalUrl, string page)

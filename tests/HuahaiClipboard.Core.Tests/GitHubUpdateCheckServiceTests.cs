@@ -196,6 +196,22 @@ public sealed class GitHubUpdateCheckServiceTests
     }
 
     [TestMethod]
+    public async Task ReleasePageFallbackUsesPublishedDigestWhenApiIsRateLimited()
+    {
+        using var client = new HttpClient(new RateLimitedThenPageHandler(includeDigest: true));
+        var service = new GitHubUpdateCheckService(client, new Version(1, 1, 10));
+
+        var result = await service.CheckAsync(CancellationToken.None);
+
+        Assert.IsTrue(result.UpdateAvailable);
+        Assert.IsTrue(result.CanAutoInstall);
+        Assert.AreEqual(353370112L, result.InstallerSize);
+        Assert.AreEqual(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            result.InstallerSha256);
+    }
+
+    [TestMethod]
     public async Task ApiWithoutDigestKeepsApiResult()
     {
         using var client = new HttpClient(new ApiOkNoDigestThenPageHandler());
@@ -282,7 +298,7 @@ public sealed class GitHubUpdateCheckServiceTests
         Assert.AreEqual(new Version(1, 1, 1), result.LatestVersion);
     }
 
-    private sealed class RateLimitedThenPageHandler(string? tag = null) : HttpMessageHandler
+    private sealed class RateLimitedThenPageHandler(string? tag = null, bool includeDigest = false) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
@@ -309,10 +325,13 @@ public sealed class GitHubUpdateCheckServiceTests
             if (request.Method == HttpMethod.Get &&
                 request.RequestUri.AbsoluteUri.Contains("/releases/latest", StringComparison.OrdinalIgnoreCase))
             {
+                var assetMetadata = includeDigest
+                    ? "<div>HuahaiClipboard-Setup.exe 337 MB SHA-256：<code>0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef</code></div>"
+                    : string.Empty;
                 var response = new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = new StringContent(
-                        $"<html><a href=\"/xy2446522127-code/huahaibanzi/releases/tag/{tagValue}\">Release</a></html>")
+                        $"<html><a href=\"/xy2446522127-code/huahaibanzi/releases/tag/{tagValue}\">Release</a>{assetMetadata}</html>")
                 };
                 response.RequestMessage = new HttpRequestMessage(
                     HttpMethod.Get,
