@@ -33,19 +33,9 @@ test('preview drag position is clamped inside the desktop surface', () => {
   );
 });
 
-test('native drag coordinates convert CSS screen pixels to physical pixels', () => {
-  assert.deepEqual(
-    dragPolicy.physicalScreenPoint({ screenX: 120, screenY: 80 }, 1.5),
-    { x: 180, y: 120 }
-  );
-  assert.deepEqual(
-    dragPolicy.physicalScreenPoint({ screenX: 120, screenY: 80 }, 0),
-    { x: 120, y: 80 }
-  );
-});
-
 test('native panel dragging coalesces movement to display frames without per-frame WebView bridge traffic', () => {
-  assert.match(shell, /postNative\('beginNativeDrag',nativePointerPosition\(event\)\)/);
+  assert.match(shell, /postNative\('beginNativeDrag'\)/);
+  assert.doesNotMatch(shell, /physicalScreenPoint/);
   assert.doesNotMatch(shell, /postNative\('beginSystemDrag'/);
   assert.doesNotMatch(shell, /postNative\('dragMove'/);
   assert.doesNotMatch(shell, /postNative\('endDrag'/);
@@ -53,6 +43,6 @@ test('native panel dragging coalesces movement to display frames without per-fra
   assert.doesNotMatch(windowHost, /dragTimer\.Interval = TimeSpan\.FromMilliseconds\(8\)/);
   assert.match(windowHost, /GetAsyncKeyState\(LeftMouseButton\)/);
   assert.match(windowHost, /GetCursorPos\(/);
-  assert.match(windowHost, /BeginNativeWindowDrag\(request\.X, request\.Y\)/);
+  assert.match(windowHost, /BeginNativeWindowDrag\(\)/);
   assert.match(windowHost, /appWindow\.Move\(/);
 });

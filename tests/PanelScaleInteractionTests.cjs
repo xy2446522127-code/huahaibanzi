@@ -86,6 +86,36 @@ test('cancel restores the last committed scale without persisting a preview', ()
   assert.deepEqual(previews, [1.59, 0.83]);
 });
 
+test('range binding previews continuously while pointer is held and commits only on change', () => {
+  const listeners = new Map();
+  const element = {
+    value: '100',
+    addEventListener(type, listener) { listeners.set(type, listener); },
+    removeEventListener(type) { listeners.delete(type); },
+  };
+  const previews = [];
+  const commits = [];
+  const saved = [];
+  const controller = {
+    preview(value) { previews.push(value); },
+    commit(value) { commits.push(value); },
+    cancel() {},
+  };
+
+  scale.bindRange(element, controller, value => saved.push(value));
+  listeners.get('pointerdown')({ currentTarget: element });
+  element.value = '137';
+  listeners.get('input')({ target: element });
+  assert.deepEqual(previews, [137]);
+  assert.deepEqual(commits, []);
+
+  listeners.get('pointerup')({ currentTarget: element });
+  assert.deepEqual(commits, []);
+  listeners.get('change')({ target: element });
+  assert.deepEqual(commits, [137]);
+  assert.deepEqual(saved, [137]);
+});
+
 test('native preview keeps a rounded window region instead of exposing square corners', () => {
   const preview = windowHost.slice(
     windowHost.indexOf('private void PreviewPanelScale'),

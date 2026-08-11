@@ -247,6 +247,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         }
         catch (Exception exception)
         {
+            await PostShellStateAsync();
             await PostShellToastAsync(
                 string.IsNullOrWhiteSpace(exception.Message) ? "操作失败，请重试" : exception.Message,
                 isError: true);
@@ -461,7 +462,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                 });
                 return;
             case "beginNativeDrag":
-                BeginNativeWindowDrag(request.X, request.Y);
+                BeginNativeWindowDrag();
                 return;
         }
 
@@ -1049,20 +1050,14 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private int ScaleDimension(int value) =>
         Math.Max(1, (int)Math.Round(value * panelScaleSession.CurrentRatio));
 
-    private void BeginNativeWindowDrag(double? pointerX, double? pointerY)
+    private void BeginNativeWindowDrag()
     {
         if (appWindow is null)
         {
             return;
         }
 
-        if (pointerX is not null && pointerY is not null)
-        {
-            dragPointerOrigin = new PointInt32(
-                (int)Math.Round(pointerX.Value),
-                (int)Math.Round(pointerY.Value));
-        }
-        else if (GetCursorPos(out var cursor))
+        if (GetCursorPos(out var cursor))
         {
             dragPointerOrigin = new PointInt32(cursor.X, cursor.Y);
         }

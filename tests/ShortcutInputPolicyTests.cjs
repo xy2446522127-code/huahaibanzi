@@ -38,3 +38,12 @@ test('keyboard shortcut formatting keeps supported modifiers and the final key',
     code: 'Numpad1'
   }), 'Ctrl + Numpad1');
 });
+
+test('keyboard shortcut formatting rejects gestures the native parser cannot register', () => {
+  const event = key => ({ ctrlKey: false, altKey: false, shiftKey: false, metaKey: false, key });
+  assert.equal(shortcutInput.formatKey(event('Enter')), '');
+  assert.equal(shortcutInput.formatKey(event('Tab')), '');
+  assert.equal(shortcutInput.formatKey(event('ArrowLeft')), '');
+  assert.equal(shortcutInput.formatKey({ ...event('Enter'), ctrlKey: true, code: 'NumpadEnter' }), '');
+  assert.equal(shortcutInput.formatKey({ ...event('Enter'), ctrlKey: true }), 'Ctrl + Enter');
+});

@@ -70,6 +70,22 @@
     });
   }
 
+  function bindRange(element, controller, onSaved = () => {}) {
+    if (!element || !controller) return () => {};
+    const pointerDown = () => {};
+    const pointerUp = () => {};
+    const pointerCancel = () => controller.cancel();
+    const input = event => controller.preview(Number(event.target.value));
+    const change = event => {
+      const value = normalizePercent(event.target.value);
+      controller.commit(value);
+      onSaved(value);
+    };
+    const listeners = { pointerdown: pointerDown, pointerup: pointerUp, pointercancel: pointerCancel, input, change };
+    Object.entries(listeners).forEach(([type, listener]) => element.addEventListener(type, listener));
+    return () => Object.entries(listeners).forEach(([type, listener]) => element.removeEventListener(type, listener));
+  }
+
   global.HuahaiPanelScale = Object.freeze({
     minimumPercent: MINIMUM,
     maximumPercent: MAXIMUM,
@@ -77,5 +93,6 @@
     normalizePercent,
     toRatio,
     createController,
+    bindRange,
   });
 })(window);

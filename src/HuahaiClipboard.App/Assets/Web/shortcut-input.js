@@ -9,13 +9,26 @@
     if (event.metaKey) parts.push('Win');
 
     if (['Control', 'Alt', 'Shift', 'Meta'].includes(event.key)) return '';
-    const key = event.code && event.code.startsWith('Numpad')
+    let key = event.code && event.code.startsWith('Numpad')
       ? event.code
       : event.key === ' '
       ? 'Space'
       : event.key.length === 1
         ? event.key.toUpperCase()
         : event.key;
+    key = ({ ArrowLeft: 'Left', ArrowUp: 'Up', ArrowRight: 'Right', ArrowDown: 'Down' })[key] || key;
+    const functionKey = /^F(?:[1-9]|1\d|2[0-4])$/i.test(key);
+    const characterKey = /^[A-Z0-9]$/.test(key);
+    const numpadDigit = /^Numpad[0-9]$/.test(key);
+    const namedKeys = new Set([
+      'Space', 'Tab', 'Enter', 'Return', 'Esc', 'Escape', 'Left', 'Up', 'Right', 'Down',
+      'Home', 'End', 'PageUp', 'PageDown', 'Insert', 'Delete', 'Backspace', 'CapsLock',
+      'PrintScreen', 'Pause', 'NumpadMultiply', 'NumpadAdd', 'NumpadSubtract',
+      'NumpadDecimal', 'NumpadDivide', 'VolumeMute', 'VolumeDown', 'VolumeUp',
+      'MediaNextTrack', 'MediaPreviousTrack', 'MediaStop', 'MediaPlayPause'
+    ]);
+    if (!functionKey && !characterKey && !numpadDigit && !namedKeys.has(key)) return '';
+    if (parts.length === 0 && !functionKey) return '';
     parts.push(key);
     return parts.join(' + ');
   }
