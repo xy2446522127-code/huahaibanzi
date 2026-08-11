@@ -6,9 +6,32 @@ using FormsClipboard = System.Windows.Forms.Clipboard;
 
 namespace HuahaiClipboard.App.Infrastructure.Clipboard;
 
-public sealed class WindowsClipboardPlatform(IClipboardImageStore imageStore) : IClipboardPlatform
+public sealed class WindowsClipboardPlatform : IClipboardPlatform
 {
+    private readonly IClipboardImageStore imageStore;
+    private readonly IClipboardWriteOriginGuard writeOriginGuard;
+    private readonly Action<global::System.Windows.Forms.DataObject> setDataObject;
     private IntPtr pasteTarget;
+
+    public WindowsClipboardPlatform(
+        IClipboardImageStore imageStore,
+        IClipboardWriteOriginGuard writeOriginGuard)
+        : this(
+            imageStore,
+            writeOriginGuard,
+            dataObject => FormsClipboard.SetDataObject(dataObject, copy: true))
+    {
+    }
+
+    public WindowsClipboardPlatform(
+        IClipboardImageStore imageStore,
+        IClipboardWriteOriginGuard writeOriginGuard,
+        Action<global::System.Windows.Forms.DataObject> setDataObject)
+    {
+        this.imageStore = imageStore ?? throw new ArgumentNullException(nameof(imageStore));
+        this.writeOriginGuard = writeOriginGuard ?? throw new ArgumentNullException(nameof(writeOriginGuard));
+        this.setDataObject = setDataObject ?? throw new ArgumentNullException(nameof(setDataObject));
+    }
 
     public void SetPasteTarget(IntPtr windowHandle) => pasteTarget = windowHandle;
 
@@ -21,12 +44,17 @@ public sealed class WindowsClipboardPlatform(IClipboardImageStore imageStore) : 
         {
             try
             {
+                var dataObject = new global::System.Windows.Forms.DataObject();
+                dataObject.SetData(
+                    writeOriginGuard.MarkerFormat,
+                    autoConvert: false,
+                    writeOriginGuard.MarkerValue);
                 switch (record.Kind)
                 {
                     case ClipboardItemKind.File:
                         var files = new StringCollection();
                         files.AddRange(record.PrimaryText.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries));
-                        FormsClipboard.SetFileDropList(files);
+                        dataObject.SetFileDropList(files);
                         break;
                     case ClipboardItemKind.Image when !string.IsNullOrWhiteSpace(record.PreviewAssetPath):
                         var imageBytes = await imageStore.ReadAsync(record.PreviewAssetPath, cancellationToken);
@@ -34,14 +62,18 @@ public sealed class WindowsClipboardPlatform(IClipboardImageStore imageStore) : 
                         using (var sourceImage = global::System.Drawing.Image.FromStream(stream))
                         using (var image = new global::System.Drawing.Bitmap(sourceImage))
                         {
-                            FormsClipboard.SetImage(image);
+                            dataObject.SetImage(image);
+                            setDataObject(dataObject);
                         }
-                        break;
+                        writeOriginGuard.RecordSuccessfulWrite();
+                        return;
                     default:
-                        FormsClipboard.SetText(record.PrimaryText);
+                        dataObject.SetText(record.PrimaryText);
                         break;
                 }
 
+                setDataObject(dataObject);
+                writeOriginGuard.RecordSuccessfulWrite();
                 return;
             }
             catch (ExternalException) when (attempt < 4)

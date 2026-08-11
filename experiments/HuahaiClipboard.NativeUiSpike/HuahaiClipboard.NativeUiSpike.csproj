@@ -21,6 +21,7 @@
     <Resource Include="..\..\src\HuahaiClipboard.App\Assets\Brand\fox-icon-source.png" Link="Assets\fox-icon-source.png" />
     <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Clipboard\ClipboardCaptureService.cs" Link="Production\ClipboardCaptureService.cs" />
     <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Clipboard\WindowsClipboardPlatform.cs" Link="Production\WindowsClipboardPlatform.cs" />
+    <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Clipboard\WindowsClipboardWriteOriginGuard.cs" Link="Production\WindowsClipboardWriteOriginGuard.cs" />
     <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Storage\DpapiTextProtector.cs" Link="Production\DpapiTextProtector.cs" />
     <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Startup\StartupRegistrationService.cs" Link="Production\StartupRegistrationService.cs" />
     <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Tray\TrayService.cs" Link="Production\TrayService.cs" />

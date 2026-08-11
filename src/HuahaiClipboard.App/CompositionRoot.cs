@@ -13,6 +13,7 @@ public sealed class CompositionRoot
     private readonly ProtectedClipboardImageStore imageStore;
     private readonly ClipboardImagePreviewSourceService imagePreviewSource;
     private readonly WindowsClipboardPlatform clipboardPlatform;
+    private readonly WindowsClipboardWriteOriginGuard clipboardWriteOriginGuard;
     private readonly ClipboardPanelActionSink actionSink;
     private readonly JsonSettingsStore settingsStore;
     private readonly ClipboardCaptureService captureService;
@@ -32,12 +33,14 @@ public sealed class CompositionRoot
             protector);
         imageStore = new ProtectedClipboardImageStore(dataLayout.ImageDirectory, protector);
         imagePreviewSource = new ClipboardImagePreviewSourceService(imageStore);
-        clipboardPlatform = new WindowsClipboardPlatform(imageStore);
+        clipboardWriteOriginGuard = new WindowsClipboardWriteOriginGuard();
+        clipboardPlatform = new WindowsClipboardPlatform(imageStore, clipboardWriteOriginGuard);
         actionSink = new ClipboardPanelActionSink(historySource, clipboardPlatform);
         captureService = new ClipboardCaptureService(
             historySource,
             settingsStore,
-            imageStore);
+            imageStore,
+            clipboardWriteOriginGuard);
     }
 
     public PanelViewModel CreatePanel(WindowNavigator navigator) =>

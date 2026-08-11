@@ -17,9 +17,14 @@ public sealed class ProductionCompositionRoot
         SettingsStore = new JsonSettingsStore(DataLayout.SettingsFile);
         HistorySource = new JsonClipboardHistorySource(DataLayout.HistoryFile, protector);
         ImageStore = new ProtectedClipboardImageStore(DataLayout.ImageDirectory, protector);
-        ClipboardPlatform = new WindowsClipboardPlatform(ImageStore);
+        var clipboardWriteOriginGuard = new WindowsClipboardWriteOriginGuard();
+        ClipboardPlatform = new WindowsClipboardPlatform(ImageStore, clipboardWriteOriginGuard);
         ActionSink = new ClipboardPanelActionSink(HistorySource, ClipboardPlatform);
-        CaptureService = new ClipboardCaptureService(HistorySource, SettingsStore, ImageStore);
+        CaptureService = new ClipboardCaptureService(
+            HistorySource,
+            SettingsStore,
+            ImageStore,
+            clipboardWriteOriginGuard);
         StartupService = new StartupRegistrationService();
     }
 

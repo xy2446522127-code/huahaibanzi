@@ -5,7 +5,8 @@ public sealed record BehaviorSettings(
     int AutoCleanupDays = 7,
     bool CheckUpdatesOnStartup = true,
     string? SnoozedUpdateVersion = null,
-    DateTimeOffset? UpdateSnoozeUntil = null)
+    DateTimeOffset? UpdateSnoozeUntil = null,
+    bool HideOnOutsideClick = true)
 {
     public static BehaviorSettings Default { get; } = new(true, 7);
 }

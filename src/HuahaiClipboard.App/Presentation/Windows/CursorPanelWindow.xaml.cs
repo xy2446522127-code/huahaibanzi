@@ -36,6 +36,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private const uint SetWindowNoActivate = 0x0010;
     private const int ShowWindowHide = 0;
     private const int LeftMouseButton = 0x01;
+    private static readonly TimeSpan PreShowSynchronizationTimeout = TimeSpan.FromMilliseconds(750);
     private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly IntPtr HwndNoTopmost = new(-2);
     private static readonly Version CurrentVersion = new(1, 1, 9);
@@ -47,6 +48,9 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private readonly StartupRegistrationService startupRegistrationService = new();
     private readonly JsonWindowPlacementStore windowPlacementStore;
     private readonly TransientWindowVisibilityController visibilityController;
+    private readonly LatestOnlyAsyncRefresh historyRefresh;
+    private readonly SuspendResumeActivityCoordinator webContentActivity = new();
+    private readonly SemaphoreSlim summonGate = new(1, 1);
     private readonly GitHubUpdateCheckService updateCheckService = GitHubUpdateCheckService.CreateDefault(CurrentVersion);
     private readonly UpdateNotificationSession updateNotificationSession = new();
     private readonly UpdateStartupGate updateStartupGate = new();
@@ -67,7 +71,6 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private bool settingsSurfaceVisible;
     private PanelScalePreviewSession panelScaleSession = new(1d);
     private bool panelScalePreviewActive;
-    private int webContentActivityVersion;
     private UpdateCheckResult? availableUpdate;
     private bool updateInstallationInProgress;
     private bool notifyUpdateOnNextSummon;
@@ -79,10 +82,12 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         windowPlacementStore = new JsonWindowPlacementStore(
             compositionRoot.DataLayout.WindowPositionsFile);
         visibilityController = new TransientWindowVisibilityController(this);
+        historyRefresh = new LatestOnlyAsyncRefresh(RefreshHistoryProjectionAsync);
         InitializeComponent();
         SystemBackdrop = new DesktopAcrylicBackdrop();
         navigator.HideTransientPanelAction = HideTransientPanel;
         navigator.SettingsAction = ShowSettingsPane;
+        Activated += CursorPanelWindow_Activated;
         Closed += (_, _) => DisposeRuntime();
     }
 
@@ -368,6 +373,10 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                 await settingsViewModel.UpdateBehaviorAsync(
                     settingsViewModel.Draft.Behavior with { BackgroundEnabled = request.Enabled == true });
                 break;
+            case "setOutsideAutoHide":
+                await settingsViewModel.UpdateBehaviorAsync(
+                    settingsViewModel.Draft.Behavior with { HideOnOutsideClick = request.Enabled == true });
+                break;
             case "previewPanelScale":
                 PreviewPanelScale(request.Number ?? 1d);
                 return;
@@ -437,15 +446,10 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         globalInputService?.UpdateInputSettings(input);
     }
 
-    private Task PostShellStateAsync()
+    private object BuildShellState()
     {
-        if (!shellReady || ProductWebView.CoreWebView2 is null)
-        {
-            return Task.CompletedTask;
-        }
-
         var settings = settingsViewModel.Draft;
-        var message = new
+        return new
         {
             type = "state",
             history = panelViewModel.AllRecords.Select(record =>
@@ -476,14 +480,44 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                 exclusions = settings.Input.ExcludedApplications,
                 retentionDays = settings.Behavior.AutoCleanupDays,
                 backgroundEnabled = settings.Behavior.BackgroundEnabled,
+                hideOnOutsideClick = settings.Behavior.HideOnOutsideClick,
                 checkUpdatesOnStartup = settings.Behavior.CheckUpdatesOnStartup,
                 startupEnabled = startupRegistrationService.IsEnabled(),
                 dataPath = compositionRoot.DataLayout.DataDirectory
             },
             warnings = globalInputService?.InitializationWarnings ?? []
         };
+    }
+
+    private Task PostShellStateAsync()
+    {
+        if (!shellReady || ProductWebView.CoreWebView2 is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var message = BuildShellState();
         ProductWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(message));
         return Task.CompletedTask;
+    }
+
+    private async Task ApplyShellStateBeforeShowAsync()
+    {
+        if (!shellReady || ProductWebView.CoreWebView2 is null)
+        {
+            return;
+        }
+
+        await webContentActivity.WaitForPendingSuspendAsync();
+        if (ProductWebView.CoreWebView2.IsSuspended)
+        {
+            ProductWebView.CoreWebView2.Resume();
+        }
+
+        await ProductWebView.CoreWebView2.ExecuteScriptAsync("void 0");
+        var state = JsonSerializer.Serialize(BuildShellState());
+        await ProductWebView.CoreWebView2.ExecuteScriptAsync(
+            $"if(typeof window.HuahaiApplyNativeState!=='function')throw new Error('Shell state adapter is unavailable');window.HuahaiApplyNativeState({state})");
     }
 
     private async Task PostThumbnailAsync(ClipboardRecord record)
@@ -775,9 +809,18 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private void CaptureService_HistoryChanged(object? sender, EventArgs e) =>
         _ = DispatcherQueue.TryEnqueue(async () =>
         {
-            await panelViewModel.LoadAsync();
-            await PostShellStateAsync();
+            await UnmanagedCallbackGuard.InvokeAsync(() => historyRefresh.RequestAsync());
         });
+
+    private async Task RefreshHistoryProjectionAsync(CancellationToken cancellationToken)
+    {
+        await panelViewModel.LoadAsync(cancellationToken);
+        var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        if (IsWindowVisible(handle))
+        {
+            await PostShellStateAsync();
+        }
+    }
 
     private void ShowAtCurrentCursor()
     {
@@ -787,42 +830,88 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         }
     }
 
-    private void ShowAtCursor(IntPtr targetWindow, PointInt32 cursor)
+    private void ShowAtCursor(IntPtr targetWindow, PointInt32 cursor) =>
+        _ = UnmanagedCallbackGuard.InvokeAsync(() => ShowAtCursorAsync(targetWindow, cursor));
+
+    private async Task ShowAtCursorAsync(IntPtr targetWindow, PointInt32 cursor)
     {
-        settingsSurfaceVisible = false;
-        compositionRoot.ClipboardPlatform.SetPasteTarget(targetWindow);
-        var display = DisplayArea.GetFromPoint(cursor, DisplayAreaFallback.Primary);
-        var workArea = display.WorkArea;
-        var width = ScaleDimension(PanelWidth);
-        var height = ScaleDimension(PanelHeight);
-        var x = cursor.X + 14;
-        if (x + width > workArea.X + workArea.Width)
+        await summonGate.WaitAsync();
+        try
         {
-            x = cursor.X - width - 14;
+            settingsSurfaceVisible = false;
+            compositionRoot.ClipboardPlatform.SetPasteTarget(targetWindow);
+            var display = DisplayArea.GetFromPoint(cursor, DisplayAreaFallback.Primary);
+            var workArea = display.WorkArea;
+            var width = ScaleDimension(PanelWidth);
+            var height = ScaleDimension(PanelHeight);
+            var x = cursor.X + 14;
+            if (x + width > workArea.X + workArea.Width)
+            {
+                x = cursor.X - width - 14;
+            }
+
+            x = Math.Clamp(x, workArea.X, Math.Max(workArea.X, workArea.X + workArea.Width - width));
+            var y = Math.Clamp(cursor.Y - 48, workArea.Y, Math.Max(workArea.Y, workArea.Y + workArea.Height - height));
+            appWindow?.MoveAndResize(new RectInt32(x, y, width, height));
+            ApplyNativeGlassChrome(
+                WinRT.Interop.WindowNative.GetWindowHandle(this),
+                width,
+                height);
+            var synchronizationError = await visibilityController.ShowAsync(async cancellationToken =>
+            {
+                await compositionRoot.CaptureService.FlushAsync(cancellationToken);
+                await historyRefresh.RequestAsync(cancellationToken);
+                await historyRefresh.FlushAsync(cancellationToken);
+                await ApplyShellStateBeforeShowAsync().WaitAsync(cancellationToken);
+            }, PreShowSynchronizationTimeout);
+            if (synchronizationError is not null)
+            {
+                await PostShellToastAsync(
+                    synchronizationError is TimeoutException
+                        ? "最新历史仍在后台同步，面板已先显示"
+                        : "最新历史同步失败，已显示上一次有效内容",
+                    isError: true);
+            }
+            Activate();
+            _ = SetForegroundWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));
+            _ = ExecuteShellScriptAsync(
+                "document.querySelector('#glassPanel')?.classList.remove('hidden','settings-mode');document.querySelector('#petals')?.classList.remove('paused');document.querySelector('#searchInput')?.focus()");
+            if (notifyUpdateOnNextSummon && availableUpdate is { } release)
+            {
+                notifyUpdateOnNextSummon = false;
+                _ = PostUpdateStatusAsync(
+                    "available",
+                    $"发现新版本 {release.LatestVersion}，可在“关于与更新”中查看。",
+                    release.ReleaseUrl,
+                    canInstall: release.CanAutoInstall,
+                    notifyUser: true);
+            }
+        }
+        finally
+        {
+            summonGate.Release();
+        }
+    }
+
+    private void CursorPanelWindow_Activated(object sender, WindowActivatedEventArgs args)
+    {
+        if (args.WindowActivationState != WindowActivationState.Deactivated)
+        {
+            return;
         }
 
-        x = Math.Clamp(x, workArea.X, Math.Max(workArea.X, workArea.X + workArea.Width - width));
-        var y = Math.Clamp(cursor.Y - 48, workArea.Y, Math.Max(workArea.Y, workArea.Y + workArea.Height - height));
-        appWindow?.MoveAndResize(new RectInt32(x, y, width, height));
-        ApplyNativeGlassChrome(
-            WinRT.Interop.WindowNative.GetWindowHandle(this),
-            width,
-            height);
-        visibilityController.Show();
-        Activate();
-        _ = SetForegroundWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));
-        _ = ExecuteShellScriptAsync(
-            "document.querySelector('#glassPanel')?.classList.remove('hidden','settings-mode');document.querySelector('#petals')?.classList.remove('paused');document.querySelector('#searchInput')?.focus()");
-        if (notifyUpdateOnNextSummon && availableUpdate is { } release)
+        var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        if (!IsWindowVisible(handle))
         {
-            notifyUpdateOnNextSummon = false;
-            _ = PostUpdateStatusAsync(
-                "available",
-                $"发现新版本 {release.LatestVersion}，可在“关于与更新”中查看。",
-                release.ReleaseUrl,
-                canInstall: release.CanAutoInstall,
-                notifyUser: true);
+            return;
         }
+
+        var interactionActive = dragPointerOrigin is not null ||
+                                panelScalePreviewActive ||
+                                summonGate.CurrentCount == 0;
+        _ = visibilityController.HideOnDeactivated(
+            settingsViewModel.Draft.Behavior.HideOnOutsideClick,
+            interactionActive);
     }
 
     private async Task ExecuteShellScriptAsync(string script)
@@ -1033,6 +1122,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             dragTimer = null;
         }
         compositionRoot.CaptureService.HistoryChanged -= CaptureService_HistoryChanged;
+        Activated -= CursorPanelWindow_Activated;
         globalInputService?.Dispose();
         globalInputService = null;
         _ = updateCoordinator?.DisposeAsync();
@@ -1063,7 +1153,6 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     void ITransientWindowHost.SetContentActive(bool active)
     {
-        var version = Interlocked.Increment(ref webContentActivityVersion);
         var coreWebView = ProductWebView.CoreWebView2;
         if (coreWebView is null)
         {
@@ -1072,6 +1161,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
         if (active)
         {
+            webContentActivity.MarkActive();
             if (coreWebView.IsSuspended)
             {
                 coreWebView.Resume();
@@ -1080,14 +1170,15 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             return;
         }
 
-        _ = SuspendWebContentAsync(version);
+        _ = UnmanagedCallbackGuard.InvokeAsync(
+            () => webContentActivity.RequestSuspendAsync(SuspendWebContentAsync));
     }
 
-    private async Task SuspendWebContentAsync(int version)
+    private async Task SuspendWebContentAsync(long version)
     {
         await Task.Yield();
         var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
-        if (version != Volatile.Read(ref webContentActivityVersion) || IsWindowVisible(handle))
+        if (!webContentActivity.IsCurrent(version) || IsWindowVisible(handle))
         {
             return;
         }
@@ -1101,7 +1192,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         try
         {
             _ = await coreWebView.TrySuspendAsync();
-            if (version != Volatile.Read(ref webContentActivityVersion) || IsWindowVisible(handle))
+            if (!webContentActivity.IsCurrent(version) || IsWindowVisible(handle))
             {
                 coreWebView.Resume();
             }

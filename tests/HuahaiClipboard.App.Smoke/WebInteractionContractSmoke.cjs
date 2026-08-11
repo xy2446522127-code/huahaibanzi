@@ -124,7 +124,7 @@ function interactionExpression(controlId) {
     if (id.startsWith('storage.retention-')) { click(id); return byId(id).classList.contains('active'); }
     if (id === 'storage.clear-ordinary') { const before = rows().length; click(id); return rows().length > 0 && rows().length < before; }
     if (id === 'storage.clear-all') { click(id); click(id); return rows().length === 0; }
-    if (id === 'system.startup' || id === 'system.background' || id === 'about.update-toggle') return toggleChanged(id);
+    if (id === 'system.startup' || id === 'system.background' || id === 'system.outside-hide' || id === 'about.update-toggle') return toggleChanged(id);
     if (id === 'about.check-update') { click(id); await pause(750); return document.querySelector('#updateStatus').classList.contains('available') && !document.querySelector('#installUpdateButton').hidden; }
     if (id === 'about.install-update') { document.querySelector('#checkUpdateButton').click(); await pause(750); click(id); await pause(1000); return document.querySelector('#updateProgress').getAttribute('aria-valuenow') === '100' && document.querySelector('#updateStatus').textContent.includes('演示完成'); }
     if (id === 'about.snooze-update') { document.querySelector('#checkUpdateButton').click(); await pause(750); click(id); return document.querySelector('#toast').classList.contains('show') && document.querySelector('#toast').textContent.includes('24 小时'); }

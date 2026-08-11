@@ -15,13 +15,21 @@ namespace HuahaiClipboard.App.Infrastructure.Clipboard;
 public sealed class ClipboardCaptureService(
     JsonClipboardHistorySource historySource,
     JsonSettingsStore settingsStore,
-    IClipboardImageStore imageStore)
+    IClipboardImageStore imageStore,
+    IClipboardWriteOriginGuard writeOriginGuard)
 {
     private readonly int currentProcessId = Environment.ProcessId;
+    private readonly SerialAsyncWorkQueue captureQueue = new();
 
     public event EventHandler? HistoryChanged;
 
-    public async Task CaptureAsync(IntPtr sourceWindow)
+    public Task CaptureAsync(IntPtr sourceWindow) =>
+        captureQueue.EnqueueAsync(() => CaptureCoreAsync(sourceWindow));
+
+    public Task FlushAsync(CancellationToken cancellationToken = default) =>
+        captureQueue.FlushAsync(cancellationToken);
+
+    private async Task CaptureCoreAsync(IntPtr sourceWindow)
     {
         var identity = WindowIdentity.FromHandle(sourceWindow);
         if (identity.ProcessId == currentProcessId)
@@ -41,6 +49,11 @@ public sealed class ClipboardCaptureService(
         {
             try
             {
+                if (writeOriginGuard.IsCurrentWrite())
+                {
+                    return;
+                }
+
                 record = await CreateRecordAsync(identity);
             }
             catch (ExternalException) when (attempt < 4)

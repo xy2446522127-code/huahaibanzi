@@ -23,7 +23,8 @@ public sealed class JsonSettingsStoreTests
                     30,
                     true,
                     "1.1.7",
-                    new DateTimeOffset(2026, 8, 9, 12, 0, 0, TimeSpan.Zero))
+                    new DateTimeOffset(2026, 8, 9, 12, 0, 0, TimeSpan.Zero),
+                    HideOnOutsideClick: false)
             };
             var first = new JsonSettingsStore(path);
 
@@ -38,9 +39,36 @@ public sealed class JsonSettingsStoreTests
             Assert.IsFalse(actual.Behavior.BackgroundEnabled);
             Assert.AreEqual(30, actual.Behavior.AutoCleanupDays);
             Assert.AreEqual("1.1.7", actual.Behavior.SnoozedUpdateVersion);
+            Assert.IsFalse(actual.Behavior.HideOnOutsideClick);
             Assert.AreEqual(
                 new DateTimeOffset(2026, 8, 9, 12, 0, 0, TimeSpan.Zero),
                 actual.Behavior.UpdateSnoozeUntil);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
+    [TestMethod]
+    public async Task Settings_MissingOutsideHidePreferenceDefaultsToEnabled()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-settings-outside-hide-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "settings.json");
+        try
+        {
+            Directory.CreateDirectory(directory);
+            var json = System.Text.Json.Nodes.JsonNode.Parse(
+                System.Text.Json.JsonSerializer.Serialize(ShellSettings.Default))!.AsObject();
+            json["Behavior"]!.AsObject().Remove("HideOnOutsideClick");
+            await File.WriteAllTextAsync(path, json.ToJsonString());
+
+            var actual = await new JsonSettingsStore(path).LoadAsync(CancellationToken.None);
+
+            Assert.IsTrue(actual.Behavior.HideOnOutsideClick);
         }
         finally
         {

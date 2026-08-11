@@ -94,7 +94,7 @@ public sealed class ShellIntegrationPolicyTests
             "setRetentionDays", "clearOrdinary", "clearAll", "setTheme", "setOpacity",
             "setPetals", "setReduceMotion", "setClickDuration", "setRightDoubleClick",
             "setShortcut", "resetShortcut", "setExclusions", "openDataFolder", "setStartup",
-            "setBackground", "beginNativeDrag"
+            "setBackground", "setOutsideAutoHide", "beginNativeDrag"
             , "previewPanelScale", "commitPanelScale", "cancelPanelScale", "setPanelScale", "setCheckUpdatesOnStartup", "checkUpdate", "snoozeUpdate", "installUpdate", "openRelease"
         ];
 

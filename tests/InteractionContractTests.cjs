@@ -8,13 +8,14 @@ const controls = contract.controls;
 
 test('interaction contract covers the complete approved control set without placeholders', () => {
   assert.equal(contract.version, 1);
-  assert.equal(controls.length, 63);
+  assert.equal(controls.length, 64);
   assert.ok(controls.some(control => control.control_id === 'settings.home'));
   assert.ok(controls.some(control => control.control_id === 'about.install-update'));
   assert.ok(controls.some(control => control.control_id === 'about.snooze-update'));
   assert.ok(controls.some(control => control.control_id === 'panel.summon'));
   assert.ok(controls.some(control => control.control_id === 'appearance.resize-handle'));
   assert.ok(controls.some(control => control.control_id === 'input.remove-exclusion'));
+  assert.ok(controls.some(control => control.control_id === 'system.outside-hide'));
   assert.equal(fs.readFileSync(contractPath, 'utf8').includes('?'), false);
   for (const control of controls) {
     assert.ok(control.user_intent.length >= 4, control.control_id);

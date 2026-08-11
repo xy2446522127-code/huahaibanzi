@@ -2425,6 +2425,51 @@
       "opens_surface": false
     },
     {
+      "control_id": "system.outside-hide",
+      "test_id": "webview.system.outside-hide",
+      "disposition": "interactive",
+      "user_intent": "设置点击面板外时自动隐藏",
+      "fixture": {
+        "route": "https://app.huahai.local/Web/product-shell.html#settings/system",
+        "state": "isolated-deterministic",
+        "viewport": {
+          "width": 820,
+          "height": 650
+        }
+      },
+      "trigger": {
+        "type": "click"
+      },
+      "expected": {
+        "type": "outside-hide-setting-saved"
+      },
+      "mock_behavior": {
+        "behavior": "synthetic",
+        "observable_result": "面板外自动隐藏偏好切换并保存；网页预览可点击桌面空白区域验证隐藏。"
+      },
+      "state_contract": {
+        "loading": "保存进行中时保留当前可见状态。",
+        "success": "开关状态立即更新并在下次启动时恢复。",
+        "error": "保存失败时保留原状态并显示可读错误信息。",
+        "disabled": "控件始终可用。"
+      },
+      "targets": {
+        "web": {
+          "behavior": "adapted",
+          "adapter": "approved product-shell preview adapter"
+        },
+        "desktop": {
+          "behavior": "native",
+          "adapter": "WebView DOM event, C# bridge, and window activation service"
+        }
+      },
+      "allowed_side_effects": [
+        "local-settings",
+        "window-visibility"
+      ],
+      "opens_surface": false
+    },
+    {
       "control_id": "about.update-toggle",
       "test_id": "webview.about.update-toggle",
       "disposition": "interactive",

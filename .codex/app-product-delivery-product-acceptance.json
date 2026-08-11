@@ -1,0 +1,129 @@
+{
+  "acceptance_id": "clipboard-live-iteration-20260811",
+  "acceptance_revision": 1,
+  "capabilities": [
+    {
+      "business_oracles": [
+        {
+          "independent": true,
+          "oracle_id": "history-count-and-original-record-identity"
+        }
+      ],
+      "capability_id": "clipboard.owned-write-suppression",
+      "evidence": [
+        {
+          "command": "dotnet test tests/HuahaiClipboard.App.IntegrationTests/HuahaiClipboard.App.IntegrationTests.csproj -c Release -p:Platform=x64",
+          "evidence_id": "owned-copy-integration-20260811",
+          "independent_oracle": true,
+          "source_digest": "c89adcaeea5cecf497f69ff30ddc8e27d9e6a50c7bd652c11162e0313d3d7c82",
+          "source_revision": "0a81eae60f55db5e7471268dac74368d999e2df9",
+          "status": "passed",
+          "target": "windows-desktop"
+        }
+      ],
+      "journeys": [
+        "panel-copy-does-not-create-a-new-history-row"
+      ],
+      "required_targets": [
+        "windows-desktop"
+      ],
+      "status": "committed"
+    },
+    {
+      "business_oracles": [
+        {
+          "independent": true,
+          "oracle_id": "latest-requested-history-count-before-show"
+        }
+      ],
+      "capability_id": "clipboard.hidden-live-history",
+      "evidence": [
+        {
+          "command": "dotnet test HuahaiClipboard.sln -c Release -p:Platform=x64",
+          "evidence_id": "hidden-live-sync-tests-20260811",
+          "independent_oracle": true,
+          "source_digest": "c89adcaeea5cecf497f69ff30ddc8e27d9e6a50c7bd652c11162e0313d3d7c82",
+          "source_revision": "0a81eae60f55db5e7471268dac74368d999e2df9",
+          "status": "passed",
+          "target": "windows-desktop"
+        }
+      ],
+      "journeys": [
+        "hidden-copy-burst-first-visible-frame-is-current"
+      ],
+      "required_targets": [
+        "windows-desktop"
+      ],
+      "status": "committed"
+    },
+    {
+      "business_oracles": [
+        {
+          "independent": true,
+          "oracle_id": "persisted-setting-and-window-visibility"
+        }
+      ],
+      "capability_id": "window.outside-click-hide",
+      "evidence": [
+        {
+          "command": "node tests/HuahaiClipboard.Core.Tests/WebInteraction/copy-live-iteration.mjs",
+          "evidence_id": "outside-hide-web-and-core-20260811",
+          "independent_oracle": true,
+          "source_digest": "c89adcaeea5cecf497f69ff30ddc8e27d9e6a50c7bd652c11162e0313d3d7c82",
+          "source_revision": "0a81eae60f55db5e7471268dac74368d999e2df9",
+          "status": "passed",
+          "target": "web-preview"
+        },
+        {
+          "command": "dotnet test tests/HuahaiClipboard.Core.Tests/HuahaiClipboard.Core.Tests.csproj -c Release",
+          "evidence_id": "outside-hide-desktop-contract-20260811",
+          "independent_oracle": true,
+          "source_digest": "c89adcaeea5cecf497f69ff30ddc8e27d9e6a50c7bd652c11162e0313d3d7c82",
+          "source_revision": "0a81eae60f55db5e7471268dac74368d999e2df9",
+          "status": "passed",
+          "target": "windows-desktop"
+        }
+      ],
+      "journeys": [
+        "toggle-outside-hide-and-deactivate-window"
+      ],
+      "required_targets": [
+        "web-preview",
+        "windows-desktop"
+      ],
+      "status": "committed"
+    }
+  ],
+  "scope": "feature",
+  "selected_capability_ids": [
+    "clipboard.owned-write-suppression",
+    "clipboard.hidden-live-history",
+    "window.outside-click-hide"
+  ],
+  "source_digest": "c89adcaeea5cecf497f69ff30ddc8e27d9e6a50c7bd652c11162e0313d3d7c82",
+  "source_paths": [
+    "src/HuahaiClipboard.Core/Contracts/IClipboardWriteOriginGuard.cs",
+    "src/HuahaiClipboard.Core/Services/ClipboardWriteOriginState.cs",
+    "src/HuahaiClipboard.Core/Services/LatestOnlyAsyncRefresh.cs",
+    "src/HuahaiClipboard.Core/Services/SerialAsyncWorkQueue.cs",
+    "src/HuahaiClipboard.Core/Services/SuspendResumeActivityCoordinator.cs",
+    "src/HuahaiClipboard.Core/Services/TransientWindowVisibilityController.cs",
+    "src/HuahaiClipboard.Core/Services/WebBridgeProtocol.cs",
+    "src/HuahaiClipboard.Core/Settings/BehaviorSettings.cs",
+    "src/HuahaiClipboard.App/Infrastructure/Clipboard/ClipboardCaptureService.cs",
+    "src/HuahaiClipboard.App/Infrastructure/Clipboard/WindowsClipboardPlatform.cs",
+    "src/HuahaiClipboard.App/Infrastructure/Clipboard/WindowsClipboardWriteOriginGuard.cs",
+    "src/HuahaiClipboard.App/Presentation/Windows/CursorPanelWindow.xaml.cs",
+    "src/HuahaiClipboard.App/Assets/Web/product-shell.html",
+    "tests/HuahaiClipboard.Core.Tests/ClipboardWriteOriginStateTests.cs",
+    "tests/HuahaiClipboard.Core.Tests/LatestOnlyAsyncRefreshTests.cs",
+    "tests/HuahaiClipboard.Core.Tests/SerialAsyncWorkQueueTests.cs",
+    "tests/HuahaiClipboard.Core.Tests/SuspendResumeActivityCoordinatorTests.cs",
+    "tests/HuahaiClipboard.Core.Tests/TransientWindowVisibilityControllerTests.cs",
+    "tests/HuahaiClipboard.App.IntegrationTests/ClipboardCaptureServiceTests.cs",
+    "tests/HuahaiClipboard.App.IntegrationTests/WindowsClipboardPlatformTests.cs",
+    "tests/HuahaiClipboard.Core.Tests/WebInteraction/copy-live-iteration.mjs"
+  ],
+  "source_revision": "0a81eae60f55db5e7471268dac74368d999e2df9",
+  "version": 1
+}

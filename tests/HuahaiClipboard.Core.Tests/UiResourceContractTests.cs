@@ -85,6 +85,9 @@ public sealed class UiResourceContractTests
         StringAssert.Contains(webShell, "<section class=\"glass-panel\" id=\"glassPanel\">");
         StringAssert.Contains(webShell, "const specularProximity=10;");
         StringAssert.Contains(webShell, "window.chrome.webview");
+        StringAssert.Contains(webShell, "id=\"outsideAutoHideToggle\"");
+        StringAssert.Contains(webShell, "setOutsideAutoHide");
+        StringAssert.Contains(webShell, "window.HuahaiApplyNativeState");
     }
 
     private static string FindRepositoryRoot()

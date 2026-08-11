@@ -32,6 +32,124 @@ public sealed class TransientWindowVisibilityControllerTests
             host.Actions);
     }
 
+    [TestMethod]
+    public async Task ShowAsync_SynchronizesContentBeforeTheWindowBecomesVisible()
+    {
+        var host = new RecordingTransientWindowHost();
+        var controller = new TransientWindowVisibilityController(host);
+
+        await controller.ShowAsync(() =>
+        {
+            host.Record("synchronize");
+            return Task.CompletedTask;
+        });
+
+        CollectionAssert.AreEqual(
+            new[] { "content:active", "synchronize", "topmost:on", "show" },
+            host.Actions);
+    }
+
+    [DataTestMethod]
+    [DataRow(true, false, true)]
+    [DataRow(false, false, false)]
+    [DataRow(true, true, false)]
+    public void HideOnDeactivated_RequiresTheSettingAndNoActiveManipulation(
+        bool enabled,
+        bool interactionActive,
+        bool expectedHidden)
+    {
+        var host = new RecordingTransientWindowHost();
+        var controller = new TransientWindowVisibilityController(host);
+
+        var hidden = controller.HideOnDeactivated(enabled, interactionActive);
+
+        Assert.AreEqual(expectedHidden, hidden);
+        if (expectedHidden)
+        {
+            CollectionAssert.AreEqual(
+                new[] { "topmost:off", "hide", "content:suspended" },
+                host.Actions);
+        }
+        else
+        {
+            Assert.AreEqual(0, host.Actions.Length);
+        }
+    }
+
+    [TestMethod]
+    public async Task HiddenBurst_AppliesTheLatestHistoryBeforeTheFirstVisibleFrame()
+    {
+        var host = new RecordingTransientWindowHost();
+        var controller = new TransientWindowVisibilityController(host);
+        var firstEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var requestedCount = 1;
+        var appliedCount = 0;
+        var refreshCalls = 0;
+        var refresh = new LatestOnlyAsyncRefresh(async cancellationToken =>
+        {
+            if (Interlocked.Increment(ref refreshCalls) == 1)
+            {
+                firstEntered.SetResult();
+                await releaseFirst.Task.WaitAsync(cancellationToken);
+            }
+
+            appliedCount = Volatile.Read(ref requestedCount);
+        });
+
+        _ = refresh.RequestAsync();
+        await firstEntered.Task;
+        for (var count = 2; count <= 10; count++)
+        {
+            Volatile.Write(ref requestedCount, count);
+            _ = refresh.RequestAsync();
+        }
+
+        releaseFirst.SetResult();
+        await controller.ShowAsync(async () =>
+        {
+            await refresh.FlushAsync();
+            host.Record($"state:{appliedCount}");
+        });
+
+        CollectionAssert.AreEqual(
+            new[] { "content:active", "state:10", "topmost:on", "show" },
+            host.Actions);
+        Assert.AreEqual(2, refreshCalls);
+    }
+
+    [TestMethod]
+    public async Task ShowAsync_WhenSynchronizationFails_ShowsTheLastValidContentAndReturnsTheError()
+    {
+        var host = new RecordingTransientWindowHost();
+        var controller = new TransientWindowVisibilityController(host);
+
+        var error = await controller.ShowAsync(
+            _ => throw new InvalidOperationException("history unavailable"),
+            TimeSpan.FromSeconds(1));
+
+        Assert.IsInstanceOfType<InvalidOperationException>(error);
+        CollectionAssert.AreEqual(
+            new[] { "content:active", "topmost:on", "show" },
+            host.Actions);
+    }
+
+    [TestMethod]
+    public async Task ShowAsync_WhenSynchronizationTimesOut_ShowsWithoutWaitingForever()
+    {
+        var host = new RecordingTransientWindowHost();
+        var controller = new TransientWindowVisibilityController(host);
+
+        var error = await controller.ShowAsync(
+            cancellationToken => Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken),
+            TimeSpan.FromMilliseconds(20));
+
+        Assert.IsInstanceOfType<TimeoutException>(error);
+        CollectionAssert.AreEqual(
+            new[] { "content:active", "topmost:on", "show" },
+            host.Actions);
+    }
+
     private sealed class RecordingTransientWindowHost : ITransientWindowHost
     {
         public string[] Actions => actions.ToArray();
@@ -47,5 +165,7 @@ public sealed class TransientWindowVisibilityControllerTests
         public void Show() => actions.Add("show");
 
         public void Hide() => actions.Add("hide");
+
+        public void Record(string action) => actions.Add(action);
     }
 }

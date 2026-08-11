@@ -28,6 +28,7 @@ public static class WebBridgeProtocol
         "openDataFolder",
         "setStartup",
         "setBackground",
+        "setOutsideAutoHide",
         "setPanelScale",
         "previewPanelScale",
         "commitPanelScale",
