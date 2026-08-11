@@ -58,11 +58,14 @@ const definitions = [
   ['storage.retention-3', 'storage', '设置普通历史保留三天', '期限保存且收藏和置顶不受清理影响', 'click', 'retention-saved'],
   ['storage.retention-7', 'storage', '设置普通历史保留七天', '期限保存且收藏和置顶不受清理影响', 'click', 'retention-saved'],
   ['storage.retention-30', 'storage', '设置普通历史保留一个月', '期限保存且收藏和置顶不受清理影响', 'click', 'retention-saved'],
+  ['storage.count-cleanup-toggle', 'storage', '开启或关闭按普通记录条数自动清理', '开关保存且收藏和置顶不计入上限', 'toggle', 'count-retention-state-saved'],
+  ['storage.count-cleanup-limit', 'storage', '设置普通记录自动清理数量上限', '一到一万条的上限保存并立即应用', 'number-input', 'count-retention-limit-saved'],
   ['storage.clear-ordinary', 'storage', '立即清空普通历史', '普通记录删除但收藏和置顶保留', 'click', 'ordinary-history-removed'],
   ['storage.clear-all', 'storage', '确认后清空全部内容', '二次确认后普通收藏和置顶全部删除', 'double-click-confirm', 'all-history-removed'],
 
   ['system.startup', 'system', '设置开机后台启动', '当前用户开机自启状态更新', 'toggle', 'startup-updated'],
   ['system.background', 'system', '设置关闭面板后继续后台运行', '后台运行偏好更新并保留唤出监听', 'toggle', 'background-updated'],
+  ['system.outside-hide', 'system', '设置点击面板外自动隐藏', '窗口失焦时按偏好隐藏且后台监听保持运行', 'toggle', 'outside-hide-updated'],
 
   ['about.update-toggle', 'about', '设置启动时检查更新', '自动检查偏好保存到本机', 'toggle', 'update-setting-saved'],
   ['about.check-update', 'about', '立即检查 GitHub Release 更新', '显示检查中最新版本可更新或错误状态', 'click', 'update-status-visible'],
@@ -97,6 +100,18 @@ const sideEffectsFor = group => ({
   global: ['global-input', 'window-visibility'],
   tray: ['tray-menu', 'window-visibility', 'process-lifecycle'],
 }[group]);
+
+const featureFor = controlId => {
+  if (controlId === 'panel.minimize' || controlId === 'panel.summon' || controlId === 'panel.drag' || controlId === 'appearance.resize-handle') return 'panel.window';
+  if (controlId === 'panel.settings' || controlId.startsWith('settings.')) return 'settings.navigation';
+  if (controlId.startsWith('panel.update-') || controlId.startsWith('about.')) return 'update.lifecycle';
+  if (controlId.startsWith('theme.') || controlId.startsWith('appearance.') || controlId.startsWith('motion.')) return 'appearance.customization';
+  if (controlId.startsWith('input.') || controlId.startsWith('global.')) return 'input.activation';
+  if (controlId.startsWith('storage.')) return 'storage.retention';
+  if (controlId.startsWith('system.')) return 'system.behavior';
+  if (controlId.startsWith('tray.')) return 'system.tray';
+  return 'clipboard.history';
+};
 
 const controls = definitions.map(([controlId, group, intent, result, trigger, expected, page]) => {
   const route = routeFor(group, page);
@@ -133,15 +148,32 @@ const controls = definitions.map(([controlId, group, intent, result, trigger, ex
     },
     allowed_side_effects: sideEffectsFor(group),
     opens_surface: controlId === 'panel.settings' || controlId === 'tray.open-settings',
+    feature_id: featureFor(controlId),
   };
   if (controlId === 'panel.settings' || controlId === 'tray.open-settings') control.exit_control_id = 'settings.back';
   return control;
 });
 
+const journeys = controls.map(control => ({
+  journey_id: `journey.${control.control_id}`,
+  feature_id: control.feature_id,
+  user_outcome: control.user_intent,
+  fixture: control.fixture,
+  steps: [control.control_id],
+  expected: control.expected,
+  targets: control.targets,
+  test_id: `journey.${control.test_id}`,
+}));
+
 const contract = {
-  version: 1,
-  contract_revision: 'huahai-webview-1.1.9-layout-type-v1',
+  version: 2,
+  contract_revision: 'huahai-webview-1.1.11-complete-v3',
+  evidence_adapters: {
+    web: 'assets/playwright/interaction-contract-runner.mjs',
+    desktop: 'huahai-native-interaction-runner',
+  },
   controls,
+  journeys,
 };
 
 fs.writeFileSync(

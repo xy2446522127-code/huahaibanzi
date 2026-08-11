@@ -149,7 +149,7 @@ test('every WebView-visible contract control is tagged on the real product shell
   const visibleControls = interactionContract.controls.filter(control =>
     control.fixture.route.startsWith('https://app.huahai.local/Web/product-shell.html'),
   );
-  assert.equal(visibleControls.length, 59);
+  assert.equal(visibleControls.length, 61);
   assert.match(interactionModule, /data-apd-control-id/);
   for (const control of visibleControls) {
     assert.ok((html + interactionModule).includes(`'${control.control_id}'`), control.control_id);

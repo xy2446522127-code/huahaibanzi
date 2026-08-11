@@ -8,7 +8,7 @@ const controls = contract.controls;
 
 test('interaction contract covers the complete approved control set without placeholders', () => {
   assert.equal(contract.version, 2);
-  assert.equal(controls.length, 64);
+  assert.equal(controls.length, 66);
   assert.ok(controls.some(control => control.control_id === 'settings.home'));
   assert.ok(controls.some(control => control.control_id === 'about.install-update'));
   assert.ok(controls.some(control => control.control_id === 'about.snooze-update'));
@@ -16,6 +16,8 @@ test('interaction contract covers the complete approved control set without plac
   assert.ok(controls.some(control => control.control_id === 'appearance.resize-handle'));
   assert.ok(controls.some(control => control.control_id === 'input.remove-exclusion'));
   assert.ok(controls.some(control => control.control_id === 'system.outside-hide'));
+  assert.ok(controls.some(control => control.control_id === 'storage.count-cleanup-toggle'));
+  assert.ok(controls.some(control => control.control_id === 'storage.count-cleanup-limit'));
   assert.equal(fs.readFileSync(contractPath, 'utf8').includes('?'), false);
   for (const control of controls) {
     assert.ok(control.user_intent.length >= 4, control.control_id);
@@ -23,6 +25,15 @@ test('interaction contract covers the complete approved control set without plac
     for (const state of ['loading', 'success', 'error', 'disabled']) {
       assert.ok(control.state_contract[state].length >= 4, `${control.control_id}:${state}`);
     }
+  }
+});
+
+test('every control belongs to a runnable journey', () => {
+  const covered = new Set(contract.journeys.flatMap(journey => journey.steps));
+  assert.equal(contract.journeys.length, controls.length);
+  for (const control of controls) {
+    assert.ok(control.feature_id, control.control_id);
+    assert.ok(covered.has(control.control_id), control.control_id);
   }
 });
 

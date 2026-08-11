@@ -13,7 +13,7 @@
     'appearance.opacity': '#opacityRange', 'appearance.scale': '#scaleRange', 'appearance.reset-scale': '#resetScale', 'appearance.resize-handle': '#resizeHandle',
     'motion.petals': '#petalToggle', 'motion.reduced': '#reduceToggle', 'motion.duration': '#durationRange',
     'input.right-double': '#rightDoubleToggle', 'input.capture-shortcut': '#captureShortcut', 'input.reset-shortcut': '#resetShortcut', 'input.exclusions': '#excludeInput', 'input.save-exclusions': '#saveExclude',
-    'storage.open-folder': '#openFolder', 'storage.retention-3': '.retention-option[data-days="3"]', 'storage.retention-7': '.retention-option[data-days="7"]', 'storage.retention-30': '.retention-option[data-days="30"]', 'storage.clear-ordinary': '#clearOrdinaryHistory', 'storage.clear-all': '#clearAllHistory',
+    'storage.open-folder': '#openFolder', 'storage.retention-3': '.retention-option[data-days="3"]', 'storage.retention-7': '.retention-option[data-days="7"]', 'storage.retention-30': '.retention-option[data-days="30"]', 'storage.count-cleanup-toggle': '#autoCleanupCountToggle', 'storage.count-cleanup-limit': '#autoCleanupCountInput', 'storage.clear-ordinary': '#clearOrdinaryHistory', 'storage.clear-all': '#clearAllHistory',
     'system.startup': '#startupToggle', 'system.background': '#backgroundToggle', 'system.outside-hide': '#outsideAutoHideToggle',
     'about.update-toggle': '#updateAutoToggle', 'about.check-update': '#checkUpdateButton', 'about.install-update': '#installUpdateButton', 'about.snooze-update': '#snoozeUpdateButton', 'about.open-release': '#releaseButton'
   });

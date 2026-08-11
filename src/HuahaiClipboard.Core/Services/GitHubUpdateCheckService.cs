@@ -17,7 +17,10 @@ public sealed record UpdateCheckResult(
     string InstallerSha256)
 {
     public bool CanAutoInstall => UpdateAvailable && InstallerSize > 0
-        && (InstallerSha256.Length == 64 || true);
+        && IsSha256(InstallerSha256);
+
+    private static bool IsSha256(string? value) =>
+        value is { Length: 64 } && value.All(Uri.IsHexDigit);
 }
 
 public sealed class GitHubUpdateCheckService(HttpClient client, Version currentVersion)
@@ -302,25 +305,15 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
                 }
             }
 
-            if (!string.IsNullOrEmpty(release.InstallerSha256))
+            string actualSha256;
+            await using (var downloaded = File.OpenRead(temporary))
             {
-                string actualSha256;
-                await using (var downloaded = File.OpenRead(temporary))
-                {
-                    actualSha256 = Convert.ToHexString(
-                        await SHA256.HashDataAsync(downloaded, cancellationToken)).ToLowerInvariant();
-                }
-                if (!string.Equals(actualSha256, release.InstallerSha256, StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new InvalidDataException("更新包 SHA-256 校验失败，已拒绝安装。");
-                }
+                actualSha256 = Convert.ToHexString(
+                    await SHA256.HashDataAsync(downloaded, cancellationToken)).ToLowerInvariant();
             }
-            else
+            if (!string.Equals(actualSha256, release.InstallerSha256, StringComparison.OrdinalIgnoreCase))
             {
-                // Release 未提供 SHA-256 时，用固定的发布者签名校验安装包完整性。
-                InstallerPublisherSignaturePolicy.Verify(
-                    temporary,
-                    InstallerPublisherSignaturePolicy.PinnedPublisherThumbprint);
+                throw new InvalidDataException("更新包 SHA-256 校验失败，已拒绝安装。");
             }
 
             File.Move(temporary, destination, overwrite: true);
@@ -384,8 +377,8 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
             installerUri.Scheme != Uri.UriSchemeHttps ||
             !string.Equals(installerUri.Host, "github.com", StringComparison.OrdinalIgnoreCase) ||
             size <= 0 ||
-            (!string.IsNullOrEmpty(sha256) &&
-             (sha256.Length != 64 || !sha256.All(Uri.IsHexDigit))))
+            sha256 is not { Length: 64 } ||
+            !sha256.All(Uri.IsHexDigit))
         {
             throw new InvalidDataException("GitHub Release 安装包元数据无效。");
         }

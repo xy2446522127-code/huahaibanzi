@@ -171,7 +171,7 @@ public sealed class GitHubUpdateCheckServiceTests
 
         Assert.IsTrue(result.UpdateAvailable);
         Assert.AreEqual(new Version(1, 2, 0), result.LatestVersion);
-        Assert.IsTrue(result.CanAutoInstall);
+        Assert.IsFalse(result.CanAutoInstall);
         Assert.AreEqual(353370112L, result.InstallerSize);
         Assert.AreEqual(
             "https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.2.0/HuahaiClipboard-Setup.exe",
@@ -190,7 +190,7 @@ public sealed class GitHubUpdateCheckServiceTests
         var result = await service.CheckAsync(CancellationToken.None);
 
         Assert.IsTrue(result.UpdateAvailable);
-        Assert.IsTrue(result.CanAutoInstall);
+        Assert.IsFalse(result.CanAutoInstall);
         Assert.AreEqual(353370112L, result.InstallerSize);
         Assert.AreEqual(string.Empty, result.InstallerSha256);
     }
@@ -205,7 +205,7 @@ public sealed class GitHubUpdateCheckServiceTests
 
         Assert.IsTrue(result.UpdateAvailable);
         Assert.AreEqual(new Version(1, 2, 0), result.LatestVersion);
-        Assert.IsTrue(result.CanAutoInstall);
+        Assert.IsFalse(result.CanAutoInstall);
         Assert.AreEqual(345678L, result.InstallerSize);
         Assert.AreEqual(string.Empty, result.InstallerSha256);
         Assert.AreEqual(
@@ -238,6 +238,35 @@ public sealed class GitHubUpdateCheckServiceTests
                 HttpMethod.Get,
                 "https://github.com/xy2446522127-code/huahaibanzi/releases/tag/v1.2.0");
             return Task.FromResult(response);
+        }
+    }
+
+    [TestMethod]
+    public async Task RejectsMissingDigestBeforeDownloadingInstaller()
+    {
+        var payload = Encoding.UTF8.GetBytes("unsigned fallback payload");
+        var handler = new BytesHandler(payload);
+        using var client = new HttpClient(handler);
+        var service = new GitHubUpdateCheckService(client, new Version(1, 1, 10));
+        var release = new UpdateCheckResult(
+            true,
+            new Version(1, 1, 10),
+            new Version(1, 1, 11),
+            "https://github.com/xy2446522127-code/huahaibanzi/releases/tag/v1.1.11",
+            "HuahaiClipboard-Setup.exe",
+            "https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.1.11/HuahaiClipboard-Setup.exe",
+            payload.LongLength,
+            string.Empty);
+        var directory = Path.Combine(Path.GetTempPath(), $"HuahaiClipboard.UpdateTests.{Guid.NewGuid():N}");
+        try
+        {
+            await Assert.ThrowsExceptionAsync<InvalidDataException>(() =>
+                service.DownloadInstallerAsync(release, directory, null, CancellationToken.None));
+            Assert.AreEqual(0, handler.RequestCount);
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
         }
     }
 
@@ -378,13 +407,18 @@ public sealed class GitHubUpdateCheckServiceTests
 
     private sealed class BytesHandler(byte[] payload) : HttpMessageHandler
     {
+        public int RequestCount { get; private set; }
+
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
-            CancellationToken cancellationToken) =>
-            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            CancellationToken cancellationToken)
+        {
+            RequestCount++;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new ByteArrayContent(payload)
             });
+        }
     }
 
     private sealed class InlineProgress<T>(Action<T> report) : IProgress<T>
