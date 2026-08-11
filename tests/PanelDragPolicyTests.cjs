@@ -44,12 +44,13 @@ test('native drag coordinates convert CSS screen pixels to physical pixels', () 
   );
 });
 
-test('native panel dragging enters the Windows compositor move loop without per-frame WebView bridge traffic', () => {
+test('native panel dragging coalesces movement to display frames without per-frame WebView bridge traffic', () => {
   assert.match(shell, /postNative\('beginNativeDrag',nativePointerPosition\(event\)\)/);
   assert.doesNotMatch(shell, /postNative\('beginSystemDrag'/);
   assert.doesNotMatch(shell, /postNative\('dragMove'/);
   assert.doesNotMatch(shell, /postNative\('endDrag'/);
-  assert.match(windowHost, /DispatcherQueue\.CreateTimer\(\)/);
+  assert.match(windowHost, /CompositionTarget\.Rendering \+= DragCompositionTarget_Rendering/);
+  assert.doesNotMatch(windowHost, /dragTimer\.Interval = TimeSpan\.FromMilliseconds\(8\)/);
   assert.match(windowHost, /GetAsyncKeyState\(LeftMouseButton\)/);
   assert.match(windowHost, /GetCursorPos\(/);
   assert.match(windowHost, /BeginNativeWindowDrag\(request\.X, request\.Y\)/);

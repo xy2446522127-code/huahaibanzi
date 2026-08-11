@@ -60,7 +60,6 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private InputSettingsSnapshot? inputSettingsSnapshot;
     private AppWindow? appWindow;
     private Microsoft.UI.Dispatching.DispatcherQueueTimer? retentionTimer;
-    private Microsoft.UI.Dispatching.DispatcherQueueTimer? dragTimer;
     private PointInt32? dragPointerOrigin;
     private PointInt32? dragWindowOrigin;
     private RectInt32? dragWorkArea;
@@ -280,9 +279,16 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                     return;
                 }
 
+                await panelViewModel.LoadAsync();
+
                 if (hideAfterCopy && !settingsViewModel.Draft.Behavior.BackgroundEnabled)
                 {
                     ExitApplication();
+                }
+                else if (!hideAfterCopy)
+                {
+                    await PostShellStateAsync();
+                    await PostShellToastAsync("已复制", isError: false);
                 }
                 return;
             case "requestThumbnail":
@@ -1003,16 +1009,17 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private void PreviewPanelScale(double ratio)
     {
         panelScaleSession.Preview(ratio);
-        if (!panelScalePreviewActive)
-        {
-            panelScalePreviewActive = true;
-            _ = SetWindowRgn(WinRT.Interop.WindowNative.GetWindowHandle(this), IntPtr.Zero, false);
-        }
+        panelScalePreviewActive = true;
 
         ResizeWindow(
             settingsSurfaceVisible ? SettingsWidth : PanelWidth,
             settingsSurfaceVisible ? SettingsHeight : PanelHeight,
             rebuildChrome: false);
+        ApplyNativeGlassChrome(
+            WinRT.Interop.WindowNative.GetWindowHandle(this),
+            ScaleDimension(settingsSurfaceVisible ? SettingsWidth : PanelWidth),
+            ScaleDimension(settingsSurfaceVisible ? SettingsHeight : PanelHeight),
+            redraw: false);
     }
 
     private void ResizeWindow(int width, int height, bool rebuildChrome = true)
@@ -1070,19 +1077,11 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             dragPointerOrigin.Value,
             DisplayAreaFallback.Nearest).WorkArea;
 
-        if (dragTimer is null)
-        {
-            dragTimer = DispatcherQueue.CreateTimer();
-            dragTimer.Interval = TimeSpan.FromMilliseconds(8);
-            dragTimer.IsRepeating = true;
-            dragTimer.Tick += DragTimer_Tick;
-        }
-        dragTimer.Start();
+        CompositionTarget.Rendering -= DragCompositionTarget_Rendering;
+        CompositionTarget.Rendering += DragCompositionTarget_Rendering;
     }
 
-    private void DragTimer_Tick(
-        Microsoft.UI.Dispatching.DispatcherQueueTimer sender,
-        object args)
+    private void DragCompositionTarget_Rendering(object? sender, object args)
     {
         if (appWindow is null ||
             dragPointerOrigin is not { } pointerOrigin ||
@@ -1112,7 +1111,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     private void StopNativeWindowDrag(bool savePosition)
     {
-        dragTimer?.Stop();
+        CompositionTarget.Rendering -= DragCompositionTarget_Rendering;
         var hadActiveDrag = dragPointerOrigin is not null;
         dragPointerOrigin = null;
         dragWindowOrigin = null;
@@ -1198,11 +1197,6 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             retentionTimer = null;
         }
         StopNativeWindowDrag(savePosition: false);
-        if (dragTimer is not null)
-        {
-            dragTimer.Tick -= DragTimer_Tick;
-            dragTimer = null;
-        }
         compositionRoot.CaptureService.HistoryChanged -= CaptureService_HistoryChanged;
         Activated -= CursorPanelWindow_Activated;
         globalInputService?.Dispose();
@@ -1298,21 +1292,24 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         _ = ShowWindow(WinRT.Interop.WindowNative.GetWindowHandle(this), ShowWindowHide);
     }
 
-    private void ApplyNativeGlassChrome(IntPtr windowHandle, int width, int height)
+    private void ApplyNativeGlassChrome(IntPtr windowHandle, int width, int height, bool redraw = true)
     {
-        RemoveNativeWindowFrame(windowHandle);
-        var cornerPreference = DwmRoundCornerPreference;
-        _ = DwmSetWindowAttribute(
-            windowHandle,
-            DwmWindowCornerPreference,
-            ref cornerPreference,
-            sizeof(int));
-        var borderColor = DwmColorNone;
-        _ = DwmSetWindowAttribute(
-            windowHandle,
-            DwmBorderColor,
-            ref borderColor,
-            sizeof(int));
+        if (redraw)
+        {
+            RemoveNativeWindowFrame(windowHandle);
+            var cornerPreference = DwmRoundCornerPreference;
+            _ = DwmSetWindowAttribute(
+                windowHandle,
+                DwmWindowCornerPreference,
+                ref cornerPreference,
+                sizeof(int));
+            var borderColor = DwmColorNone;
+            _ = DwmSetWindowAttribute(
+                windowHandle,
+                DwmBorderColor,
+                ref borderColor,
+                sizeof(int));
+        }
 
         var geometry = WindowChromeGeometry.CreateForWebView(
             width,
@@ -1327,7 +1324,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             geometry.Height + 1,
             geometry.CornerDiameter,
             geometry.CornerDiameter);
-        if (region != IntPtr.Zero && SetWindowRgn(windowHandle, region, true) == 0)
+        if (region != IntPtr.Zero && SetWindowRgn(windowHandle, region, redraw) == 0)
         {
             _ = DeleteObject(region);
         }

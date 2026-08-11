@@ -14,12 +14,24 @@ public sealed class GlobalInputService : IDisposable
     private const uint WmClipboardUpdate = 0x031D;
     private const uint WmHotkey = 0x0312;
     private const int WhMouseLowLevel = 14;
+    private const uint WmLeftButtonDown = 0x0201;
+    private const uint WmLeftButtonUp = 0x0202;
     private const uint WmRightButtonDown = 0x0204;
     private const uint WmRightButtonUp = 0x0205;
     private const uint WmMiddleButtonDown = 0x0207;
     private const uint WmMiddleButtonUp = 0x0208;
+    private const uint WmMouseWheel = 0x020A;
     private const uint WmXButtonDown = 0x020B;
     private const uint WmXButtonUp = 0x020C;
+    private const uint ModifierAlt = 0x0001;
+    private const uint ModifierControl = 0x0002;
+    private const uint ModifierShift = 0x0004;
+    private const uint ModifierWindows = 0x0008;
+    private const int VirtualKeyShift = 0x10;
+    private const int VirtualKeyControl = 0x11;
+    private const int VirtualKeyAlt = 0x12;
+    private const int VirtualKeyLeftWindows = 0x5B;
+    private const int VirtualKeyRightWindows = 0x5C;
     private const string HotkeyConflictWarning = "自定义键盘快捷键已被其他程序占用，请更换后重试。";
     private const string HotkeyReleaseWarning = "旧快捷键未能释放，重启花海剪贴板后将恢复。";
     private readonly IntPtr windowHandle;
@@ -128,6 +140,24 @@ public sealed class GlobalInputService : IDisposable
         }
 
         var message = unchecked((uint)wParam.ToUInt64());
+        if (message is WmLeftButtonDown or WmRightButtonDown or WmMiddleButtonDown or WmMouseWheel or WmXButtonDown &&
+            TrySummonCustomMouse(message, lParam))
+        {
+            suppressCustomMouseUp = message switch
+            {
+                WmLeftButtonDown => WmLeftButtonUp,
+                WmRightButtonDown => WmRightButtonUp,
+                WmMiddleButtonDown => WmMiddleButtonUp,
+                WmXButtonDown => WmXButtonUp,
+                _ => 0
+            };
+            return new IntPtr(1);
+        }
+        if (message == suppressCustomMouseUp && suppressCustomMouseUp != 0)
+        {
+            suppressCustomMouseUp = 0;
+            return new IntPtr(1);
+        }
         if (message == WmRightButtonDown)
         {
             var target = GetForegroundWindow();
@@ -151,19 +181,6 @@ public sealed class GlobalInputService : IDisposable
             suppressRightButtonUp = false;
             return new IntPtr(1);
         }
-        else if (message is WmMiddleButtonDown or WmXButtonDown &&
-                 TrySummonCustomMouse(message, lParam))
-        {
-            suppressCustomMouseUp = message == WmMiddleButtonDown
-                ? WmMiddleButtonUp
-                : WmXButtonUp;
-            return new IntPtr(1);
-        }
-        else if (message == suppressCustomMouseUp)
-        {
-            suppressCustomMouseUp = 0;
-            return new IntPtr(1);
-        }
 
         return CallNextHookEx(mouseHook, code, wParam, lParam);
     }
@@ -182,12 +199,16 @@ public sealed class GlobalInputService : IDisposable
         var mouse = Marshal.PtrToStructure<MouseHookData>(lParam);
         var matches = gesture.Kind switch
         {
+            ShortcutGestureKind.LeftMouse => message == WmLeftButtonDown,
+            ShortcutGestureKind.RightMouse => message == WmRightButtonDown,
             ShortcutGestureKind.MiddleMouse => message == WmMiddleButtonDown,
             ShortcutGestureKind.XButton1 => message == WmXButtonDown && HighWord(mouse.mouseData) == 1,
             ShortcutGestureKind.XButton2 => message == WmXButtonDown && HighWord(mouse.mouseData) == 2,
+            ShortcutGestureKind.WheelUp => message == WmMouseWheel && unchecked((short)HighWord(mouse.mouseData)) > 0,
+            ShortcutGestureKind.WheelDown => message == WmMouseWheel && unchecked((short)HighWord(mouse.mouseData)) < 0,
             _ => false
         };
-        if (!matches)
+        if (!matches || !ModifiersMatch(gesture.Modifiers))
         {
             return false;
         }
@@ -243,6 +264,18 @@ public sealed class GlobalInputService : IDisposable
     }
 
     private static uint HighWord(uint value) => (value >> 16) & 0xFFFF;
+
+    private static bool ModifiersMatch(uint required) =>
+        IsModifierMatch(required, ModifierControl, VirtualKeyControl) &&
+        IsModifierMatch(required, ModifierAlt, VirtualKeyAlt) &&
+        IsModifierMatch(required, ModifierShift, VirtualKeyShift) &&
+        ((required & ModifierWindows) != 0) ==
+        (IsKeyDown(VirtualKeyLeftWindows) || IsKeyDown(VirtualKeyRightWindows));
+
+    private static bool IsModifierMatch(uint required, uint flag, int virtualKey) =>
+        ((required & flag) != 0) == IsKeyDown(virtualKey);
+
+    private static bool IsKeyDown(int virtualKey) => (GetAsyncKeyState(virtualKey) & 0x8000) != 0;
 
     public void Dispose()
     {
@@ -332,6 +365,9 @@ public sealed class GlobalInputService : IDisposable
 
     [DllImport("user32.dll")]
     private static extern bool GetCursorPos(out NativePoint point);
+
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int virtualKey);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern IntPtr GetModuleHandle(string? moduleName);

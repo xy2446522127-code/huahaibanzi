@@ -10,6 +10,10 @@ const source = fs.readFileSync(
 const context = { window: {} };
 vm.runInNewContext(source, context);
 const scale = context.window.HuahaiPanelScale;
+const windowHost = fs.readFileSync(
+  'src/HuahaiClipboard.App/Presentation/Windows/CursorPanelWindow.xaml.cs',
+  'utf8'
+);
 
 test('scale accepts every one-percent value from 80 through 160', () => {
   for (let percent = 80; percent <= 160; percent += 1) {
@@ -80,4 +84,13 @@ test('cancel restores the last committed scale without persisting a preview', ()
   assert.equal(rendered.at(-1), 83);
   assert.deepEqual(commits, []);
   assert.deepEqual(previews, [1.59, 0.83]);
+});
+
+test('native preview keeps a rounded window region instead of exposing square corners', () => {
+  const preview = windowHost.slice(
+    windowHost.indexOf('private void PreviewPanelScale'),
+    windowHost.indexOf('private void ResizeWindow')
+  );
+  assert.doesNotMatch(preview, /SetWindowRgn\([^;]+IntPtr\.Zero/);
+  assert.match(preview, /ApplyNativeGlassChrome\([\s\S]*redraw: false/);
 });

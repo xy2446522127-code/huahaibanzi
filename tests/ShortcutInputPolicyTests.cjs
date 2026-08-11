@@ -8,6 +8,10 @@ test('mouse shortcut is captured after listening starts even when pointer stays 
   assert.equal(shortcutInput.mouseGestureForButton(3), '鼠标侧键 1');
   assert.equal(shortcutInput.mouseGestureForButton(4), '鼠标侧键 2');
   assert.equal(shortcutInput.mouseGestureForButton(0), null);
+  assert.equal(shortcutInput.mouseGestureForButton(0, { ctrlKey: true }), 'Ctrl + 鼠标左键');
+  assert.equal(shortcutInput.mouseGestureForButton(2, { altKey: true }), 'Alt + 鼠标右键');
+  assert.equal(shortcutInput.wheelGesture(-120), '鼠标滚轮上');
+  assert.equal(shortcutInput.wheelGesture(120), '鼠标滚轮下');
 });
 
 test('keyboard shortcut formatting keeps supported modifiers and the final key', () => {
@@ -25,4 +29,12 @@ test('keyboard shortcut formatting keeps supported modifiers and the final key',
     metaKey: false,
     key: 'F8'
   }), 'F8');
+  assert.equal(shortcutInput.formatKey({
+    ctrlKey: true,
+    altKey: false,
+    shiftKey: false,
+    metaKey: false,
+    key: '1',
+    code: 'Numpad1'
+  }), 'Ctrl + Numpad1');
 });

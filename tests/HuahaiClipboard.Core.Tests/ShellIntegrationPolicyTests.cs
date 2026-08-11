@@ -19,7 +19,14 @@ public sealed class ShellIntegrationPolicyTests
         AssertGesture(tryParse, "F8", "Keyboard", 0u, 0x77u);
         AssertGesture(tryParse, "鼠标中键", "MiddleMouse", 0u, 0u);
         AssertGesture(tryParse, "鼠标侧键 1", "XButton1", 0u, 0u);
+        AssertGesture(tryParse, "鼠标滚轮上", "WheelUp", 0u, 0u);
+        AssertGesture(tryParse, "鼠标滚轮下", "WheelDown", 0u, 0u);
+        AssertGesture(tryParse, "Ctrl + 鼠标左键", "LeftMouse", 0x0002u, 0u);
+        AssertGesture(tryParse, "Alt + 鼠标右键", "RightMouse", 0x0001u, 0u);
+        AssertGesture(tryParse, "Ctrl + Numpad1", "Keyboard", 0x0002u, 0x61u);
+        AssertGesture(tryParse, "Ctrl + MediaPlayPause", "Keyboard", 0x0002u, 0xB3u);
         Assert.IsFalse(TryParse(tryParse, "A", out _), "Plain typing keys must not be captured globally.");
+        Assert.IsFalse(TryParse(tryParse, "鼠标左键", out _), "Bare primary clicks must not replace normal Windows input.");
     }
 
     [TestMethod]

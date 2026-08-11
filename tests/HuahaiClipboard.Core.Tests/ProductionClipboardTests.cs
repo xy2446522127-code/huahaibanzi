@@ -325,6 +325,7 @@ public sealed class ProductionClipboardTests
             var records = await source.GetAllAsync(CancellationToken.None);
             Assert.AreEqual(2, records.Count);
             Assert.AreEqual(older.Id, records[0].Id);
+            Assert.AreEqual(1, records.Count(record => record.Id == older.Id));
             Assert.AreEqual(touchedAt, records[0].LastCopiedAt);
             Assert.IsTrue(records[0].IsFavorite);
             Assert.IsTrue(records[0].IsPinned);

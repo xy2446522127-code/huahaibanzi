@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const shellPath = 'src/HuahaiClipboard.App/Assets/Web/product-shell.html';
 const html = fs.readFileSync(shellPath, 'utf8');
 const interactionModule = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/interaction-contract.js', 'utf8');
+const windowHost = fs.readFileSync('src/HuahaiClipboard.App/Presentation/Windows/CursorPanelWindow.xaml.cs', 'utf8');
 const count = (part) => html.split(part).length - 1;
 const interactionContract = JSON.parse(fs.readFileSync('.codex/app-product-delivery-interaction-contract.json', 'utf8'));
 
@@ -160,4 +161,11 @@ test('panel and settings hashes are real deep links with browser history support
   assert.match(html, /window\.addEventListener\('hashchange',applyRouteFromHash\)/);
   assert.match(html, /window\.HuahaiShellRouter\.settingsHash\(page\)/);
   assert.match(html, /window\.HuahaiShellRouter\.panelHash\(\)/);
+});
+
+test('visible native copy provides feedback while the host refreshes the promoted record', () => {
+  assert.match(html, /row\.classList\.add\('copying'\);if\(nativeHost\)/);
+  const copyCase = windowHost.slice(windowHost.indexOf('case "copy":'), windowHost.indexOf('case "requestThumbnail":'));
+  assert.match(copyCase, /await panelViewModel\.LoadAsync\(\)/);
+  assert.match(copyCase, /PostShellToastAsync\("已复制"/);
 });
