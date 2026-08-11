@@ -61,7 +61,7 @@ test('about page uses the production update bridge while keeping preview simulat
   assert.equal(count('id="updateStatus"'), 1);
   assert.equal(count('id="releaseButton"'), 1);
   assert.equal(count('id="installUpdateButton"'), 1);
-  assert.match(html, /版本 1\.1\.10/);
+  assert.match(html, /版本 1\.1\.11/);
   assert.match(html, /postNative\('setCheckUpdatesOnStartup'/);
   assert.match(html, /postNative\('checkUpdate'/);
   assert.match(html, /postNative\('installUpdate'/);
