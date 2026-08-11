@@ -72,6 +72,12 @@ public sealed class PanelViewModelTests
             typeof(ClipboardRecord),
             typeof(CancellationToken));
         AssertMethod<IClipboardHistorySource>(
+            "TouchAsync",
+            typeof(Task),
+            typeof(Guid),
+            typeof(DateTimeOffset),
+            typeof(CancellationToken));
+        AssertMethod<IClipboardHistorySource>(
             "SetFavoriteAsync",
             typeof(Task),
             typeof(Guid),
@@ -102,7 +108,12 @@ public sealed class PanelViewModelTests
             "ClearAsync",
             typeof(Task),
             typeof(CancellationToken));
-        Assert.AreEqual(9, typeof(IClipboardHistorySource).GetMethods().Length);
+        AssertMethod<IClipboardHistorySource>(
+            "TrimOrdinaryAsync",
+            typeof(Task),
+            typeof(int),
+            typeof(CancellationToken));
+        Assert.AreEqual(11, typeof(IClipboardHistorySource).GetMethods().Length);
 
         AssertMethod<IPanelActionSink>(
             "CopyAsync",

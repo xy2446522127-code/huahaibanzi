@@ -49,6 +49,31 @@ public sealed class ProtectedClipboardImageStoreTests
         }
     }
 
+    [TestMethod]
+    public async Task DeleteUnreferencedAsync_RemovesOnlyOrphansInsideTheImageDirectory()
+    {
+        var directory = CreateDirectory();
+        var outside = Path.Combine(Path.GetDirectoryName(directory)!, $"outside-{Guid.NewGuid():N}.png");
+        try
+        {
+            var store = new ProtectedClipboardImageStore(directory, new XorBinaryProtector());
+            var referenced = await store.SaveAsync("referenced.png", PngBytes, CancellationToken.None);
+            var orphan = await store.SaveAsync("orphan.png", PngBytes, CancellationToken.None);
+            await File.WriteAllBytesAsync(outside, PngBytes);
+
+            await store.DeleteUnreferencedAsync([referenced, outside], CancellationToken.None);
+
+            Assert.IsTrue(File.Exists(referenced));
+            Assert.IsFalse(File.Exists(orphan));
+            Assert.IsTrue(File.Exists(outside));
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+            if (File.Exists(outside)) File.Delete(outside);
+        }
+    }
+
     private static string CreateDirectory()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"huahai-images-{Guid.NewGuid():N}");

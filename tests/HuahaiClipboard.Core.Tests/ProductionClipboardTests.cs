@@ -285,6 +285,90 @@ public sealed class ProductionClipboardTests
         Assert.AreEqual(record, platform.LastWrittenRecord);
         Assert.IsFalse(missing.Succeeded);
         Assert.AreEqual(1, platform.WriteCalls);
+        Assert.AreEqual(1, source.TouchCalls);
+        Assert.AreEqual(record.Id, source.LastTouchedId);
+    }
+
+    [TestMethod]
+    public async Task ActionSink_DoesNotPromoteARecordWhenClipboardWriteFails()
+    {
+        var record = CreateRecord("copy failure", DateTimeOffset.UtcNow.AddMinutes(-5));
+        var source = new InMemoryHistorySource(record);
+        var sink = new ClipboardPanelActionSink(source, new RecordingClipboardPlatform { FailWrites = true });
+
+        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
+            () => sink.CopyAsync(record.Id, CancellationToken.None));
+
+        Assert.AreEqual(0, source.TouchCalls);
+    }
+
+    [TestMethod]
+    public async Task History_TouchMovesTheSameProtectedRecordToTheTop()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-touch-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "history.dat");
+        try
+        {
+            var source = new JsonClipboardHistorySource(path, new PassthroughTextProtector());
+            var older = CreateRecord("older", DateTimeOffset.Parse("2026-08-12T09:00:00+08:00")) with
+            {
+                IsFavorite = true,
+                IsPinned = true
+            };
+            var newer = CreateRecord("newer", DateTimeOffset.Parse("2026-08-12T10:00:00+08:00"));
+            await source.UpsertAsync(older, CancellationToken.None);
+            await source.UpsertAsync(newer, CancellationToken.None);
+
+            var touchedAt = DateTimeOffset.Parse("2026-08-12T11:00:00+08:00");
+            await source.TouchAsync(older.Id, touchedAt, CancellationToken.None);
+
+            var records = await source.GetAllAsync(CancellationToken.None);
+            Assert.AreEqual(2, records.Count);
+            Assert.AreEqual(older.Id, records[0].Id);
+            Assert.AreEqual(touchedAt, records[0].LastCopiedAt);
+            Assert.IsTrue(records[0].IsFavorite);
+            Assert.IsTrue(records[0].IsPinned);
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task History_DeleteRemovesAnImageOnlyAfterItsLastReferenceDisappears()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-image-lifecycle-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "history.dat");
+        var imageDirectory = Path.Combine(directory, "images");
+        try
+        {
+            var imageStore = new ProtectedClipboardImageStore(imageDirectory, new PassthroughBinaryProtector());
+            var imagePath = await imageStore.SaveAsync("shared.png", [1, 2, 3], CancellationToken.None);
+            var source = new JsonClipboardHistorySource(path, new PassthroughTextProtector(), imageStore);
+            var first = CreateRecord("first-image", DateTimeOffset.UtcNow) with
+            {
+                Kind = ClipboardItemKind.Image,
+                PreviewAssetPath = imagePath
+            };
+            var second = CreateRecord("second-image", DateTimeOffset.UtcNow.AddSeconds(1)) with
+            {
+                Kind = ClipboardItemKind.Image,
+                PreviewAssetPath = imagePath
+            };
+            await source.UpsertAsync(first, CancellationToken.None);
+            await source.UpsertAsync(second, CancellationToken.None);
+
+            await source.DeleteAsync(first.Id, CancellationToken.None);
+            Assert.IsTrue(File.Exists(imagePath));
+
+            await source.DeleteAsync(second.Id, CancellationToken.None);
+            Assert.IsFalse(File.Exists(imagePath));
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
     }
 
     private static ClipboardRecord CreateRecord(string text, DateTimeOffset copiedAt) =>
@@ -319,11 +403,13 @@ public sealed class ProductionClipboardTests
     {
         public int WriteCalls { get; private set; }
         public ClipboardRecord? LastWrittenRecord { get; private set; }
+        public bool FailWrites { get; init; }
 
         public Task WriteAsync(ClipboardRecord record, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             WriteCalls++;
+            if (FailWrites) throw new InvalidOperationException("clipboard unavailable");
             LastWrittenRecord = record;
             return Task.CompletedTask;
         }
@@ -334,6 +420,8 @@ public sealed class ProductionClipboardTests
     private sealed class InMemoryHistorySource(params ClipboardRecord[] records) : IClipboardHistorySource
     {
         private readonly List<ClipboardRecord> values = [.. records];
+        public int TouchCalls { get; private set; }
+        public Guid? LastTouchedId { get; private set; }
 
         public Task<IReadOnlyList<ClipboardRecord>> GetAllAsync(CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<ClipboardRecord>>(values.ToArray());
@@ -342,11 +430,24 @@ public sealed class ProductionClipboardTests
             Task.FromResult(values.FirstOrDefault(record => record.Id == recordId));
 
         public Task UpsertAsync(ClipboardRecord record, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task TouchAsync(Guid recordId, DateTimeOffset touchedAt, CancellationToken cancellationToken)
+        {
+            TouchCalls++;
+            LastTouchedId = recordId;
+            return Task.CompletedTask;
+        }
         public Task SetFavoriteAsync(Guid recordId, bool value, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task SetPinnedAsync(Guid recordId, bool value, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteAsync(Guid recordId, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task ClearUnprotectedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
         public Task PruneAsync(DateTimeOffset cutoff, bool preserveProtected, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task ClearAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task TrimOrdinaryAsync(int maximumCount, CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class PassthroughBinaryProtector : IBinaryProtector
+    {
+        public byte[] Protect(byte[] value) => value;
+        public byte[] Unprotect(byte[] value) => value;
     }
 }

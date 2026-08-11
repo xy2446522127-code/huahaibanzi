@@ -49,6 +49,43 @@ public sealed class ProtectedClipboardImageStore(
         }
     }
 
+    public Task DeleteAsync(string filePath, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (IsOwnedPath(filePath) && File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteUnreferencedAsync(
+        IReadOnlyCollection<string> referencedPaths,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(referencedPaths);
+        if (!Directory.Exists(imageDirectory))
+        {
+            return Task.CompletedTask;
+        }
+
+        var referenced = referencedPaths
+            .Where(IsOwnedPath)
+            .Select(Path.GetFullPath)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var path in Directory.EnumerateFiles(imageDirectory, "*.png"))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!referenced.Contains(Path.GetFullPath(path)))
+            {
+                File.Delete(path);
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
     private async Task WriteProtectedAsync(
         string path,
         byte[] plainBytes,
@@ -92,6 +129,15 @@ public sealed class ProtectedClipboardImageStore(
                 return path;
             }
         }
+    }
+
+    private bool IsOwnedPath(string? filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath)) return false;
+        var expectedParent = Path.GetFullPath(imageDirectory)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var actual = Path.GetFullPath(filePath);
+        return string.Equals(Path.GetDirectoryName(actual), expectedParent, StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool HasHeader(byte[] value) =>

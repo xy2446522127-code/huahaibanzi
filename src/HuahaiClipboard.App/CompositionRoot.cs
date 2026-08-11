@@ -28,10 +28,11 @@ public sealed class CompositionRoot
             LocalDataLayout.ResolveLegacyDataDirectory());
         var protector = new DpapiTextProtector();
         settingsStore = new JsonSettingsStore(dataLayout.SettingsFile);
+        imageStore = new ProtectedClipboardImageStore(dataLayout.ImageDirectory, protector);
         historySource = new JsonClipboardHistorySource(
             dataLayout.HistoryFile,
-            protector);
-        imageStore = new ProtectedClipboardImageStore(dataLayout.ImageDirectory, protector);
+            protector,
+            imageStore);
         imagePreviewSource = new ClipboardImagePreviewSourceService(imageStore);
         clipboardWriteOriginGuard = new WindowsClipboardWriteOriginGuard();
         clipboardPlatform = new WindowsClipboardPlatform(imageStore, clipboardWriteOriginGuard);

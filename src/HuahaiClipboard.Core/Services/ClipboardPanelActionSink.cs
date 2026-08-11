@@ -25,6 +25,7 @@ public sealed class ClipboardPanelActionSink(
         }
 
         await clipboardPlatform.WriteAsync(record, cancellationToken);
+        await historySource.TouchAsync(record.Id, DateTimeOffset.Now, cancellationToken);
         if (!paste)
         {
             return PanelActionResult.Success();

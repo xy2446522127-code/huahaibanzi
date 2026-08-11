@@ -8,13 +8,18 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
 {
     private readonly string filePath;
     private readonly ITextProtector protector;
+    private readonly IClipboardImageStore? imageStore;
     private readonly SemaphoreSlim gate = new(1, 1);
     private List<ClipboardRecord>? records;
 
-    public JsonClipboardHistorySource(string filePath, ITextProtector protector)
+    public JsonClipboardHistorySource(
+        string filePath,
+        ITextProtector protector,
+        IClipboardImageStore? imageStore = null)
     {
         this.filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
         this.protector = protector ?? throw new ArgumentNullException(nameof(protector));
+        this.imageStore = imageStore;
     }
 
     public async Task<IReadOnlyList<ClipboardRecord>> GetAllAsync(CancellationToken cancellationToken)
@@ -71,12 +76,15 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
             var overflow = values
                 .Where(value => !value.IsFavorite && !value.IsPinned)
                 .OrderByDescending(value => value.LastCopiedAt)
-                .Skip(1000)
+                .Skip(10000)
                 .Select(value => value.Id)
                 .ToHashSet();
             values.RemoveAll(value => overflow.Contains(value.Id));
         }, cancellationToken);
     }
+
+    public Task TouchAsync(Guid recordId, DateTimeOffset touchedAt, CancellationToken cancellationToken) =>
+        UpdateAsync(recordId, record => record with { LastCopiedAt = touchedAt }, cancellationToken);
 
     public Task SetFavoriteAsync(Guid recordId, bool value, CancellationToken cancellationToken) =>
         UpdateAsync(recordId, record => record with { IsFavorite = value }, cancellationToken);
@@ -111,18 +119,39 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
         try
         {
             await EnsureLoadedAsync(cancellationToken);
+            var beforeAssets = ReferencedAssets(records!);
             var removed = records!.RemoveAll(value =>
                 value.LastCopiedAt < cutoff &&
                 (!preserveProtected || !value.IsFavorite && !value.IsPinned));
             if (removed > 0)
             {
                 await SaveAsync(cancellationToken);
+                await DeleteRemovedAssetsAsync(beforeAssets, records!, cancellationToken);
             }
         }
         finally
         {
             gate.Release();
         }
+    }
+
+    public Task TrimOrdinaryAsync(int maximumCount, CancellationToken cancellationToken)
+    {
+        if (maximumCount is < 1 or > 10000)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maximumCount));
+        }
+
+        return MutateAsync(values =>
+        {
+            var overflow = values
+                .Where(value => !value.IsFavorite && !value.IsPinned)
+                .OrderByDescending(value => value.LastCopiedAt)
+                .Skip(maximumCount)
+                .Select(value => value.Id)
+                .ToHashSet();
+            values.RemoveAll(value => overflow.Contains(value.Id));
+        }, cancellationToken);
     }
 
     private Task UpdateAsync(
@@ -146,14 +175,43 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
         try
         {
             await EnsureLoadedAsync(cancellationToken);
+            var beforeAssets = ReferencedAssets(records!);
             mutation(records!);
             await SaveAsync(cancellationToken);
+            await DeleteRemovedAssetsAsync(beforeAssets, records!, cancellationToken);
         }
         finally
         {
             gate.Release();
         }
     }
+
+    private async Task DeleteRemovedAssetsAsync(
+        IReadOnlySet<string> beforeAssets,
+        IReadOnlyCollection<ClipboardRecord> remaining,
+        CancellationToken cancellationToken)
+    {
+        if (imageStore is null || beforeAssets.Count == 0) return;
+        var remainingAssets = ReferencedAssets(remaining);
+        foreach (var path in beforeAssets.Where(path => !remainingAssets.Contains(path)))
+        {
+            try
+            {
+                await imageStore.DeleteAsync(path, cancellationToken);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                // Startup orphan collection retries files temporarily held by another process.
+            }
+        }
+    }
+
+    private static HashSet<string> ReferencedAssets(IEnumerable<ClipboardRecord> values) =>
+        values
+            .Select(value => value.PreviewAssetPath)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Select(path => Path.GetFullPath(path!))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     private async Task EnsureLoadedAsync(CancellationToken cancellationToken)
     {
