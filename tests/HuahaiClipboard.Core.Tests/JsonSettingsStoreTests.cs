@@ -24,7 +24,9 @@ public sealed class JsonSettingsStoreTests
                     true,
                     "1.1.7",
                     new DateTimeOffset(2026, 8, 9, 12, 0, 0, TimeSpan.Zero),
-                    HideOnOutsideClick: false)
+                    HideOnOutsideClick: false,
+                    AutoCleanupCountEnabled: true,
+                    AutoCleanupCount: 4321)
             };
             var first = new JsonSettingsStore(path);
 
@@ -40,6 +42,8 @@ public sealed class JsonSettingsStoreTests
             Assert.AreEqual(30, actual.Behavior.AutoCleanupDays);
             Assert.AreEqual("1.1.7", actual.Behavior.SnoozedUpdateVersion);
             Assert.IsFalse(actual.Behavior.HideOnOutsideClick);
+            Assert.IsTrue(actual.Behavior.AutoCleanupCountEnabled);
+            Assert.AreEqual(4321, actual.Behavior.AutoCleanupCount);
             Assert.AreEqual(
                 new DateTimeOffset(2026, 8, 9, 12, 0, 0, TimeSpan.Zero),
                 actual.Behavior.UpdateSnoozeUntil);
@@ -50,6 +54,40 @@ public sealed class JsonSettingsStoreTests
             {
                 Directory.Delete(directory, recursive: true);
             }
+        }
+    }
+
+    [DataTestMethod]
+    [DataRow(0, 100)]
+    [DataRow(1, 1)]
+    [DataRow(100, 100)]
+    [DataRow(10000, 10000)]
+    [DataRow(10001, 100)]
+    public async Task Settings_NormalizeAutomaticCountLimit(int storedCount, int expectedCount)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-settings-count-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "settings.json");
+        try
+        {
+            Directory.CreateDirectory(directory);
+            var settings = ShellSettings.Default with
+            {
+                Behavior = ShellSettings.Default.Behavior with
+                {
+                    AutoCleanupCountEnabled = true,
+                    AutoCleanupCount = storedCount
+                }
+            };
+            await File.WriteAllTextAsync(path, System.Text.Json.JsonSerializer.Serialize(settings));
+
+            var actual = await new JsonSettingsStore(path).LoadAsync(CancellationToken.None);
+
+            Assert.IsTrue(actual.Behavior.AutoCleanupCountEnabled);
+            Assert.AreEqual(expectedCount, actual.Behavior.AutoCleanupCount);
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
         }
     }
 

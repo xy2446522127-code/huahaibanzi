@@ -6,7 +6,9 @@ public sealed record BehaviorSettings(
     bool CheckUpdatesOnStartup = true,
     string? SnoozedUpdateVersion = null,
     DateTimeOffset? UpdateSnoozeUntil = null,
-    bool HideOnOutsideClick = true)
+    bool HideOnOutsideClick = true,
+    bool AutoCleanupCountEnabled = false,
+    int AutoCleanupCount = 100)
 {
     public static BehaviorSettings Default { get; } = new(true, 7);
 }

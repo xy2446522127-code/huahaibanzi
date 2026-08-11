@@ -20,6 +20,7 @@ public sealed class ClipboardCaptureService(
 {
     private readonly int currentProcessId = Environment.ProcessId;
     private readonly SerialAsyncWorkQueue captureQueue = new();
+    private readonly ClipboardRetentionService retentionService = new(historySource);
 
     public event EventHandler? HistoryChanged;
 
@@ -70,10 +71,7 @@ public sealed class ClipboardCaptureService(
         }
 
         await historySource.UpsertAsync(record, CancellationToken.None);
-        await historySource.PruneAsync(
-            DateTimeOffset.Now.AddDays(-settings.Behavior.AutoCleanupDays),
-            preserveProtected: true,
-            CancellationToken.None);
+        await retentionService.ApplyAsync(settings.Behavior, DateTimeOffset.Now, CancellationToken.None);
         HistoryChanged?.Invoke(this, EventArgs.Empty);
     }
 

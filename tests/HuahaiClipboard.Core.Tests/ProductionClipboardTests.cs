@@ -371,6 +371,61 @@ public sealed class ProductionClipboardTests
         }
     }
 
+    [TestMethod]
+    public async Task RetentionService_AppliesTimeAndCountLimitsWithoutRemovingProtectedRecords()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-retention-service-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "history.dat");
+        try
+        {
+            var source = new JsonClipboardHistorySource(path, new PassthroughTextProtector());
+            var now = DateTimeOffset.Parse("2026-08-12T12:00:00+08:00");
+            await source.UpsertAsync(CreateRecord("expired", now.AddDays(-4)), CancellationToken.None);
+            await source.UpsertAsync(CreateRecord("ordinary-old", now.AddHours(-3)), CancellationToken.None);
+            await source.UpsertAsync(CreateRecord("ordinary-middle", now.AddHours(-2)), CancellationToken.None);
+            await source.UpsertAsync(CreateRecord("ordinary-new", now.AddHours(-1)), CancellationToken.None);
+            await source.UpsertAsync(CreateRecord("favorite", now.AddDays(-40)) with { IsFavorite = true }, CancellationToken.None);
+            await source.UpsertAsync(CreateRecord("pinned", now.AddDays(-40)) with { IsPinned = true }, CancellationToken.None);
+            var service = new ClipboardRetentionService(source);
+            var settings = new HuahaiClipboard.Core.Settings.BehaviorSettings(
+                BackgroundEnabled: true,
+                AutoCleanupDays: 3,
+                AutoCleanupCountEnabled: true,
+                AutoCleanupCount: 2);
+
+            await service.ApplyAsync(settings, now, CancellationToken.None);
+
+            CollectionAssert.AreEquivalent(
+                new[] { "ordinary-middle", "ordinary-new", "favorite", "pinned" },
+                (await source.GetAllAsync(CancellationToken.None)).Select(record => record.PrimaryText).ToArray());
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task History_TrimDoesNotRewriteWhenOrdinaryRecordsAreWithinTheLimit()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-trim-unchanged-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "history.dat");
+        try
+        {
+            var protector = new CountingTextProtector();
+            var source = new JsonClipboardHistorySource(path, protector);
+            await source.UpsertAsync(CreateRecord("one", DateTimeOffset.UtcNow), CancellationToken.None);
+
+            await source.TrimOrdinaryAsync(100, CancellationToken.None);
+
+            Assert.AreEqual(1, protector.ProtectCalls);
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
+
     private static ClipboardRecord CreateRecord(string text, DateTimeOffset copiedAt) =>
         new(Guid.NewGuid(), ClipboardItemKind.Text, text, "notepad.exe", copiedAt, false, false, true, null);
 

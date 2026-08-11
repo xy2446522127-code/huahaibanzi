@@ -135,23 +135,33 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
         }
     }
 
-    public Task TrimOrdinaryAsync(int maximumCount, CancellationToken cancellationToken)
+    public async Task TrimOrdinaryAsync(int maximumCount, CancellationToken cancellationToken)
     {
         if (maximumCount is < 1 or > 10000)
         {
             throw new ArgumentOutOfRangeException(nameof(maximumCount));
         }
 
-        return MutateAsync(values =>
+        await gate.WaitAsync(cancellationToken);
+        try
         {
-            var overflow = values
+            await EnsureLoadedAsync(cancellationToken);
+            var overflow = records!
                 .Where(value => !value.IsFavorite && !value.IsPinned)
                 .OrderByDescending(value => value.LastCopiedAt)
                 .Skip(maximumCount)
                 .Select(value => value.Id)
                 .ToHashSet();
-            values.RemoveAll(value => overflow.Contains(value.Id));
-        }, cancellationToken);
+            if (overflow.Count == 0) return;
+            var beforeAssets = ReferencedAssets(records!);
+            records!.RemoveAll(value => overflow.Contains(value.Id));
+            await SaveAsync(cancellationToken);
+            await DeleteRemovedAssetsAsync(beforeAssets, records!, cancellationToken);
+        }
+        finally
+        {
+            gate.Release();
+        }
     }
 
     private Task UpdateAsync(

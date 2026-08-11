@@ -103,7 +103,10 @@ public sealed class JsonSettingsStore(string filePath) : ISettingsStore
         {
             AutoCleanupDays = behavior.AutoCleanupDays is 3 or 7 or 30
                 ? behavior.AutoCleanupDays
-                : BehaviorSettings.Default.AutoCleanupDays
+                : BehaviorSettings.Default.AutoCleanupDays,
+            AutoCleanupCount = behavior.AutoCleanupCount is >= 1 and <= 10000
+                ? behavior.AutoCleanupCount
+                : BehaviorSettings.Default.AutoCleanupCount
         };
     }
 }

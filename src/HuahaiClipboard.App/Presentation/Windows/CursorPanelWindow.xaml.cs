@@ -59,6 +59,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private ProactiveUpdateCoordinator? updateCoordinator;
     private InputSettingsSnapshot? inputSettingsSnapshot;
     private AppWindow? appWindow;
+    private Microsoft.UI.Dispatching.DispatcherQueueTimer? retentionTimer;
     private Microsoft.UI.Dispatching.DispatcherQueueTimer? dragTimer;
     private PointInt32? dragPointerOrigin;
     private PointInt32? dragWindowOrigin;
@@ -108,11 +109,18 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             inputSettingsSnapshot,
             compositionRoot.CaptureService,
             ShowAtCursor);
-        await compositionRoot.HistorySource.PruneAsync(
-            DateTimeOffset.Now.AddDays(-settings.Behavior.AutoCleanupDays),
-            preserveProtected: true,
+        await compositionRoot.RetentionService.ApplyAsync(
+            settings.Behavior,
+            DateTimeOffset.Now,
             CancellationToken.None);
         await panelViewModel.LoadAsync();
+        await compositionRoot.ImageStore.DeleteUnreferencedAsync(
+            panelViewModel.AllRecords
+                .Select(record => record.PreviewAssetPath)
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Select(path => path!)
+                .ToArray(),
+            CancellationToken.None);
         await UnmanagedCallbackGuard.InvokeAsync(
             () => compositionRoot.ImageStore.ProtectLegacyFilesAsync(CancellationToken.None));
         trayService = new TrayService(
@@ -125,6 +133,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             () => DispatcherQueue.TryEnqueue(ShowUpdatePane),
             () => DispatcherQueue.TryEnqueue(ExitApplication));
         TryStartUpdateCoordinator();
+        StartRetentionTimer();
         await PostShellStateAsync();
     }
 
@@ -292,11 +301,24 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                 var retentionDays = NormalizeRetentionDays(request.Number);
                 await settingsViewModel.UpdateBehaviorAsync(
                     settingsViewModel.Draft.Behavior with { AutoCleanupDays = retentionDays });
-                await compositionRoot.HistorySource.PruneAsync(
-                    DateTimeOffset.Now.AddDays(-retentionDays),
-                    preserveProtected: true,
-                    CancellationToken.None);
-                await panelViewModel.LoadAsync();
+                await ApplyRetentionAsync();
+                break;
+            case "setAutoCleanupCountEnabled":
+                await settingsViewModel.UpdateBehaviorAsync(
+                    settingsViewModel.Draft.Behavior with
+                    {
+                        AutoCleanupCountEnabled = request.Enabled == true
+                    });
+                await ApplyRetentionAsync();
+                break;
+            case "setAutoCleanupCount":
+                var cleanupCount = NormalizeCleanupCount(request.Number);
+                await settingsViewModel.UpdateBehaviorAsync(
+                    settingsViewModel.Draft.Behavior with
+                    {
+                        AutoCleanupCount = cleanupCount
+                    });
+                await ApplyRetentionAsync();
                 break;
             case "clearOrdinary":
                 await compositionRoot.HistorySource.ClearUnprotectedAsync(CancellationToken.None);
@@ -490,6 +512,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                 customShortcut = settings.Input.HotkeyEnabled ? settings.Input.CustomShortcut : null,
                 exclusions = settings.Input.ExcludedApplications,
                 retentionDays = settings.Behavior.AutoCleanupDays,
+                autoCleanupCountEnabled = settings.Behavior.AutoCleanupCountEnabled,
+                autoCleanupCount = settings.Behavior.AutoCleanupCount,
                 backgroundEnabled = settings.Behavior.BackgroundEnabled,
                 hideOnOutsideClick = settings.Behavior.HideOnOutsideClick,
                 checkUpdatesOnStartup = settings.Behavior.CheckUpdatesOnStartup,
@@ -764,6 +788,47 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private static int NormalizeRetentionDays(double? value) => (int?)value is 3 or 7 or 30
         ? (int)value!.Value
         : throw new InvalidOperationException("自动清理期限无效");
+
+    private static int NormalizeCleanupCount(double? value)
+    {
+        if (value is not double number ||
+            number != Math.Truncate(number) ||
+            number is < 1 or > 10000)
+        {
+            throw new InvalidOperationException("普通记录上限必须是 1–10000 的整数");
+        }
+
+        return (int)number;
+    }
+
+    private void StartRetentionTimer()
+    {
+        if (retentionTimer is not null) return;
+        retentionTimer = DispatcherQueue.CreateTimer();
+        retentionTimer.Interval = TimeSpan.FromMinutes(15);
+        retentionTimer.IsRepeating = true;
+        retentionTimer.Tick += RetentionTimer_Tick;
+        retentionTimer.Start();
+    }
+
+    private void RetentionTimer_Tick(
+        Microsoft.UI.Dispatching.DispatcherQueueTimer sender,
+        object args) =>
+        _ = UnmanagedCallbackGuard.InvokeAsync(ApplyRetentionAsync);
+
+    private async Task ApplyRetentionAsync()
+    {
+        await compositionRoot.RetentionService.ApplyAsync(
+            settingsViewModel.Draft.Behavior,
+            DateTimeOffset.Now,
+            CancellationToken.None);
+        await panelViewModel.LoadAsync();
+        var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        if (IsWindowVisible(handle))
+        {
+            await PostShellStateAsync();
+        }
+    }
 
     private static string NormalizeThemeId(string? value) => value switch
     {
@@ -1126,6 +1191,12 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     private void DisposeRuntime()
     {
+        if (retentionTimer is not null)
+        {
+            retentionTimer.Stop();
+            retentionTimer.Tick -= RetentionTimer_Tick;
+            retentionTimer = null;
+        }
         StopNativeWindowDrag(savePosition: false);
         if (dragTimer is not null)
         {

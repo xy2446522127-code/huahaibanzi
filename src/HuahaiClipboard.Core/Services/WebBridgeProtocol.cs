@@ -14,6 +14,8 @@ public static class WebBridgeProtocol
         "toggleFavorite",
         "delete",
         "setRetentionDays",
+        "setAutoCleanupCountEnabled",
+        "setAutoCleanupCount",
         "clearOrdinary",
         "clearAll",
         "setTheme",

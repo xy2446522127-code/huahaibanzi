@@ -91,7 +91,7 @@ public sealed class ShellIntegrationPolicyTests
         string[] actions =
         [
             "ready", "hide", "resize", "copy", "requestThumbnail", "togglePin", "toggleFavorite", "delete",
-            "setRetentionDays", "clearOrdinary", "clearAll", "setTheme", "setOpacity",
+            "setRetentionDays", "setAutoCleanupCountEnabled", "setAutoCleanupCount", "clearOrdinary", "clearAll", "setTheme", "setOpacity",
             "setPetals", "setReduceMotion", "setClickDuration", "setRightDoubleClick",
             "setShortcut", "resetShortcut", "setExclusions", "openDataFolder", "setStartup",
             "setBackground", "setOutsideAutoHide", "beginNativeDrag"
