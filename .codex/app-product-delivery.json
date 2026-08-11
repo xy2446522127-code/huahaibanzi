@@ -16,12 +16,15 @@
   "product_acceptance_required": true,
   "progress_path": ".codex/app-product-delivery-progress.json",
   "project_kind": "new",
+  "requirement_routing_path": ".codex/app-product-delivery-requirement-routing.json",
+  "requirement_routing_required": true,
+  "requirement_routing_version": 1,
   "resource_budget_path": ".codex/app-product-delivery-resource-budget.json",
   "resource_governance_version": 1,
   "token_budget_mode": "bounded_auto",
   "ui_carrier_contract_path": ".codex/app-product-delivery-ui-carrier.json",
   "update_capability_enabled": false,
   "update_contract_path": ".codex/app-product-delivery-update-contract.json",
-  "version": 6,
+  "version": 7,
   "visual_contract_path": ".codex/app-product-delivery-visual-contract.json"
 }

@@ -18,6 +18,7 @@
 - Cross-conversation memory: use the versioned coordination manifest and block stale child tasks before writes or checkpoints.
 - Evidence acceptance: route each surface to bounded deterministic evidence; retain before, after, and difference only when material.
 - Existing UI: derive from the approved baseline; classify and propagate shared visual changes.
+- Requirement routing: each formal task has a revision-bound routing receipt; affected formal UI work needs source screening and approved-shell lineage before a candidate is presented.
 - Checkpoints: one verified functional outcome equals one checkpoint; coordination metadata is not a standalone checkpoint.
 - Runtime: use fixed or leased ports, PID records, bounded logs, and cleanup on success, failure, interruption, or timeout.
 - Completion boundary: non-blocking findings go to the backlog and do not auto-expand the stage.

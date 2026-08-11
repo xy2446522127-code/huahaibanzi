@@ -2,7 +2,7 @@
   "compatibility_review_required": false,
   "findings": [],
   "policy_path": ".codex/app-product-delivery.json",
-  "policy_version": 6,
+  "policy_version": 7,
   "reason_codes": [],
   "version": 1
 }

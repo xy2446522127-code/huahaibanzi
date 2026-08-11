@@ -39,7 +39,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private static readonly TimeSpan PreShowSynchronizationTimeout = TimeSpan.FromMilliseconds(750);
     private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly IntPtr HwndNoTopmost = new(-2);
-    private static readonly Version CurrentVersion = new(1, 1, 9);
+    private static readonly Version CurrentVersion = new(1, 1, 10);
 
     private readonly CompositionRoot compositionRoot = new();
     private readonly WindowNavigator navigator = new();
