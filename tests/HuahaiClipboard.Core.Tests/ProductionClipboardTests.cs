@@ -337,6 +337,39 @@ public sealed class ProductionClipboardTests
     }
 
     [TestMethod]
+    public async Task ActionSink_PromotesAnExistingRecordWithinItsOwnGroupWithoutDuplicatingIt()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-copy-order-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "history.dat");
+        try
+        {
+            var source = new JsonClipboardHistorySource(path, new PassthroughTextProtector());
+            var now = DateTimeOffset.Now;
+            var pinned = CreateRecord("pinned", now.AddMinutes(-30)) with { IsPinned = true };
+            var newestOrdinary = CreateRecord("newest-ordinary", now.AddMinutes(-10));
+            var reusedOrdinary = CreateRecord("reused-ordinary", now.AddMinutes(-20));
+            await source.UpsertAsync(pinned, CancellationToken.None);
+            await source.UpsertAsync(newestOrdinary, CancellationToken.None);
+            await source.UpsertAsync(reusedOrdinary, CancellationToken.None);
+            var sink = new ClipboardPanelActionSink(source, new RecordingClipboardPlatform());
+
+            var result = await sink.CopyAsync(reusedOrdinary.Id, CancellationToken.None);
+
+            Assert.IsTrue(result.Succeeded);
+            var records = await source.GetAllAsync(CancellationToken.None);
+            CollectionAssert.AreEqual(
+                new[] { pinned.Id, reusedOrdinary.Id, newestOrdinary.Id },
+                records.Select(record => record.Id).ToArray());
+            Assert.AreEqual(1, records.Count(record => record.Id == reusedOrdinary.Id));
+            Assert.IsFalse(records.Single(record => record.Id == reusedOrdinary.Id).IsPinned);
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [TestMethod]
     public async Task History_DeleteRemovesAnImageOnlyAfterItsLastReferenceDisappears()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"huahai-image-lifecycle-{Guid.NewGuid():N}");

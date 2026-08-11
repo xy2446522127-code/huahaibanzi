@@ -28,7 +28,10 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
         try
         {
             await EnsureLoadedAsync(cancellationToken);
-            return records!.OrderByDescending(record => record.LastCopiedAt).ToArray();
+            return records!
+                .OrderByDescending(record => record.IsPinned)
+                .ThenByDescending(record => record.LastCopiedAt)
+                .ToArray();
         }
         finally
         {
