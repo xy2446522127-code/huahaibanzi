@@ -26,6 +26,7 @@ $requiredPaths = @(
     'Presentation\Windows\CursorPanelWindow.xbf'
     'Assets\Web\product-shell.html'
     'Assets\Web\panel-scale.js'
+    'Assets\Web\virtual-record-list.js'
     'WebView2Loader.dll'
     'Microsoft.WindowsAppRuntime.Bootstrap.dll'
 )

@@ -19,9 +19,11 @@ if (Test-Path -LiteralPath $userDataRoot) {
     }
 }
 Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
 $clipboardData = [System.Windows.Forms.Clipboard]::GetDataObject()
 $clipboardWasEmpty = $null -eq $clipboardData
 $clipboardSnapshot = [System.Windows.Forms.DataObject]::new()
+$clipboardDisposables = [System.Collections.Generic.List[System.IDisposable]]::new()
 foreach ($format in @($(if ($clipboardWasEmpty) { @() } else { $clipboardData.GetFormats($false) }))) {
     $value = $clipboardData.GetData($format, $false)
     if ($value -is [string]) {
@@ -30,6 +32,12 @@ foreach ($format in @($(if ($clipboardWasEmpty) { @() } else { $clipboardData.Ge
     }
     if ($value -is [System.IO.MemoryStream]) {
         $clipboardSnapshot.SetData($format, $false, [System.IO.MemoryStream]::new($value.ToArray(), $false))
+        continue
+    }
+    if ($value -is [System.Drawing.Image]) {
+        $imageCopy = [System.Drawing.Bitmap]::new([System.Drawing.Image]$value)
+        $clipboardDisposables.Add($imageCopy)
+        $clipboardSnapshot.SetData($format, $false, $imageCopy)
         continue
     }
     throw "Clipboard smoke cannot safely clone and restore format '$format' of type '$($value.GetType().FullName)'; no test changes were made."
@@ -85,8 +93,9 @@ try {
         throw 'The background instance could not be summoned for record interaction checks.'
     }
     Start-Sleep -Milliseconds 750
-    $inspectRaw = node $recordProbe $DebugPort inspect-and-toggle $deleteProbe
+    $inspectOutput = @(& node $recordProbe $DebugPort inspect-and-toggle $deleteProbe 2>&1)
     $inspectExitCode = $LASTEXITCODE
+    $inspectRaw = ($inspectOutput | ForEach-Object { [string]$_ }) -join [Environment]::NewLine
     $inspect = if ([string]::IsNullOrWhiteSpace($inspectRaw)) { $null } else { $inspectRaw | ConvertFrom-Json }
     if ($inspectExitCode -ne 0 -or $null -eq $inspect -or -not $inspect.pinRestored -or -not $inspect.favoriteRestored) {
         throw "Pin/favorite state did not toggle and restore through the production bridge. ExitCode=$inspectExitCode Raw=$inspectRaw Result=$($inspect | ConvertTo-Json -Compress)"
@@ -152,6 +161,9 @@ try {
 
     $cleanup = node $recordProbe $DebugPort delete-prefix 'HuahaiClipboard-Smoke-' | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0) { throw 'Smoke test records could not be cleaned from production history.' }
+    if ([int]$cleanup.deleted -ne 0) {
+        throw "A clipboard value copied from the panel was captured into history again. Recaptured=$($cleanup.deleted)"
+    }
 
     [pscustomobject]@{
         Status = 'passed'
@@ -169,11 +181,27 @@ try {
     } | ConvertTo-Json -Compress
 }
 finally {
-    if (-not $process.HasExited) {
-        Stop-Process -Id $process.Id -Force
+    if ($null -ne $process) {
+        $snapshot = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)
+        $ownedIds = @($process.Id)
+        $expanded = $true
+        while ($expanded) {
+            $expanded = $false
+            $children = @($snapshot | Where-Object { $ownedIds -contains $_.ParentProcessId } | Select-Object -ExpandProperty ProcessId)
+            foreach ($childId in $children) {
+                if ($ownedIds -notcontains $childId) {
+                    $ownedIds += [int]$childId
+                    $expanded = $true
+                }
+            }
+        }
+        foreach ($ownedId in ($ownedIds | Sort-Object -Descending -Unique)) {
+            Stop-Process -Id $ownedId -Force -ErrorAction SilentlyContinue
+        }
         Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
     }
     Restore-ClipboardSnapshot $clipboardSnapshot $clipboardWasEmpty
+    foreach ($disposable in $clipboardDisposables) { $disposable.Dispose() }
     $env:HUAHAI_CLIPBOARD_LOCALAPPDATA = $previousDataRoot
     $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = $previousArguments
     $env:WEBVIEW2_USER_DATA_FOLDER = $previousWebViewData

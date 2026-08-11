@@ -24,8 +24,8 @@ public sealed class TransientWindowVisibilityController(ITransientWindowHost hos
     {
         ArgumentNullException.ThrowIfNull(synchronizeBeforeShow);
         host.SetContentActive(true);
-        await synchronizeBeforeShow();
         host.SetTopmost(true);
+        await synchronizeBeforeShow();
         host.Show();
     }
 
@@ -40,6 +40,7 @@ public sealed class TransientWindowVisibilityController(ITransientWindowHost hos
         }
 
         host.SetContentActive(true);
+        host.SetTopmost(true);
         Exception? synchronizationError = null;
         using var timeoutSource = new CancellationTokenSource(timeout);
         try
@@ -56,7 +57,6 @@ public sealed class TransientWindowVisibilityController(ITransientWindowHost hos
             synchronizationError = exception;
         }
 
-        host.SetTopmost(true);
         host.Show();
         return synchronizationError;
     }

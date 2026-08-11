@@ -1,4 +1,5 @@
 using Microsoft.Windows.AppLifecycle;
+using HuahaiClipboard.App.Infrastructure.Activation;
 using HuahaiClipboard.Core.Services;
 
 namespace HuahaiClipboard.App;
@@ -7,6 +8,7 @@ public partial class App : Microsoft.UI.Xaml.Application
 {
     private Presentation.Windows.CursorPanelWindow? window;
     private AppInstance? mainInstance;
+    private ExternalActivationSignal? externalActivationSignal;
     private readonly DeferredActivationGate activationGate = new();
 
     public App() => InitializeComponent();
@@ -16,19 +18,12 @@ public partial class App : Microsoft.UI.Xaml.Application
         var commandLineArguments = string.Join(' ', Environment.GetCommandLineArgs().Skip(1));
         var startHidden = StartupLaunchPolicy.ShouldStartHidden(args.Arguments) ||
             StartupLaunchPolicy.ShouldStartHidden(commandLineArguments);
-        var activation = AppInstance.GetCurrent().GetActivatedEventArgs();
-        mainInstance = AppInstance.FindOrRegisterForKey("HuahaiClipboard.Main");
-        if (!mainInstance.IsCurrent)
-        {
-            if (!startHidden)
-            {
-                await mainInstance.RedirectActivationToAsync(activation);
-            }
-            Exit();
-            return;
-        }
+        mainInstance = Program.MainInstance ?? AppInstance.FindOrRegisterForKey("HuahaiClipboard.Main");
 
         mainInstance.Activated += MainInstance_Activated;
+        externalActivationSignal = new ExternalActivationSignal(
+            ExternalActivationSignal.DefaultEventName,
+            RequestPanelActivation);
         window = new Presentation.Windows.CursorPanelWindow();
         window.Activate();
         if (startHidden)
@@ -52,6 +47,9 @@ public partial class App : Microsoft.UI.Xaml.Application
     }
 
     private void MainInstance_Activated(object? sender, AppActivationArguments e)
+        => RequestPanelActivation();
+
+    private void RequestPanelActivation()
     {
         if (!activationGate.RequestActivation())
         {

@@ -8,5 +8,5 @@ public interface IClipboardWriteOriginGuard
 
     bool IsCurrentWrite();
 
-    void RecordSuccessfulWrite();
+    void ExecuteOwnedWrite(Action write);
 }

@@ -2,14 +2,14 @@ $ErrorActionPreference = 'Stop'
 
 $projectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $fixtureParent = Join-Path ([System.IO.Path]::GetTempPath()) 'HuahaiClipboard.Tests'
-$fixtureRoot = Join-Path $fixtureParent ('installer-required-payload-' + [guid]::NewGuid().ToString('N'))
+$fixtureRoot = Join-Path $fixtureParent ('installer-virtual-record-payload-' + [guid]::NewGuid().ToString('N'))
 $publishRoot = Join-Path $fixtureRoot 'publish'
 $prerequisiteRoot = Join-Path $fixtureRoot 'prerequisites'
 $outputPath = Join-Path $fixtureRoot 'probe.exe'
 $buildScript = Join-Path $projectRoot 'installer\Build-Installer.ps1'
 
 try {
-    $requiredWithoutPanelScale = @(
+    $requiredWithoutVirtualRecordList = @(
         'HuahaiClipboard.App.exe'
         'HuahaiClipboard.App.dll'
         'HuahaiClipboard.App.deps.json'
@@ -24,11 +24,11 @@ try {
         'App.xbf'
         'Presentation\Windows\CursorPanelWindow.xbf'
         'Assets\Web\product-shell.html'
-        'Assets\Web\virtual-record-list.js'
+        'Assets\Web\panel-scale.js'
         'WebView2Loader.dll'
         'Microsoft.WindowsAppRuntime.Bootstrap.dll'
     )
-    foreach ($relativePath in $requiredWithoutPanelScale) {
+    foreach ($relativePath in $requiredWithoutVirtualRecordList) {
         $target = Join-Path $publishRoot $relativePath
         New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
         Set-Content -LiteralPath $target -Value 'fixture' -Encoding ASCII
@@ -43,12 +43,14 @@ try {
         $failure = $_.Exception.Message
     }
 
-    if ($failure -notmatch 'Assets\\Web\\panel-scale\.js') {
-        throw "Installer builder did not reject the missing panel-scale.js payload: $failure"
+    if ($failure -notmatch 'Assets\\Web\\virtual-record-list\.js') {
+        throw "Installer builder did not reject the missing virtual-record-list.js payload: $failure"
     }
 
-    [pscustomobject]@{ Status = 'passed'; MissingResource = 'Assets\Web\panel-scale.js' } |
-        ConvertTo-Json -Compress
+    [pscustomobject]@{
+        Status = 'passed'
+        MissingResource = 'Assets\Web\virtual-record-list.js'
+    } | ConvertTo-Json -Compress
 }
 finally {
     if (Test-Path -LiteralPath $fixtureRoot) {

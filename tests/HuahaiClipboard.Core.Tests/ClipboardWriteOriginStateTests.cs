@@ -30,4 +30,23 @@ public sealed class ClipboardWriteOriginStateTests
 
         Assert.IsFalse(state.Matches("process-token", 0));
     }
+
+    [TestMethod]
+    public void Matches_SuppressesTheMatchingMarkerWhileAnOwnedWriteIsPending()
+    {
+        var state = new ClipboardWriteOriginState("process-token");
+
+        state.BeginWrite();
+        try
+        {
+            Assert.IsTrue(state.Matches("process-token", 77));
+            Assert.IsFalse(state.Matches("different-token", 77));
+        }
+        finally
+        {
+            state.EndWrite();
+        }
+
+        Assert.IsFalse(state.Matches("process-token", 77));
+    }
 }

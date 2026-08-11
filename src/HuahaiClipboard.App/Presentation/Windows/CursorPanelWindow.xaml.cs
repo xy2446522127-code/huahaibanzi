@@ -100,13 +100,6 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
         var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
         var settings = await compositionRoot.SettingsStore.LoadAsync(CancellationToken.None);
-        await compositionRoot.HistorySource.PruneAsync(
-            DateTimeOffset.Now.AddDays(-settings.Behavior.AutoCleanupDays),
-            preserveProtected: true,
-            CancellationToken.None);
-        await panelViewModel.LoadAsync();
-        await UnmanagedCallbackGuard.InvokeAsync(
-            () => compositionRoot.ImageStore.ProtectLegacyFilesAsync(CancellationToken.None));
         inputSettingsSnapshot = new InputSettingsSnapshot(settings.Input);
         compositionRoot.CaptureService.HistoryChanged += CaptureService_HistoryChanged;
         globalInputService = new GlobalInputService(
@@ -115,6 +108,13 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             inputSettingsSnapshot,
             compositionRoot.CaptureService,
             ShowAtCursor);
+        await compositionRoot.HistorySource.PruneAsync(
+            DateTimeOffset.Now.AddDays(-settings.Behavior.AutoCleanupDays),
+            preserveProtected: true,
+            CancellationToken.None);
+        await panelViewModel.LoadAsync();
+        await UnmanagedCallbackGuard.InvokeAsync(
+            () => compositionRoot.ImageStore.ProtectLegacyFilesAsync(CancellationToken.None));
         trayService = new TrayService(
             () => DispatcherQueue.TryEnqueue(ShowAtCurrentCursor),
             () => DispatcherQueue.TryEnqueue(() =>
@@ -251,18 +251,29 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         {
             case "copy":
                 var copyRecord = FindRecord(request.Id);
+                var hideAfterCopy = request.Enabled != false;
+                if (hideAfterCopy)
+                {
+                    visibilityController.Hide();
+                    await Task.Yield();
+                }
                 var copyResult = await compositionRoot.ActionSink.CopyAsync(
                     copyRecord.Id,
                     CancellationToken.None);
                 if (!copyResult.Succeeded)
                 {
+                    if (hideAfterCopy)
+                    {
+                        visibilityController.Show();
+                        Activate();
+                    }
                     await PostShellToastAsync(copyResult.RecoveryMessage ?? "复制失败", isError: true);
                     return;
                 }
 
-                if (request.Enabled != false)
+                if (hideAfterCopy && !settingsViewModel.Draft.Behavior.BackgroundEnabled)
                 {
-                    HideTransientPanel();
+                    ExitApplication();
                 }
                 return;
             case "requestThumbnail":

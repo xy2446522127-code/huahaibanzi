@@ -16,5 +16,7 @@
              Link="Infrastructure\Clipboard\ClipboardCaptureService.cs" />
     <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Clipboard\WindowsClipboardPlatform.cs"
              Link="Infrastructure\Clipboard\WindowsClipboardPlatform.cs" />
+    <Compile Include="..\..\src\HuahaiClipboard.App\Infrastructure\Activation\ExternalActivationSignal.cs"
+             Link="Infrastructure\Activation\ExternalActivationSignal.cs" />
   </ItemGroup>
 </Project>

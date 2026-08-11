@@ -35,6 +35,7 @@ $requiredReleaseFiles = @(
     'Presentation\Windows\CursorPanelWindow.xbf',
     'Assets\Web\product-shell.html',
     'Assets\Web\panel-scale.js',
+    'Assets\Web\virtual-record-list.js',
     'WebView2Loader.dll',
     'Microsoft.WindowsAppRuntime.Bootstrap.dll'
 )
@@ -103,6 +104,8 @@ try {
 
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Uninstall.ps1') -Destination (Join-Path $payloadRoot 'Uninstall.ps1') -Force
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'UninstallPolicy.ps1') -Destination (Join-Path $payloadRoot 'UninstallPolicy.ps1') -Force
+    $launcherOutput = Join-Path $payloadRoot 'HuahaiClipboard.Launcher.exe'
+    & (Join-Path $projectRoot 'launcher\Build-Launcher.ps1') -OutputPath $launcherOutput | Out-Null
     $payloadPrerequisites = Join-Path $payloadRoot 'prerequisites'
     New-Item -ItemType Directory -Path $payloadPrerequisites -Force | Out-Null
     Copy-Item -LiteralPath $dotNetInstallers[0].FullName -Destination $payloadPrerequisites -Force

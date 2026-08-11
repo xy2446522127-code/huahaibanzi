@@ -3,6 +3,7 @@ namespace HuahaiClipboard.Core.Services;
 public sealed class ClipboardWriteOriginState
 {
     private long ownedSequence;
+    private int pendingWrites;
 
     public ClipboardWriteOriginState()
         : this(Guid.NewGuid().ToString("N"))
@@ -21,6 +22,10 @@ public sealed class ClipboardWriteOriginState
 
     public string Token { get; }
 
+    public void BeginWrite() => Interlocked.Increment(ref pendingWrites);
+
+    public void EndWrite() => Interlocked.Decrement(ref pendingWrites);
+
     public void Record(uint sequence)
     {
         if (sequence == 0)
@@ -32,7 +37,7 @@ public sealed class ClipboardWriteOriginState
     }
 
     public bool Matches(string? marker, uint sequence) =>
-        sequence != 0 &&
-        sequence == unchecked((uint)Interlocked.Read(ref ownedSequence)) &&
-        string.Equals(marker, Token, StringComparison.Ordinal);
+        string.Equals(marker, Token, StringComparison.Ordinal) &&
+        (Volatile.Read(ref pendingWrites) > 0 ||
+         sequence != 0 && sequence == unchecked((uint)Interlocked.Read(ref ownedSequence)));
 }

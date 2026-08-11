@@ -22,6 +22,7 @@ internal static class Bootstrapper
     private const string ProductName = "花海剪贴板";
     private const string ProductFolderName = "HuahaiClipboard";
     private const string AppFileName = "HuahaiClipboard.App.exe";
+    private const string LauncherFileName = "HuahaiClipboard.Launcher.exe";
     private const string ResourceName = "HuahaiClipboard.Payload";
     private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\HuahaiClipboard";
     private static string installerLogPath;
@@ -465,7 +466,8 @@ internal static class Bootstrapper
     // 创建当前用户的开始菜单和桌面入口。
     private static void CreateShortcuts(string installRoot)
     {
-        string target = Path.Combine(installRoot, AppFileName);
+        string target = Path.Combine(installRoot, LauncherFileName);
+        string icon = Path.Combine(installRoot, AppFileName);
         string startMenu = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "Microsoft", "Windows", "Start Menu", "Programs", ProductName + ".lnk");
@@ -473,12 +475,16 @@ internal static class Bootstrapper
             Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
             ProductName + ".lnk");
 
-        CreateShortcut(startMenu, target, installRoot);
-        CreateShortcut(desktop, target, installRoot);
+        CreateShortcut(startMenu, target, icon, installRoot);
+        CreateShortcut(desktop, target, icon, installRoot);
     }
 
     // 通过 Windows Shell 写入带狐狸图标的快捷方式。
-    private static void CreateShortcut(string shortcutPath, string target, string workingDirectory)
+    private static void CreateShortcut(
+        string shortcutPath,
+        string target,
+        string icon,
+        string workingDirectory)
     {
         string directory = Path.GetDirectoryName(shortcutPath);
         if (!String.IsNullOrEmpty(directory))
@@ -494,7 +500,7 @@ internal static class Bootstrapper
             dynamic shortcut = shellType.InvokeMember("CreateShortcut", BindingFlags.InvokeMethod, null, shell, new object[] { shortcutPath });
             shortcut.TargetPath = target;
             shortcut.WorkingDirectory = workingDirectory;
-            shortcut.IconLocation = target + ",0";
+            shortcut.IconLocation = icon + ",0";
             shortcut.Description = ProductName;
             shortcut.Save();
             Marshal.FinalReleaseComObject(shortcut);

@@ -7,7 +7,7 @@ const contract = JSON.parse(fs.readFileSync(contractPath, 'utf8'));
 const controls = contract.controls;
 
 test('interaction contract covers the complete approved control set without placeholders', () => {
-  assert.equal(contract.version, 1);
+  assert.equal(contract.version, 2);
   assert.equal(controls.length, 64);
   assert.ok(controls.some(control => control.control_id === 'settings.home'));
   assert.ok(controls.some(control => control.control_id === 'about.install-update'));

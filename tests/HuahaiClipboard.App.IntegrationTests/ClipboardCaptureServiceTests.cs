@@ -116,7 +116,7 @@ public sealed class ClipboardCaptureServiceTests
         public string MarkerValue => "test-token";
         public void AttachMarker(DataObject dataObject) =>
             dataObject.SetData(MarkerFormat, autoConvert: false, MarkerValue);
-        public void RecordSuccessfulWrite() => throw new AssertFailedException("Capture must not write.");
+        public void ExecuteOwnedWrite(Action write) => throw new AssertFailedException("Capture must not write.");
         public bool IsCurrentWrite()
         {
             Checks++;
@@ -133,7 +133,7 @@ public sealed class ClipboardCaptureServiceTests
         public string MarkerValue => "blocking-token";
         public void AttachMarker(DataObject dataObject) =>
             dataObject.SetData(MarkerFormat, autoConvert: false, MarkerValue);
-        public void RecordSuccessfulWrite() => throw new AssertFailedException("Capture must not write.");
+        public void ExecuteOwnedWrite(Action write) => throw new AssertFailedException("Capture must not write.");
         public bool IsCurrentWrite()
         {
             Entered.TrySetResult();
@@ -150,7 +150,7 @@ public sealed class ClipboardCaptureServiceTests
         public int Checks;
         public string MarkerFormat => "HuahaiClipboard.InternalOrigin.v1";
         public string MarkerValue => "burst-token";
-        public void RecordSuccessfulWrite() => throw new AssertFailedException("Capture must not write.");
+        public void ExecuteOwnedWrite(Action write) => throw new AssertFailedException("Capture must not write.");
         public bool IsCurrentWrite()
         {
             var call = Interlocked.Increment(ref Checks);

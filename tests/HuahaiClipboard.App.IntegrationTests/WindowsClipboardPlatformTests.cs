@@ -91,6 +91,49 @@ public sealed class WindowsClipboardPlatformTests
         Assert.AreEqual(0, guard.SuccessfulWrites);
     }
 
+    [TestMethod]
+    public async Task WriteAsync_WhenClipboardSinkIsSlow_ReturnsControlWithoutBlockingTheCaller()
+    {
+        var guard = new RecordingGuard();
+        var platform = new WindowsClipboardPlatform(
+            new FixedImageStore([]),
+            guard,
+            _ => Thread.Sleep(250));
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+
+        var writeTask = platform.WriteAsync(
+            Record(ClipboardItemKind.Text, "responsive copy"),
+            CancellationToken.None);
+        var callReturnedAfter = watch.ElapsedMilliseconds;
+
+        Assert.IsTrue(
+            callReturnedAfter < 100,
+            $"WriteAsync blocked its caller for {callReturnedAfter} ms before returning a task.");
+        await writeTask;
+        Assert.AreEqual(1, guard.SuccessfulWrites);
+    }
+
+    [TestMethod]
+    public async Task WriteAsync_PublishesOwnershipBeforeTheClipboardSinkCanRaiseAnUpdate()
+    {
+        var guard = new RecordingGuard();
+        var ownershipVisibleInsideSink = false;
+        var platform = new WindowsClipboardPlatform(
+            new FixedImageStore([]),
+            guard,
+            _ => ownershipVisibleInsideSink = guard.WriteScopeActive);
+
+        await platform.WriteAsync(
+            Record(ClipboardItemKind.Text, "owned write"),
+            CancellationToken.None);
+
+        Assert.IsTrue(
+            ownershipVisibleInsideSink,
+            "Clipboard ownership must be visible before SetDataObject can dispatch WM_CLIPBOARDUPDATE.");
+        Assert.IsFalse(guard.WriteScopeActive);
+        Assert.AreEqual(1, guard.SuccessfulWrites);
+    }
+
     private static ClipboardRecord Record(
         ClipboardItemKind kind,
         string primaryText,
@@ -111,8 +154,21 @@ public sealed class WindowsClipboardPlatformTests
         public string MarkerFormat => "HuahaiClipboard.InternalOrigin.v1";
         public string MarkerValue => "integration-token";
         public int SuccessfulWrites { get; private set; }
+        public bool WriteScopeActive { get; private set; }
         public bool IsCurrentWrite() => false;
-        public void RecordSuccessfulWrite() => SuccessfulWrites++;
+        public void ExecuteOwnedWrite(Action write)
+        {
+            WriteScopeActive = true;
+            try
+            {
+                write();
+                SuccessfulWrites++;
+            }
+            finally
+            {
+                WriteScopeActive = false;
+            }
+        }
     }
 
     private sealed class FixedImageStore(byte[] bytes) : IClipboardImageStore

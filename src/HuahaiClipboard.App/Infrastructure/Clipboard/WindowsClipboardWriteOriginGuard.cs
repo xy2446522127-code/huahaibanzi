@@ -24,7 +24,20 @@ public sealed class WindowsClipboardWriteOriginGuard : IClipboardWriteOriginGuar
         return state.Matches(marker, GetClipboardSequenceNumber());
     }
 
-    public void RecordSuccessfulWrite() => state.Record(GetClipboardSequenceNumber());
+    public void ExecuteOwnedWrite(Action write)
+    {
+        ArgumentNullException.ThrowIfNull(write);
+        state.BeginWrite();
+        try
+        {
+            write();
+            state.Record(GetClipboardSequenceNumber());
+        }
+        finally
+        {
+            state.EndWrite();
+        }
+    }
 
     [DllImport("user32.dll")]
     private static extern uint GetClipboardSequenceNumber();

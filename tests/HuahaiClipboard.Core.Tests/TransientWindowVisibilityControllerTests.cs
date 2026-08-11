@@ -33,19 +33,30 @@ public sealed class TransientWindowVisibilityControllerTests
     }
 
     [TestMethod]
-    public async Task ShowAsync_SynchronizesContentBeforeTheWindowBecomesVisible()
+    public async Task ShowAsync_WaitsForSynchronizationBeforeShowing()
     {
         var host = new RecordingTransientWindowHost();
         var controller = new TransientWindowVisibilityController(host);
+        var synchronizationStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSynchronization = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await controller.ShowAsync(() =>
+        var showTask = controller.ShowAsync(async cancellationToken =>
         {
-            host.Record("synchronize");
-            return Task.CompletedTask;
-        });
+            synchronizationStarted.SetResult();
+            await releaseSynchronization.Task.WaitAsync(cancellationToken);
+        }, TimeSpan.FromSeconds(1));
+
+        await synchronizationStarted.Task;
 
         CollectionAssert.AreEqual(
-            new[] { "content:active", "synchronize", "topmost:on", "show" },
+            new[] { "content:active", "topmost:on" },
+            host.Actions);
+        Assert.IsFalse(showTask.IsCompleted);
+
+        releaseSynchronization.SetResult();
+        Assert.IsNull(await showTask);
+        CollectionAssert.AreEqual(
+            new[] { "content:active", "topmost:on", "show" },
             host.Actions);
     }
 
@@ -113,7 +124,7 @@ public sealed class TransientWindowVisibilityControllerTests
         });
 
         CollectionAssert.AreEqual(
-            new[] { "content:active", "state:10", "topmost:on", "show" },
+            new[] { "content:active", "topmost:on", "state:10", "show" },
             host.Actions);
         Assert.AreEqual(2, refreshCalls);
     }

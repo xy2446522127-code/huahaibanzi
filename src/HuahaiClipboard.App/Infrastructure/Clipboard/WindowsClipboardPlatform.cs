@@ -11,6 +11,7 @@ public sealed class WindowsClipboardPlatform : IClipboardPlatform
     private readonly IClipboardImageStore imageStore;
     private readonly IClipboardWriteOriginGuard writeOriginGuard;
     private readonly Action<global::System.Windows.Forms.DataObject> setDataObject;
+    private readonly SemaphoreSlim writeGate = new(1, 1);
     private IntPtr pasteTarget;
 
     public WindowsClipboardPlatform(
@@ -39,9 +40,35 @@ public sealed class WindowsClipboardPlatform : IClipboardPlatform
     {
         ArgumentNullException.ThrowIfNull(record);
         cancellationToken.ThrowIfCancellationRequested();
+        await writeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            byte[]? imageBytes = null;
+            if (record.Kind == ClipboardItemKind.Image &&
+                !string.IsNullOrWhiteSpace(record.PreviewAssetPath))
+            {
+                imageBytes = await imageStore.ReadAsync(record.PreviewAssetPath, cancellationToken)
+                    .ConfigureAwait(false);
+            }
 
+            await RunOnStaThreadAsync(
+                () => WriteDataObject(record, imageBytes, cancellationToken))
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            writeGate.Release();
+        }
+    }
+
+    private void WriteDataObject(
+        ClipboardRecord record,
+        byte[]? imageBytes,
+        CancellationToken cancellationToken)
+    {
         for (var attempt = 0; ; attempt++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             try
             {
                 var dataObject = new global::System.Windows.Forms.DataObject();
@@ -53,34 +80,60 @@ public sealed class WindowsClipboardPlatform : IClipboardPlatform
                 {
                     case ClipboardItemKind.File:
                         var files = new StringCollection();
-                        files.AddRange(record.PrimaryText.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries));
+                        files.AddRange(record.PrimaryText.Split(
+                            Environment.NewLine,
+                            StringSplitOptions.RemoveEmptyEntries));
                         dataObject.SetFileDropList(files);
                         break;
-                    case ClipboardItemKind.Image when !string.IsNullOrWhiteSpace(record.PreviewAssetPath):
-                        var imageBytes = await imageStore.ReadAsync(record.PreviewAssetPath, cancellationToken);
+                    case ClipboardItemKind.Image when imageBytes is not null:
                         using (var stream = new MemoryStream(imageBytes, writable: false))
                         using (var sourceImage = global::System.Drawing.Image.FromStream(stream))
                         using (var image = new global::System.Drawing.Bitmap(sourceImage))
                         {
                             dataObject.SetImage(image);
-                            setDataObject(dataObject);
+                            writeOriginGuard.ExecuteOwnedWrite(() => setDataObject(dataObject));
                         }
-                        writeOriginGuard.RecordSuccessfulWrite();
                         return;
                     default:
                         dataObject.SetText(record.PrimaryText);
                         break;
                 }
 
-                setDataObject(dataObject);
-                writeOriginGuard.RecordSuccessfulWrite();
+                writeOriginGuard.ExecuteOwnedWrite(() => setDataObject(dataObject));
                 return;
             }
             catch (ExternalException) when (attempt < 4)
             {
-                await Task.Delay(30 * (attempt + 1), cancellationToken);
+                if (cancellationToken.WaitHandle.WaitOne(30 * (attempt + 1)))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
             }
         }
+    }
+
+    private static Task RunOnStaThreadAsync(Action action)
+    {
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                action();
+                completion.TrySetResult();
+            }
+            catch (Exception exception)
+            {
+                completion.TrySetException(exception);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "HuahaiClipboard.ClipboardWriter"
+        };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        return completion.Task;
     }
 
     public async Task<bool> PasteAsync(CancellationToken cancellationToken)
