@@ -30,7 +30,8 @@ try {
         --current $CurrentVersion --expected-target $TargetVersion 2>&1
     if ($LASTEXITCODE -ne 0) { throw "Released update component probe failed: $($probeOutput -join [Environment]::NewLine)" }
     $probe = ($probeOutput | Select-Object -Last 1) | ConvertFrom-Json
-    if ($probe.status -ne 'passed' -or -not $probe.updateAvailable -or $probe.latestVersion -ne $TargetVersion) {
+    if ($probe.status -ne 'passed' -or -not $probe.updateAvailable -or
+        $probe.latestVersion -ne $TargetVersion -or $probe.source -ne 'live-release') {
         throw 'Released old-client update component did not discover the target version.'
     }
 
@@ -50,7 +51,7 @@ try {
             passed = $true
             old_version = $CurrentVersion
             target_version = $TargetVersion
-            client_identity = 'released-installed-binary'
+            client_identity = 'released-installer-update-component'
             update_available = $true
         } | ConvertTo-Json -Compress
     }

@@ -1,8 +1,10 @@
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Net;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 const string PayloadResource = "HuahaiClipboard.Payload";
@@ -102,32 +104,51 @@ static object ProbeUpdateCommand(IReadOnlyDictionary<string, string> options)
     var expectedTarget = Version.Parse(Required(options, "expected-target"));
     var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(corePath);
     var serviceType = assembly.GetType("HuahaiClipboard.Core.Services.GitHubUpdateCheckService", throwOnError: true)!;
-    var service = serviceType.GetMethod("CreateDefault", BindingFlags.Public | BindingFlags.Static)!
-        .Invoke(null, [currentVersion])!;
-    var task = (Task)serviceType.GetMethod("CheckAsync", BindingFlags.Public | BindingFlags.Instance)!
-        .Invoke(service, [CancellationToken.None])!;
-    task.GetAwaiter().GetResult();
-    var result = task.GetType().GetProperty("Result")!.GetValue(task)!;
-    var resultType = result.GetType();
-    var updateAvailable = (bool)resultType.GetProperty("UpdateAvailable")!.GetValue(result)!;
-    var latestVersion = (Version)resultType.GetProperty("LatestVersion")!.GetValue(result)!;
-    var installerName = (string)resultType.GetProperty("InstallerName")!.GetValue(result)!;
-    var releaseUrl = (string)resultType.GetProperty("ReleaseUrl")!.GetValue(result)!;
-    if (!updateAvailable || latestVersion != expectedTarget || installerName != "HuahaiClipboard-Setup.exe" ||
-        !Uri.TryCreate(releaseUrl, UriKind.Absolute, out var releaseUri) || releaseUri.Scheme != Uri.UriSchemeHttps)
+    HttpClient fixtureClient = null;
+    try
     {
-        throw new InvalidDataException($"Released update component did not discover {expectedTarget}.");
-    }
+        object service;
+        if (options.TryGetValue("release-fixture", out var fixturePath))
+        {
+            var fixture = File.ReadAllText(Path.GetFullPath(fixturePath));
+            fixtureClient = new HttpClient(new StaticReleaseHandler(fixture));
+            service = Activator.CreateInstance(serviceType, fixtureClient, currentVersion)!;
+        }
+        else
+        {
+            service = serviceType.GetMethod("CreateDefault", BindingFlags.Public | BindingFlags.Static)!
+                .Invoke(null, [currentVersion])!;
+        }
+        var task = (Task)serviceType.GetMethod("CheckAsync", BindingFlags.Public | BindingFlags.Instance)!
+            .Invoke(service, [CancellationToken.None])!;
+        task.GetAwaiter().GetResult();
+        var result = task.GetType().GetProperty("Result")!.GetValue(task)!;
+        var resultType = result.GetType();
+        var updateAvailable = (bool)resultType.GetProperty("UpdateAvailable")!.GetValue(result)!;
+        var latestVersion = (Version)resultType.GetProperty("LatestVersion")!.GetValue(result)!;
+        var installerName = (string)resultType.GetProperty("InstallerName")!.GetValue(result)!;
+        var releaseUrl = (string)resultType.GetProperty("ReleaseUrl")!.GetValue(result)!;
+        if (!updateAvailable || latestVersion != expectedTarget || installerName != "HuahaiClipboard-Setup.exe" ||
+            !Uri.TryCreate(releaseUrl, UriKind.Absolute, out var releaseUri) || releaseUri.Scheme != Uri.UriSchemeHttps)
+        {
+            throw new InvalidDataException($"Released update component did not discover {expectedTarget}.");
+        }
 
-    return new
+        return new
+        {
+            status = "passed",
+            currentVersion = currentVersion.ToString(3),
+            latestVersion = latestVersion.ToString(3),
+            updateAvailable,
+            installerName,
+            releaseUrl,
+            source = fixtureClient is null ? "live-release" : "local-fixture"
+        };
+    }
+    finally
     {
-        status = "passed",
-        currentVersion = currentVersion.ToString(3),
-        latestVersion = latestVersion.ToString(3),
-        updateAvailable,
-        installerName,
-        releaseUrl
-    };
+        fixtureClient?.Dispose();
+    }
 }
 
 static void ExtractInstaller(string installerPath, string destination)
@@ -212,4 +233,15 @@ static string RequiredPath(IReadOnlyDictionary<string, string> options, string n
     var path = Path.GetFullPath(Required(options, name));
     if (mustExist && !File.Exists(path)) throw new FileNotFoundException($"Missing --{name} file.", path);
     return path;
+}
+
+sealed class StaticReleaseHandler(string payload) : HttpMessageHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            RequestMessage = request,
+            Content = new StringContent(payload, Encoding.UTF8, "application/json")
+        });
 }

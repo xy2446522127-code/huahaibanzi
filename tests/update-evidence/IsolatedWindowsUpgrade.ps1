@@ -9,7 +9,7 @@ param(
     [Parameter(Mandatory = $true)][string]$Architecture
 )
 $ErrorActionPreference = 'Stop'
-if ($EvidenceId -ne 'installed_upgrade') { throw 'Unexpected evidence ID.' }
+if ($EvidenceId -ne 'payload_upgrade_component') { throw 'Unexpected evidence ID.' }
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $probeProject = Join-Path $projectRoot 'tools\HuahaiClipboard.UpdateEvidenceProbe\HuahaiClipboard.UpdateEvidenceProbe.csproj'
 $oldHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $OldInstaller).Hash.ToLowerInvariant()
@@ -35,7 +35,9 @@ try {
         architecture = $Architecture
         package_sha256 = $newHash
         user_data_preserved = $true
-        startup_succeeded = $true
+        installed_upgrade_proven = $false
+        startup_succeeded = $false
+        evidence_scope = 'extracted-payload-transaction-component'
     } | ConvertTo-Json -Compress
 }
 finally {

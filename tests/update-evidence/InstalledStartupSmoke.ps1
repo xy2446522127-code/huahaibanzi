@@ -5,7 +5,7 @@ param(
     [Parameter(Mandatory = $true)][string]$TargetVersion
 )
 $ErrorActionPreference = 'Stop'
-if ($EvidenceId -ne 'post_update_startup') { throw 'Unexpected evidence ID.' }
+if ($EvidenceId -ne 'packaged_payload_readiness') { throw 'Unexpected evidence ID.' }
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $probeProject = Join-Path $projectRoot 'tools\HuahaiClipboard.UpdateEvidenceProbe\HuahaiClipboard.UpdateEvidenceProbe.csproj'
 $actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NewInstaller).Hash.ToLowerInvariant()
@@ -30,7 +30,9 @@ try {
             'release payload version and required startup assets verified',
             'application integration startup suite passed'
         )
-        startup_succeeded = $true
+        process_started = $false
+        startup_succeeded = $false
+        evidence_scope = 'packaged-payload-readiness-only'
     } | ConvertTo-Json -Compress
 }
 finally {

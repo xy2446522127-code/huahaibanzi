@@ -2,7 +2,14 @@ $ErrorActionPreference = 'Stop'
 
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $adapter = Join-Path $PSScriptRoot 'update-evidence\ReleasedClientProbe.ps1'
-$oldInstaller = Join-Path $projectRoot 'dist\HuahaiClipboard-Setup-1.1.10.exe'
+$oldInstaller = if ([string]::IsNullOrWhiteSpace($env:HUAHAI_PREVIOUS_INSTALLER_FIXTURE)) {
+    Join-Path $projectRoot 'dist\HuahaiClipboard-Setup-1.1.10.exe'
+} else { [IO.Path]::GetFullPath($env:HUAHAI_PREVIOUS_INSTALLER_FIXTURE) }
+if (-not (Test-Path -LiteralPath $oldInstaller -PathType Leaf)) {
+    [pscustomobject]@{ Status = 'skipped'; Reason = 'release-artifacts-unavailable'; Missing = @($oldInstaller) } |
+        ConvertTo-Json -Compress
+    exit 0
+}
 $oldHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $oldInstaller).Hash.ToLowerInvariant()
 
 $output = & powershell.exe -NoProfile -NonInteractive -File $adapter `

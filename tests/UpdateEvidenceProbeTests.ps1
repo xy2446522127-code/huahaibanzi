@@ -2,15 +2,37 @@ $ErrorActionPreference = 'Stop'
 
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $probeProject = Join-Path $projectRoot 'tools\HuahaiClipboard.UpdateEvidenceProbe\HuahaiClipboard.UpdateEvidenceProbe.csproj'
-$installer = Join-Path $projectRoot 'dist\HuahaiClipboard-Setup.exe'
-$oldInstaller = Join-Path $projectRoot 'dist\HuahaiClipboard-Setup-1.1.10.exe'
+$installer = if ([string]::IsNullOrWhiteSpace($env:HUAHAI_RELEASE_INSTALLER_FIXTURE)) {
+    Join-Path $projectRoot 'dist\HuahaiClipboard-Setup.exe'
+} else { [IO.Path]::GetFullPath($env:HUAHAI_RELEASE_INSTALLER_FIXTURE) }
+$oldInstaller = if ([string]::IsNullOrWhiteSpace($env:HUAHAI_PREVIOUS_INSTALLER_FIXTURE)) {
+    Join-Path $projectRoot 'dist\HuahaiClipboard-Setup-1.1.10.exe'
+} else { [IO.Path]::GetFullPath($env:HUAHAI_PREVIOUS_INSTALLER_FIXTURE) }
 $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ('HuahaiClipboard.UpdateEvidenceProbe.' + [guid]::NewGuid().ToString('N'))
 $extracted = Join-Path $fixtureRoot 'extracted'
 $upgradeRoot = Join-Path $fixtureRoot 'upgrade'
+$releaseFixture = Join-Path $fixtureRoot 'release.json'
+
+$missingArtifacts = @($installer, $oldInstaller) | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }
+if ($missingArtifacts.Count -gt 0) {
+    [pscustomobject]@{ Status = 'skipped'; Reason = 'release-artifacts-unavailable'; Missing = $missingArtifacts } |
+        ConvertTo-Json -Compress
+    exit 0
+}
 
 try {
-    if (-not (Test-Path -LiteralPath $installer)) { throw "Installer fixture is missing: $installer" }
-    if (-not (Test-Path -LiteralPath $oldInstaller)) { throw "Old installer fixture is missing: $oldInstaller" }
+    New-Item -ItemType Directory -Path $fixtureRoot -Force | Out-Null
+
+    @{
+        tag_name = 'v1.1.10'
+        html_url = 'https://github.com/xy2446522127-code/huahaibanzi/releases/tag/v1.1.10'
+        assets = @(@{
+            name = 'HuahaiClipboard-Setup.exe'
+            browser_download_url = 'https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.1.10/HuahaiClipboard-Setup.exe'
+            size = 123456
+            digest = 'sha256:' + ('a' * 64)
+        })
+    } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $releaseFixture -Encoding UTF8
 
     $json = & dotnet run --project $probeProject --configuration Release -- extract `
         --installer $installer `
@@ -41,10 +63,12 @@ try {
     $discoveryJson = & dotnet run --project $probeProject --configuration Release --no-build -- probe-update `
         --core (Join-Path $extracted 'HuahaiClipboard.Core.dll') `
         --current 1.1.9 `
-        --expected-target 1.1.10
+        --expected-target 1.1.10 `
+        --release-fixture $releaseFixture
     if ($LASTEXITCODE -ne 0) { throw "Released update component probe failed with exit code $LASTEXITCODE" }
     $discovery = $discoveryJson | ConvertFrom-Json
-    if ($discovery.status -ne 'passed' -or -not $discovery.updateAvailable -or $discovery.latestVersion -ne '1.1.10') {
+    if ($discovery.status -ne 'passed' -or -not $discovery.updateAvailable -or
+        $discovery.latestVersion -ne '1.1.10' -or $discovery.source -ne 'local-fixture') {
         throw 'The released update component did not discover the public latest release.'
     }
 
@@ -55,6 +79,7 @@ try {
         UpgradeFrom = $upgrade.fromVersion
         UpgradeTo = $upgrade.toVersion
         DiscoveredVersion = $discovery.latestVersion
+        DiscoverySource = $discovery.source
     } | ConvertTo-Json -Compress
 }
 finally {
