@@ -15,7 +15,7 @@
           "command": "dotnet test tests/HuahaiClipboard.App.IntegrationTests/HuahaiClipboard.App.IntegrationTests.csproj -c Release -p:Platform=x64",
           "evidence_id": "owned-copy-integration-20260811",
           "independent_oracle": true,
-          "source_digest": "c89adcaeea5cecf497f69ff30ddc8e27d9e6a50c7bd652c11162e0313d3d7c82",
+          "source_digest": "eda0b27edad9387174b9ae08281977053898c3c941568151efc396fa7241e37a",
           "source_revision": "0a81eae60f55db5e7471268dac74368d999e2df9",
           "status": "passed",
           "target": "windows-desktop"
@@ -42,7 +42,7 @@
           "command": "dotnet test HuahaiClipboard.sln -c Release -p:Platform=x64",
           "evidence_id": "hidden-live-sync-tests-20260811",
           "independent_oracle": true,
-          "source_digest": "c89adcaeea5cecf497f69ff30ddc8e27d9e6a50c7bd652c11162e0313d3d7c82",
+          "source_digest": "eda0b27edad9387174b9ae08281977053898c3c941568151efc396fa7241e37a",
           "source_revision": "0a81eae60f55db5e7471268dac74368d999e2df9",
           "status": "passed",
           "target": "windows-desktop"
@@ -69,7 +69,7 @@
           "command": "node tests/HuahaiClipboard.Core.Tests/WebInteraction/copy-live-iteration.mjs",
           "evidence_id": "outside-hide-web-and-core-20260811",
           "independent_oracle": true,
-          "source_digest": "c89adcaeea5cecf497f69ff30ddc8e27d9e6a50c7bd652c11162e0313d3d7c82",
+          "source_digest": "eda0b27edad9387174b9ae08281977053898c3c941568151efc396fa7241e37a",
           "source_revision": "0a81eae60f55db5e7471268dac74368d999e2df9",
           "status": "passed",
           "target": "web-preview"
@@ -78,7 +78,7 @@
           "command": "dotnet test tests/HuahaiClipboard.Core.Tests/HuahaiClipboard.Core.Tests.csproj -c Release",
           "evidence_id": "outside-hide-desktop-contract-20260811",
           "independent_oracle": true,
-          "source_digest": "c89adcaeea5cecf497f69ff30ddc8e27d9e6a50c7bd652c11162e0313d3d7c82",
+          "source_digest": "eda0b27edad9387174b9ae08281977053898c3c941568151efc396fa7241e37a",
           "source_revision": "0a81eae60f55db5e7471268dac74368d999e2df9",
           "status": "passed",
           "target": "windows-desktop"
@@ -100,7 +100,7 @@
     "clipboard.hidden-live-history",
     "window.outside-click-hide"
   ],
-  "source_digest": "c89adcaeea5cecf497f69ff30ddc8e27d9e6a50c7bd652c11162e0313d3d7c82",
+  "source_digest": "eda0b27edad9387174b9ae08281977053898c3c941568151efc396fa7241e37a",
   "source_paths": [
     "src/HuahaiClipboard.Core/Contracts/IClipboardWriteOriginGuard.cs",
     "src/HuahaiClipboard.Core/Services/ClipboardWriteOriginState.cs",
