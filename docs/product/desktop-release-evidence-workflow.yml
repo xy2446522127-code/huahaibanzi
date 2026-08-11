@@ -1,0 +1,42 @@
+name: Desktop release evidence
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  installed-upgrade:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download released installers
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          New-Item -ItemType Directory -Force artifacts/old, artifacts/new | Out-Null
+          gh release download v1.1.10 --repo $env:GITHUB_REPOSITORY --pattern HuahaiClipboard-Setup.exe --dir artifacts/old
+          gh release download v1.1.11 --repo $env:GITHUB_REPOSITORY --pattern HuahaiClipboard-Setup.exe --dir artifacts/new
+
+      - name: Install, upgrade, and observe startup
+        shell: powershell
+        run: |
+          powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File tests/update-evidence/HostedWindowsInstalledUpgrade.ps1 `
+            -OldInstaller artifacts/old/HuahaiClipboard-Setup.exe `
+            -NewInstaller artifacts/new/HuahaiClipboard-Setup.exe `
+            -OldSha256 c912bea7662bdce80e400c34dabc747e73165f32eecc3d07bda952eb08472eaa `
+            -NewSha256 e8d94447e20d9c176b53ccfdbfa9beffca186f494ef89108dde3e8dae5af1950 `
+            -InstallRoot "D:/HuahaiClipboardEvidence/$env:GITHUB_RUN_ID/HuahaiClipboard" `
+            -EvidencePath artifacts/installed-upgrade.json
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-installed-upgrade-evidence
+          path: artifacts/installed-upgrade.json
+          if-no-files-found: warn
