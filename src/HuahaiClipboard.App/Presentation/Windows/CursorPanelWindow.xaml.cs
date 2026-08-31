@@ -39,7 +39,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private static readonly TimeSpan PreShowSynchronizationTimeout = TimeSpan.FromMilliseconds(750);
     private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly IntPtr HwndNoTopmost = new(-2);
-    private static readonly Version CurrentVersion = new(1, 1, 11);
+    private static readonly Version CurrentVersion = new(1, 1, 12);
 
     private readonly CompositionRoot compositionRoot = new();
     private readonly WindowNavigator navigator = new();
@@ -74,6 +74,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private UpdateCheckResult? availableUpdate;
     private bool updateInstallationInProgress;
     private bool notifyUpdateOnNextSummon;
+    private ContentPreviewWindow? contentPreviewWindow;
+    private Guid? hoveredPreviewRecordId;
 
     public CursorPanelWindow()
     {
@@ -107,7 +109,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             DispatcherQueue,
             inputSettingsSnapshot,
             compositionRoot.CaptureService,
-            ShowAtCursor);
+            ShowAtCursor,
+            OpenHoveredPreview);
         await compositionRoot.RetentionService.ApplyAsync(
             settings.Behavior,
             DateTimeOffset.Now,
@@ -380,6 +383,19 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                         CustomShortcut = request.Text
                     });
                 break;
+            case "setPreviewShortcut":
+                if (!PreviewShortcutLeasePolicy.ShouldLease(
+                        mainPanelVisible: true,
+                        hasHoveredRecord: true,
+                        settingsOpen: false,
+                        request.Text,
+                        settingsViewModel.Draft.Input.CustomShortcut))
+                {
+                    throw new InvalidOperationException("预览快捷键必须是与唤出快捷键不同的有效键盘组合");
+                }
+                await SaveInputSettingsAsync(
+                    settingsViewModel.Draft.Input with { PreviewShortcut = request.Text });
+                break;
             case "resetShortcut":
                 await SaveInputSettingsAsync(
                     settingsViewModel.Draft.Input with
@@ -464,6 +480,17 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
             case "beginNativeDrag":
                 BeginNativeWindowDrag();
                 return;
+            case "openPreview":
+                await OpenPreviewAsync(FindRecord(request.Id));
+                return;
+            case "previewHover":
+                hoveredPreviewRecordId = FindRecord(request.Id).Id;
+                globalInputService?.UpdatePreviewShortcutLease(true);
+                return;
+            case "previewHoverEnd":
+                hoveredPreviewRecordId = null;
+                globalInputService?.UpdatePreviewShortcutLease(false);
+                return;
         }
 
         await PostShellStateAsync();
@@ -517,6 +544,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
                 clickDuration = settings.Motion.ClickDurationMs,
                 rightDoubleClick = settings.Input.RightDoubleClickEnabled,
                 customShortcut = settings.Input.HotkeyEnabled ? settings.Input.CustomShortcut : null,
+                previewShortcut = settings.Input.PreviewShortcut,
                 exclusions = settings.Input.ExcludedApplications,
                 retentionDays = settings.Behavior.AutoCleanupDays,
                 autoCleanupCountEnabled = settings.Behavior.AutoCleanupCountEnabled,
@@ -808,6 +836,47 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         return (int)number;
     }
 
+    private async Task OpenPreviewAsync(ClipboardRecord record)
+    {
+        contentPreviewWindow ??= new ContentPreviewWindow(
+            (id, edit) => panelViewModel.SavePreviewAsync(id, edit),
+            async id =>
+            {
+                var result = await compositionRoot.ActionSink.CopyAsync(id, CancellationToken.None);
+                if (!result.Succeeded) throw new InvalidOperationException(result.RecoveryMessage ?? "复制失败");
+            },
+            (previewRecord, cancellationToken) => compositionRoot.ImagePreviewSource.CreateDataUrlAsync(previewRecord, cancellationToken),
+            () => (settingsViewModel.Draft.Appearance.ThemeId, settingsViewModel.Draft.Appearance.Opacity),
+            updated => { _ = PostShellStateAsync(); },
+            new PreviewWindowPlacementStore(Path.Combine(compositionRoot.DataLayout.DataDirectory, "preview-window.json")),
+            Path.Combine(AppContext.BaseDirectory, "Assets"));
+        var mainHandle = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        var main = appWindow?.Position ?? new PointInt32(0, 0);
+        var display = DisplayArea.GetFromWindowId(appWindow?.Id ?? Win32Interop.GetWindowIdFromWindow(mainHandle), DisplayAreaFallback.Primary);
+        var area = display.WorkArea;
+        const int width = PreviewWindowPlacementStore.DefaultWidth;
+        const int height = PreviewWindowPlacementStore.DefaultHeight;
+        var x = main.X - 18 - width;
+        if (x < area.X + 16) x = Math.Min(area.X + area.Width - width - 16, main.X + PanelWidth + 18);
+        x = Math.Clamp(x, area.X + 16, Math.Max(area.X + 16, area.X + area.Width - width - 16));
+        var y = Math.Clamp(main.Y, area.Y + 16, Math.Max(area.Y + 16, area.Y + area.Height - height - 16));
+        await contentPreviewWindow.OpenAsync(record, new RectInt32(x, y, width, height));
+    }
+
+    private async void OpenHoveredPreview()
+    {
+        if (hoveredPreviewRecordId is not { } recordId)
+        {
+            return;
+        }
+
+        var record = panelViewModel.AllRecords.FirstOrDefault(value => value.Id == recordId);
+        if (record is not null)
+        {
+            await OpenPreviewAsync(record);
+        }
+    }
+
     private void StartRetentionTimer()
     {
         if (retentionTimer is not null) return;
@@ -880,6 +949,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
     private void HideTransientPanel()
     {
+        hoveredPreviewRecordId = null;
+        globalInputService?.UpdatePreviewShortcutLease(false);
         if (settingsViewModel.Draft.Behavior.BackgroundEnabled)
         {
             visibilityController.Hide();
@@ -922,6 +993,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         try
         {
             settingsSurfaceVisible = false;
+            hoveredPreviewRecordId = null;
+            globalInputService?.UpdatePreviewShortcutLease(false);
             compositionRoot.ClipboardPlatform.SetPasteTarget(targetWindow);
             var display = DisplayArea.GetFromPoint(cursor, DisplayAreaFallback.Primary);
             var workArea = display.WorkArea;
@@ -991,7 +1064,8 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
 
         var interactionActive = dragPointerOrigin is not null ||
                                 panelScalePreviewActive ||
-                                summonGate.CurrentCount == 0;
+                                summonGate.CurrentCount == 0 ||
+                                contentPreviewWindow?.IsOpen == true;
         _ = visibilityController.HideOnDeactivated(
             settingsViewModel.Draft.Behavior.HideOnOutsideClick,
             interactionActive);

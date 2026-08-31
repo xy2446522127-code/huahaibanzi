@@ -98,9 +98,12 @@ public sealed class ShellIntegrationPolicyTests
         string[] actions =
         [
             "ready", "hide", "resize", "copy", "requestThumbnail", "togglePin", "toggleFavorite", "delete",
+            "openPreview", "previewHover", "previewHoverEnd", "previewReady", "savePreview", "discardPreview",
+            "previewCopy", "previewDirty", "previewFocus", "previewPointer", "previewTopmost", "previewAutoHide",
+            "previewHide", "previewClose",
             "setRetentionDays", "setAutoCleanupCountEnabled", "setAutoCleanupCount", "clearOrdinary", "clearAll", "setTheme", "setOpacity",
             "setPetals", "setReduceMotion", "setClickDuration", "setRightDoubleClick",
-            "setShortcut", "resetShortcut", "setExclusions", "openDataFolder", "setStartup",
+            "setShortcut", "setPreviewShortcut", "resetShortcut", "setExclusions", "openDataFolder", "setStartup",
             "setBackground", "setOutsideAutoHide", "beginNativeDrag"
             , "previewPanelScale", "commitPanelScale", "cancelPanelScale", "setPanelScale", "setCheckUpdatesOnStartup", "checkUpdate", "snoozeUpdate", "installUpdate", "openRelease"
         ];

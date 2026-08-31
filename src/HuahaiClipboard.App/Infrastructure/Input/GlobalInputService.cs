@@ -11,6 +11,7 @@ namespace HuahaiClipboard.App.Infrastructure.Input;
 public sealed class GlobalInputService : IDisposable
 {
     private const int HotkeyId = 0x4843;
+    private const int PreviewHotkeyId = 0x4850;
     private const uint WmClipboardUpdate = 0x031D;
     private const uint WmHotkey = 0x0312;
     private const int WhMouseLowLevel = 14;
@@ -39,6 +40,7 @@ public sealed class GlobalInputService : IDisposable
     private readonly InputSettingsSnapshot settingsSnapshot;
     private readonly ClipboardCaptureService captureService;
     private readonly Action<IntPtr, PointInt32> summonAction;
+    private readonly Action previewShortcutAction;
     private readonly SubclassProcedure subclassProcedure;
     private readonly MouseHookProcedure mouseHookProcedure;
     private readonly List<string> initializationWarnings = [];
@@ -51,6 +53,8 @@ public sealed class GlobalInputService : IDisposable
     private bool subclassInstalled;
     private bool clipboardListenerRegistered;
     private bool hotkeyRegistered;
+    private bool previewHotkeyRegistered;
+    private bool previewHotkeyLeased;
     private bool suppressRightButtonUp;
     private uint suppressCustomMouseUp;
 
@@ -59,13 +63,15 @@ public sealed class GlobalInputService : IDisposable
         DispatcherQueue dispatcherQueue,
         InputSettingsSnapshot settingsSnapshot,
         ClipboardCaptureService captureService,
-        Action<IntPtr, PointInt32> summonAction)
+        Action<IntPtr, PointInt32> summonAction,
+        Action previewShortcutAction)
     {
         this.windowHandle = windowHandle;
         this.dispatcherQueue = dispatcherQueue;
         this.settingsSnapshot = settingsSnapshot;
         this.captureService = captureService;
         this.summonAction = summonAction;
+        this.previewShortcutAction = previewShortcutAction;
         subclassProcedure = WindowSubclassProcedure;
         mouseHookProcedure = MouseHook;
 
@@ -98,6 +104,13 @@ public sealed class GlobalInputService : IDisposable
     {
         settingsSnapshot.Update(settings);
         ApplyHotkeyRegistration(settings);
+        ApplyPreviewHotkeyRegistration(settings);
+    }
+
+    public void UpdatePreviewShortcutLease(bool leased)
+    {
+        previewHotkeyLeased = leased;
+        ApplyPreviewHotkeyRegistration(settingsSnapshot.Current);
     }
 
     private IntPtr WindowSubclassProcedure(
@@ -122,6 +135,10 @@ public sealed class GlobalInputService : IDisposable
             {
                 _ = dispatcherQueue.TryEnqueue(() => summonAction(target, new PointInt32(point.X, point.Y)));
             }
+        }
+        else if (message == WmHotkey && unchecked((int)wParam.ToUInt64()) == PreviewHotkeyId)
+        {
+            _ = dispatcherQueue.TryEnqueue(() => previewShortcutAction());
         }
 
         return DefSubclassProc(hwnd, message, wParam, lParam);
@@ -263,6 +280,30 @@ public sealed class GlobalInputService : IDisposable
         }
     }
 
+    private void ApplyPreviewHotkeyRegistration(InputSettings settings)
+    {
+        if (!subclassInstalled)
+        {
+            return;
+        }
+
+        if (previewHotkeyRegistered)
+        {
+            _ = UnregisterHotKey(windowHandle, PreviewHotkeyId);
+            previewHotkeyRegistered = false;
+        }
+
+        if (!previewHotkeyLeased ||
+            !PreviewShortcutLeasePolicy.ShouldLease(true, true, false, settings.PreviewShortcut, settings.CustomShortcut) ||
+            !ShortcutGestureParser.TryParse(settings.PreviewShortcut, out var gesture) ||
+            gesture is not { Kind: ShortcutGestureKind.Keyboard })
+        {
+            return;
+        }
+
+        previewHotkeyRegistered = RegisterHotKey(windowHandle, PreviewHotkeyId, gesture.Modifiers, gesture.VirtualKey);
+    }
+
     private static uint HighWord(uint value) => (value >> 16) & 0xFFFF;
 
     private static bool ModifiersMatch(uint required) =>
@@ -295,6 +336,11 @@ public sealed class GlobalInputService : IDisposable
         {
             _ = UnregisterHotKey(windowHandle, HotkeyId);
             hotkeyRegistered = false;
+        }
+        if (previewHotkeyRegistered)
+        {
+            _ = UnregisterHotKey(windowHandle, PreviewHotkeyId);
+            previewHotkeyRegistered = false;
         }
 
         if (clipboardListenerRegistered)
