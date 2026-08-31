@@ -138,6 +138,40 @@ public sealed class PanelViewModel : ObservableObject
         CancellationToken cancellationToken = default) =>
         RunDeleteAsync(record, cancellationToken);
 
+    public async Task<PreviewEditResult> SavePreviewAsync(
+        Guid recordId,
+        PreviewEdit edit,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(edit);
+        if (IsBusy)
+        {
+            return PreviewEditResult.ValidationError("正在处理其他操作，请稍后再试");
+        }
+
+        IsBusy = true;
+        RecoveryMessage = null;
+        try
+        {
+            var result = await historySource.ApplyPreviewEditAsync(recordId, edit, cancellationToken);
+            if (!result.Succeeded)
+            {
+                RecoveryMessage = result.ErrorMessage;
+                return result;
+            }
+
+            AllRecords = AllRecords
+                .Select(record => record.Id == recordId ? result.Record! : record)
+                .ToArray();
+            RefreshVisibleRecords();
+            return result;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     public async Task ClearAsync(CancellationToken cancellationToken = default)
     {
         if (IsBusy)

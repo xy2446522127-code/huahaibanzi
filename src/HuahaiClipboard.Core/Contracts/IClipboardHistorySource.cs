@@ -7,6 +7,10 @@ public interface IClipboardHistorySource
     Task<IReadOnlyList<ClipboardRecord>> GetAllAsync(CancellationToken cancellationToken);
     Task<ClipboardRecord?> FindAsync(Guid recordId, CancellationToken cancellationToken);
     Task UpsertAsync(ClipboardRecord record, CancellationToken cancellationToken);
+    Task<PreviewEditResult> ApplyPreviewEditAsync(
+        Guid recordId,
+        PreviewEdit edit,
+        CancellationToken cancellationToken) => Task.FromResult(PreviewEditResult.RecordMissing());
     Task TouchAsync(Guid recordId, DateTimeOffset touchedAt, CancellationToken cancellationToken) =>
         Task.CompletedTask;
     Task SetFavoriteAsync(Guid recordId, bool value, CancellationToken cancellationToken);

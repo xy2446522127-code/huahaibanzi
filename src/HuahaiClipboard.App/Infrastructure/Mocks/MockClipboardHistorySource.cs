@@ -1,5 +1,6 @@
 using HuahaiClipboard.Core.Contracts;
 using HuahaiClipboard.Core.Models;
+using HuahaiClipboard.Core.Services;
 
 namespace HuahaiClipboard.App.Infrastructure.Mocks;
 
@@ -40,6 +41,31 @@ public sealed class MockClipboardHistorySource : IClipboardHistorySource
         }
 
         return Task.CompletedTask;
+    }
+
+    public Task<PreviewEditResult> ApplyPreviewEditAsync(
+        Guid recordId,
+        PreviewEdit edit,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(edit);
+        lock (syncRoot)
+        {
+            var index = records.FindIndex(record => record.Id == recordId);
+            if (index < 0)
+            {
+                return Task.FromResult(PreviewEditResult.RecordMissing());
+            }
+
+            var result = ClipboardRecordEditor.Apply(records[index], edit);
+            if (result.Succeeded)
+            {
+                records[index] = result.Record!;
+            }
+
+            return Task.FromResult(result);
+        }
     }
 
     public Task SetFavoriteAsync(Guid recordId, bool value, CancellationToken cancellationToken)

@@ -53,6 +53,38 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
         }
     }
 
+    public async Task<PreviewEditResult> ApplyPreviewEditAsync(
+        Guid recordId,
+        PreviewEdit edit,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(edit);
+        await gate.WaitAsync(cancellationToken);
+        try
+        {
+            await EnsureLoadedAsync(cancellationToken);
+            var index = records!.FindIndex(record => record.Id == recordId);
+            if (index < 0)
+            {
+                return PreviewEditResult.RecordMissing();
+            }
+
+            var result = ClipboardRecordEditor.Apply(records[index], edit);
+            if (!result.Succeeded)
+            {
+                return result;
+            }
+
+            records[index] = result.Record!;
+            await SaveAsync(cancellationToken);
+            return result;
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
     public async Task UpsertAsync(ClipboardRecord record, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(record);

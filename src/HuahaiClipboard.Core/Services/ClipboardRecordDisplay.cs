@@ -16,9 +16,13 @@ public sealed record ClipboardRecordDisplay(
             ClipboardItemKind.File => FromFiles(record),
             ClipboardItemKind.Image when !string.IsNullOrWhiteSpace(record.SourcePath) =>
                 new(
-                    SafeFileName(record.SourcePath, record.PrimaryText),
+                    DisplayTitle(record, SafeFileName(record.SourcePath, record.PrimaryText)),
                     record.SourcePath,
                     HasImagePreview(record)),
+            ClipboardItemKind.Image => new(
+                DisplayTitle(record, record.PrimaryText),
+                record.SecondaryText,
+                HasImagePreview(record)),
             _ => new(
                 record.PrimaryText,
                 record.SecondaryText,
@@ -36,17 +40,23 @@ public sealed record ClipboardRecordDisplay(
         }
 
         var firstName = SafeFileName(paths[0], record.PrimaryText);
+        var title = DisplayTitle(record, firstName);
         return paths.Length == 1
-            ? new(firstName, paths[0], false)
+            ? new(title, paths[0], false)
             : new(
-                $"{firstName} 等 {paths.Length} 个文件",
+                string.IsNullOrWhiteSpace(record.DisplayName)
+                    ? $"{firstName} 等 {paths.Length} 个文件"
+                    : title,
                 $"{paths[0]} 等 {paths.Length} 个路径",
                 false);
     }
 
     private static bool HasImagePreview(ClipboardRecord record) =>
         record.Kind == ClipboardItemKind.Image &&
-        !string.IsNullOrWhiteSpace(record.PreviewAssetPath);
+            !string.IsNullOrWhiteSpace(record.PreviewAssetPath);
+
+    private static string DisplayTitle(ClipboardRecord record, string fallback) =>
+        string.IsNullOrWhiteSpace(record.DisplayName) ? fallback : record.DisplayName.Trim();
 
     private static string SafeFileName(string path, string fallback)
     {

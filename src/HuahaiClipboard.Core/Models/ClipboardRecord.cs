@@ -12,4 +12,5 @@ public sealed record ClipboardRecord(
     bool IsPinned,
     bool IsAvailable,
     string? PreviewAssetPath,
-    string? SourcePath = null);
+    string? SourcePath = null,
+    string? DisplayName = null);

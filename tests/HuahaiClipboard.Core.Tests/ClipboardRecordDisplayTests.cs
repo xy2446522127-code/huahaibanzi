@@ -66,6 +66,32 @@ public sealed class ClipboardRecordDisplayTests
     }
 
     [TestMethod]
+    public void ImageAndFileDisplayName_OverridesOnlyTheCardTitle()
+    {
+        var file = Record(ClipboardItemKind.File, @"F:\资料\发布计划.docx", "explorer.exe") with
+        {
+            DisplayName = "八月发布计划"
+        };
+        var image = Record(
+            ClipboardItemKind.Image,
+            "花海截图-20260831-100000.png",
+            "Weixin.exe · PNG",
+            previewAssetPath: @"F:\HuahaiClipboard\Data\images\protected.bin",
+            sourcePath: @"F:\图片\原图.png") with
+        {
+            DisplayName = "主视觉截图"
+        };
+
+        var fileDisplay = ClipboardRecordDisplay.From(file);
+        var imageDisplay = ClipboardRecordDisplay.From(image);
+
+        Assert.AreEqual("八月发布计划", fileDisplay.Title);
+        Assert.AreEqual(@"F:\资料\发布计划.docx", fileDisplay.Detail);
+        Assert.AreEqual("主视觉截图", imageDisplay.Title);
+        Assert.AreEqual(@"F:\图片\原图.png", imageDisplay.Detail);
+    }
+
+    [TestMethod]
     public void LegacyJsonWithoutSourcePath_RemainsReadable()
     {
         var original = Record(

@@ -72,6 +72,12 @@ public sealed class PanelViewModelTests
             typeof(ClipboardRecord),
             typeof(CancellationToken));
         AssertMethod<IClipboardHistorySource>(
+            "ApplyPreviewEditAsync",
+            typeof(Task<PreviewEditResult>),
+            typeof(Guid),
+            typeof(PreviewEdit),
+            typeof(CancellationToken));
+        AssertMethod<IClipboardHistorySource>(
             "TouchAsync",
             typeof(Task),
             typeof(Guid),
@@ -113,7 +119,7 @@ public sealed class PanelViewModelTests
             typeof(Task),
             typeof(int),
             typeof(CancellationToken));
-        Assert.AreEqual(11, typeof(IClipboardHistorySource).GetMethods().Length);
+        Assert.AreEqual(12, typeof(IClipboardHistorySource).GetMethods().Length);
 
         AssertMethod<IPanelActionSink>(
             "CopyAsync",
@@ -406,6 +412,31 @@ public sealed class PanelViewModelTests
         Assert.IsTrue(favorite.IsFavorite);
         Assert.IsTrue(pinned.IsPinned);
         Assert.AreEqual(1, history.GetAllCalls, "Row actions must not re-read and rebuild the entire history.");
+    }
+
+    [TestMethod]
+    public async Task SavePreview_RefreshesTheEditedRecordWithoutChangingItsListPosition()
+    {
+        var source = new MockClipboardHistorySource();
+        var viewModel = new PanelViewModel(
+            source,
+            new MockPanelActionSink(),
+            new RecordingWindowNavigator());
+        await viewModel.LoadAsync();
+        var record = viewModel.AllRecords.Single(value =>
+            value.Id == Guid.Parse("00000000-0000-0000-0000-000000000004"));
+        var orderBeforeSave = viewModel.AllRecords.Select(value => value.Id).ToArray();
+
+        var result = await viewModel.SavePreviewAsync(
+            record.Id,
+            new PreviewEdit(ClipboardItemKind.File, "发布计划"));
+
+        Assert.IsTrue(result.Succeeded, result.ErrorMessage);
+        var updated = viewModel.AllRecords.Single(value => value.Id == record.Id);
+        Assert.AreEqual(record.PrimaryText, updated.PrimaryText);
+        Assert.AreEqual("发布计划", updated.DisplayName);
+        CollectionAssert.AreEqual(orderBeforeSave, viewModel.AllRecords.Select(value => value.Id).ToArray());
+        Assert.IsNull(viewModel.RecoveryMessage);
     }
 
     [TestMethod]
