@@ -4,6 +4,8 @@
 
 Huahai Clipboard v1.1.12 adds one reusable, independent preview board for every clipboard history record. A user opens it by right-clicking a history card once, or by pressing a separately configurable preview shortcut while the main panel is visible and the pointer is hovering that card.
 
+The approved executable UI baseline is `.superpowers/brainstorm/text-preview-board-20260831/content/complete-flow-prototype-v6.html`. Production implementation derives from the existing installed `product-shell.html`; the prototype records the approved interaction and spatial behavior but does not replace the production shell.
+
 The board shows complete text instead of the main list's single-line ellipsis. It is also an editor:
 
 - Text and link records expose their complete payload for editing.
@@ -29,6 +31,8 @@ The v1.1.11 clipboard capture, privacy exclusions, copy-origin guard, click-to-c
 ### Open And Reuse
 
 - A single right click on a record body opens the preview board for that record.
+- Right-click opening keeps the clipboard history main panel visible. The preview is placed to the left of the main panel with an 18-pixel logical gap when the active work area has room, and is clamped to the work area without overlapping the main panel at supported desktop sizes.
+- This exception applies only to right-click preview opening. The main panel's explicit Hide control and its existing left-click-copy auto-hide behavior remain unchanged. Shortcut opening continues to honor the checked main-panel auto-hide preference and may hide the main panel; right-click opening never does.
 - Right-clicking a pin, favorite, or delete control does not trigger its left-click action and does not open a native context menu.
 - Record-level context handling stops propagation. Right-button double-click summon remains available outside the app, but the global detector ignores the app's own panel HWND so two right clicks on a card cannot summon the panel over the preview.
 - Only one preview board exists. Opening another record replaces the current content and brings the existing board forward.
@@ -46,22 +50,24 @@ The v1.1.11 clipboard capture, privacy exclusions, copy-origin guard, click-to-c
 ### Window Behavior
 
 - The preview is an independent borderless `AppWindow`, not an overlay inside the 430 x 680 main panel.
-- Default logical size is 680 x 510. Minimum size is 420 x 360. Maximum size is the active display work area minus a 16-pixel visible margin.
+- Default logical size is 650 x 500. Minimum size is 420 x 360. Maximum size is the active display work area minus a 16-pixel visible margin.
 - The title bar drags the window. The lower-right handle resizes both axes without changing the main panel scale setting.
 - The app stores preview X, Y, width, height, and topmost state independently from the main panel. A missing display or invalid saved rectangle is clamped into the current display work area.
 - The board is topmost by default. A pin icon toggles topmost state and persists the result.
-- Mouse leave starts a 500 ms auto-hide delay. Re-entry cancels it. The board does not auto-hide while an editor owns keyboard focus, while a confirmation is open, or while unsaved changes exist. After Save or Discard, it hides if the pointer is still outside.
+- Mouse leave starts a 250 ms auto-hide delay. Re-entry cancels it. The board does not auto-hide while an editor owns keyboard focus, while a confirmation is open, or while unsaved changes exist. After Save or Discard, it hides if the pointer is still outside.
 - Auto-hide only hides the window. Reopening restores the same saved record, position, size, and editor state.
-- The main panel follows its existing outside-click auto-hide setting when the independent preview receives focus.
+- When opened by right click, focusing the independent preview does not hide the main panel. Other existing main-panel hide triggers remain intact.
 
 ## Visual Contract
 
 The preview board is a new route in the approved `src/HuahaiClipboard.App/Assets/Web/product-shell.html`, loaded by a second WebView2 host. It is not a second visual implementation or a separate HTML shell.
 
 - The board reuses the active theme ID, accent colors, glass opacity, reduced-motion state, typography, border treatment, control density, and specular feedback from the approved main panel.
+- Existing main-panel controls are not restyled for this feature. History-row pin and favorite controls reuse the exact installed production markup and CSS states: the existing custom pin paths and ruby active fill, plus the existing solid-star favorite glyph with gray and gold states. Their shape, color, shadow, hover, and active behavior remain source-identical to `product-shell.html`.
 - The upper-left corner contains only the textual title and record metadata. It has no fox, app, file-type, or decorative icon.
 - The title bar's right side contains dynamic icon controls for auto-hide, topmost, hide, and close, each with a tooltip and visible active state.
 - Text and links use a full-height, wrapping editor with text selection, scrolling, undo/redo, and stable layout while content changes.
+- Text records longer than 120 characters show a locale-formatted length in the main card metadata. The preview toolbar shows a locale-formatted live character count and an estimated wrapped-line count. The estimate counts each explicit newline and each additional 38-character segment as a display line, matching the approved 650-pixel default layout while remaining explicitly approximate after resize. These indicators are informational and never truncate or alter the stored payload.
 - The footer shows saved or dirty status plus Copy, Discard, and Save. Save is also available through `Ctrl+S`.
 - File and image records replace the text editor with a thumbnail, editable display-name field, read-only real path, and an explicit assurance that the disk file is unchanged.
 - Every visible control must have browser interaction evidence or a disabled-with-reason state.
@@ -132,10 +138,11 @@ The coordinator, record editor, thumbnail source, shortcut lease, and window geo
 
 ### Browser And Window Evidence
 
-- Right click opens a record while left click still copies and follows the existing auto-hide setting.
+- Right click opens a record, keeps the main panel visible, places the preview to its left with the approved gap, and produces no overlap. The main Hide control and left-click copy auto-hide continue to work.
 - The preview shortcut opens exactly the hovered virtualized record and never acts with no hover target.
 - The single preview window replaces clean records and guards dirty replacements.
-- Drag, two-axis resize, topmost toggle, auto-hide delay, focus/dirty exemptions, Save, Discard, Cancel, Copy, `Ctrl+S`, and all four record modes produce dynamic evidence.
+- Drag, two-axis resize, topmost toggle, the 250 ms auto-hide delay, focus/dirty exemptions, Save, Discard, Cancel, Copy, `Ctrl+S`, and all four record modes produce dynamic evidence.
+- Production pin/favorite artwork is compared against the approved installed-shell source, and both inactive-to-active interactions produce dynamic evidence without changing the established visual states.
 - A 100,000-character text record remains editable and scrollable without resizing the window or overlapping controls.
 - Default and minimum window sizes render without clipping at 100%, 125%, 150%, and 200% Windows scaling.
 - No preview action triggers the global right-double-click summon path inside the app.
