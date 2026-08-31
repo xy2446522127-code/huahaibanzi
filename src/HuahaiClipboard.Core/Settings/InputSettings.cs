@@ -4,4 +4,5 @@ public sealed record InputSettings(
     bool RightDoubleClickEnabled,
     bool HotkeyEnabled,
     string[] ExcludedApplications,
-    string? CustomShortcut = null);
+    string? CustomShortcut = null,
+    string? PreviewShortcut = null);

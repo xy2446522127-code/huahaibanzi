@@ -17,7 +17,7 @@ public sealed class JsonSettingsStoreTests
             var expected = ShellSettings.Default with
             {
                 Appearance = ShellSettings.Default.Appearance with { ThemeId = "cobalt-blue" },
-                Input = new InputSettings(false, true, ["secret.exe"]),
+                Input = new InputSettings(false, true, ["secret.exe"], PreviewShortcut: "Ctrl+Alt+P"),
                 Behavior = new BehaviorSettings(
                     false,
                     30,
@@ -38,6 +38,7 @@ public sealed class JsonSettingsStoreTests
             Assert.IsFalse(actual.Input.RightDoubleClickEnabled);
             Assert.IsTrue(actual.Input.HotkeyEnabled);
             CollectionAssert.AreEqual(new[] { "secret.exe" }, actual.Input.ExcludedApplications);
+            Assert.AreEqual("Ctrl+Alt+P", actual.Input.PreviewShortcut);
             Assert.IsFalse(actual.Behavior.BackgroundEnabled);
             Assert.AreEqual(30, actual.Behavior.AutoCleanupDays);
             Assert.AreEqual("1.1.7", actual.Behavior.SnoozedUpdateVersion);
@@ -54,6 +55,29 @@ public sealed class JsonSettingsStoreTests
             {
                 Directory.Delete(directory, recursive: true);
             }
+        }
+    }
+
+    [TestMethod]
+    public async Task Settings_OldInputWithoutPreviewShortcutLoadsUnbound()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-settings-preview-shortcut-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "settings.json");
+        try
+        {
+            Directory.CreateDirectory(directory);
+            var json = System.Text.Json.Nodes.JsonNode.Parse(
+                System.Text.Json.JsonSerializer.Serialize(ShellSettings.Default))!.AsObject();
+            json["Input"]!.AsObject().Remove("PreviewShortcut");
+            await File.WriteAllTextAsync(path, json.ToJsonString());
+
+            var actual = await new JsonSettingsStore(path).LoadAsync(CancellationToken.None);
+
+            Assert.IsNull(actual.Input.PreviewShortcut);
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
         }
     }
 
