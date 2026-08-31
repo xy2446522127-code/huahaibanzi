@@ -16,10 +16,20 @@
 
 ## 更新与联网说明
 
-- 默认启用“自动检查更新”时，程序后台启动后立即检查一次，之后每 5 分钟通过 HTTPS 请求 GitHub API（`api.github.com`）读取最新 Release；发现新版会通过 Windows 通知、托盘更新入口和面板红点提醒，可在“关于与更新”中关闭或稍后提醒 24 小时。
+- 默认启用“自动检查更新”时，程序后台启动后立即检查一次，之后每 5 分钟检查一次。`v1.1.13` 及后续版本会先通过 HTTPS 读取本仓库固定的静态更新清单；清单不可用、无效或不是新版本时，才回退到 GitHub API（`api.github.com`）和 Release 页面。发现新版会通过 Windows 通知、托盘更新入口和面板红点提醒，可在“关于与更新”中关闭或稍后提醒 24 小时。
 - 请求不会上传剪贴板历史、图片、排除列表、设置或账号数据。公网 IP、User-Agent 和当前版本号属于正常 HTTPS 请求元数据。
 - Git 仓库中的代码提交不会直接更新已安装用户。维护者必须创建新的 GitHub Release，并上传固定名称的 `HuahaiClipboard-Setup.exe` 及对应 SHA-256 文件。
 - 只有用户点击“立即更新”后，程序才会下载安装包；下载完成后校验资产大小、SHA-256 和固定发布者证书指纹，任一不一致都会拒绝启动安装并保留当前版本。
+
+### 发布静态更新清单
+
+`update-manifest.json` 是 `v1.1.13` 及后续版本的无令牌更新发现入口。不要在没有正式安装包时提交它，也不要用估算值填写大小或 SHA-256。每次发布按以下顺序操作：
+
+1. 生成并使用固定发布者证书签名 `HuahaiClipboard-Setup.exe`，创建对应的 GitHub Release 并上传该文件。
+2. 从已上传的同一安装包取得精确字节数和 SHA-256；将根目录 `update-manifest.json` 更新为 `version`、`releaseUrl`、`installerUrl`、`size` 和小写 `sha256` 五个字段。
+3. `releaseUrl` 和 `installerUrl` 必须使用 HTTPS `github.com` 地址，安装包文件名必须精确为 `HuahaiClipboard-Setup.exe`；将清单提交并推送到 `master`。
+
+客户端只接受固定的 `https://raw.githubusercontent.com/xy2446522127-code/huahaibanzi/master/update-manifest.json` 地址。清单内容即使遭到错误修改，下载内容仍必须通过 SHA-256 和固定发布者证书校验才会启动安装。
 
 ## 安装
 

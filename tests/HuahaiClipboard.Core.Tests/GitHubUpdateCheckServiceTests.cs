@@ -10,6 +10,94 @@ namespace HuahaiClipboard.Core.Tests;
 public sealed class GitHubUpdateCheckServiceTests
 {
     [TestMethod]
+    public async Task UsesAValidatedStaticManifestWithoutCallingTheReleaseApi()
+    {
+        var handler = new StaticManifestHandler(
+            """{"version":"1.1.13","releaseUrl":"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/v1.1.13","installerUrl":"https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.1.13/HuahaiClipboard-Setup.exe","size":42,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}""");
+        using var client = new HttpClient(handler);
+        var service = new GitHubUpdateCheckService(
+            client,
+            new Version(1, 1, 12),
+            new Uri("https://raw.githubusercontent.com/xy2446522127-code/huahaibanzi/master/update-manifest.json"));
+
+        var result = await service.CheckAsync(CancellationToken.None);
+
+        Assert.IsTrue(result.UpdateAvailable);
+        Assert.IsTrue(result.CanAutoInstall);
+        Assert.AreEqual(new Version(1, 1, 13), result.LatestVersion);
+        Assert.AreEqual(42L, result.InstallerSize);
+        Assert.AreEqual(0, handler.ReleaseApiRequests);
+    }
+
+    [TestMethod]
+    public async Task FallsBackToReleaseApiWhenStaticManifestIsMalformed()
+    {
+        var handler = new StaticManifestHandler("{\"version\":\"broken\"}");
+        using var client = new HttpClient(handler);
+        var service = new GitHubUpdateCheckService(
+            client,
+            new Version(1, 1, 12),
+            new Uri("https://raw.githubusercontent.com/xy2446522127-code/huahaibanzi/master/update-manifest.json"));
+
+        var result = await service.CheckAsync(CancellationToken.None);
+
+        Assert.IsTrue(result.UpdateAvailable);
+        Assert.AreEqual(new Version(1, 1, 14), result.LatestVersion);
+        Assert.AreEqual(1, handler.ReleaseApiRequests);
+    }
+
+    [TestMethod]
+    public async Task RejectsAManifestUriOutsideTheFixedRepositoryLocation()
+    {
+        var handler = new StaticManifestHandler(
+            """{"version":"1.1.13","releaseUrl":"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/v1.1.13","installerUrl":"https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.1.13/HuahaiClipboard-Setup.exe","size":42,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}""");
+        using var client = new HttpClient(handler);
+        var service = new GitHubUpdateCheckService(
+            client,
+            new Version(1, 1, 12),
+            new Uri("https://raw.githubusercontent.com/other-owner/other-repository/master/update-manifest.json"));
+
+        var result = await service.CheckAsync(CancellationToken.None);
+
+        Assert.AreEqual(new Version(1, 1, 14), result.LatestVersion);
+        Assert.AreEqual(1, handler.ReleaseApiRequests);
+    }
+
+    [TestMethod]
+    public async Task FallsBackToReleaseApiWhenStaticManifestVersionIsNotNewer()
+    {
+        var handler = new StaticManifestHandler(
+            """{"version":"1.1.12","releaseUrl":"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/v1.1.12","installerUrl":"https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.1.12/HuahaiClipboard-Setup.exe","size":42,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}""");
+        using var client = new HttpClient(handler);
+        var service = new GitHubUpdateCheckService(
+            client,
+            new Version(1, 1, 12),
+            GitHubUpdateCheckService.DefaultStaticManifestUri);
+
+        var result = await service.CheckAsync(CancellationToken.None);
+
+        Assert.AreEqual(new Version(1, 1, 14), result.LatestVersion);
+        Assert.AreEqual(1, handler.ReleaseApiRequests);
+    }
+
+    [TestMethod]
+    public async Task FallsBackToReleaseApiWhenStaticManifestMetadataIsInvalid()
+    {
+        var handler = new StaticManifestHandler(
+            """{"version":"1.1.13","releaseUrl":"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/v1.1.13","installerUrl":"https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.1.13/HuahaiClipboard-Setup.exe","size":0,"sha256":"not-a-valid-sha256"}""");
+        using var client = new HttpClient(handler);
+        var service = new GitHubUpdateCheckService(
+            client,
+            new Version(1, 1, 12),
+            GitHubUpdateCheckService.DefaultStaticManifestUri);
+
+        var result = await service.CheckAsync(CancellationToken.None);
+
+        Assert.AreEqual(new Version(1, 1, 14), result.LatestVersion);
+        Assert.AreEqual(1, handler.ReleaseApiRequests);
+    }
+
+    [TestMethod]
     public async Task AdjacentChecksReuseTheSuccessfulResultWithoutAThrottleFailure()
     {
         var handler = new CountingJsonHandler(
@@ -333,6 +421,36 @@ public sealed class GitHubUpdateCheckServiceTests
             {
                 Content = new StringContent(json)
             });
+    }
+
+    private sealed class StaticManifestHandler(string manifest) : HttpMessageHandler
+    {
+        public int ReleaseApiRequests { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            if (request.RequestUri!.Host.Equals("raw.githubusercontent.com", StringComparison.OrdinalIgnoreCase))
+            {
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(manifest)
+                });
+            }
+
+            if (request.RequestUri.Host.Equals("api.github.com", StringComparison.OrdinalIgnoreCase))
+            {
+                ReleaseApiRequests++;
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(
+                        "{\"tag_name\":\"v1.1.14\",\"html_url\":\"https://github.com/xy2446522127-code/huahaibanzi/releases/tag/v1.1.14\",\"assets\":[{\"name\":\"HuahaiClipboard-Setup.exe\",\"browser_download_url\":\"https://github.com/xy2446522127-code/huahaibanzi/releases/download/v1.1.14/HuahaiClipboard-Setup.exe\",\"size\":43,\"digest\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"}]}"),
+                });
+            }
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+        }
     }
 
     private sealed class CountingJsonHandler(string json) : HttpMessageHandler

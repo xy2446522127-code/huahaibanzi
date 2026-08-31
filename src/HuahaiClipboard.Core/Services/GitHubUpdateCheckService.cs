@@ -23,10 +23,12 @@ public sealed record UpdateCheckResult(
         value is { Length: 64 } && value.All(Uri.IsHexDigit);
 }
 
-public sealed class GitHubUpdateCheckService(HttpClient client, Version currentVersion)
+public sealed class GitHubUpdateCheckService(HttpClient client, Version currentVersion, Uri? staticManifestUri = null)
 {
     public const string ReleasesPage = "https://github.com/xy2446522127-code/huahaibanzi/releases";
     public const string InstallerAssetName = "HuahaiClipboard-Setup.exe";
+    public static readonly Uri DefaultStaticManifestUri = new(
+        "https://raw.githubusercontent.com/xy2446522127-code/huahaibanzi/master/update-manifest.json");
     private const string LatestReleaseApi = "https://api.github.com/repos/xy2446522127-code/huahaibanzi/releases/latest";
     private const string LatestReleasePage = "https://github.com/xy2446522127-code/huahaibanzi/releases/latest";
     private static readonly TimeSpan MinimumCheckInterval = TimeSpan.FromSeconds(10);
@@ -39,7 +41,7 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
     {
         var client = new HttpClient { Timeout = TimeSpan.FromSeconds(12) };
         client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("HuahaiClipboard", currentVersion.ToString(3)));
-        return new GitHubUpdateCheckService(client, currentVersion);
+        return new GitHubUpdateCheckService(client, currentVersion, DefaultStaticManifestUri);
     }
 
     public async Task<UpdateCheckResult> CheckAsync(CancellationToken cancellationToken)
@@ -54,6 +56,12 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
             }
 
             lastCheckTime = DateTimeOffset.Now;
+            var manifestResult = await CheckStaticManifestAsync(cancellationToken).ConfigureAwait(false);
+            if (manifestResult is not null)
+            {
+                lastSuccessfulResult = manifestResult;
+                return manifestResult;
+            }
             using var request = new HttpRequestMessage(HttpMethod.Get, LatestReleaseApi);
             if (latestReleaseEtag is not null)
             {
@@ -102,6 +110,44 @@ public sealed class GitHubUpdateCheckService(HttpClient client, Version currentV
         finally
         {
             checkGate.Release();
+        }
+    }
+
+    private async Task<UpdateCheckResult?> CheckStaticManifestAsync(CancellationToken cancellationToken)
+    {
+        if (staticManifestUri is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            if (!string.Equals(
+                    staticManifestUri.AbsoluteUri,
+                    DefaultStaticManifestUri.AbsoluteUri,
+                    StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            using var response = await client.GetAsync(staticManifestUri, cancellationToken).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            return StaticUpdateManifest.TryCreateUpdate(json, currentVersion, out var update)
+                ? update
+                : null;
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return null;
         }
     }
 
