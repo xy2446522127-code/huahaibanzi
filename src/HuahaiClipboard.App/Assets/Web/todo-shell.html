@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>待办</title>
+  <style>
+    :root{color-scheme:dark;--surface:#231626;--panel:#38213b;--border:rgba(255,207,233,.28);--text:#fff4fc;--muted:#d9c2d5;--accent:#f092c4}*{box-sizing:border-box}body{margin:0;background:transparent;color:var(--text);font:14px "Microsoft YaHei UI",sans-serif}.workspace{height:100vh;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;overflow:hidden;border:1px solid var(--border);border-radius:10px;background:linear-gradient(145deg,rgba(86,45,84,.97),rgba(29,18,35,.98));box-shadow:inset 0 1px rgba(255,255,255,.14)}.titlebar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 15px;border-bottom:1px solid var(--border);cursor:move}.titlebar h1{margin:0;font-size:17px}.actions{display:flex;align-items:center;gap:6px}button,input{font:inherit}button{min-height:30px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:rgba(255,255,255,.09);color:var(--text);cursor:pointer}button:hover{background:rgba(255,255,255,.16)}button:disabled{cursor:not-allowed;opacity:.5}.quick-add{display:flex;gap:8px;padding:12px 15px;border-bottom:1px solid rgba(255,255,255,.09)}.quick-add input{min-width:0;flex:1;border:1px solid var(--border);border-radius:6px;background:rgba(0,0,0,.16);color:var(--text);padding:8px 10px}.content{min-height:0;overflow:auto;padding:0 15px 14px}.todo-row{display:grid;grid-template-columns:27px 28px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:48px;border-bottom:1px solid rgba(255,255,255,.09)}.todo-row.done .todo-text{text-decoration:line-through;opacity:.55}.order{color:var(--accent)}.check{width:24px;min-height:24px;padding:0;border-radius:50%}.todo-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.note{margin:13px 0;padding:12px;border:1px solid var(--border);border-radius:7px;background:rgba(0,0,0,.12)}.note-title,.note-editor{width:100%;margin-bottom:8px;border:1px solid var(--border);border-radius:6px;background:rgba(0,0,0,.16);color:var(--text);padding:8px}.note-editor{min-height:120px;max-height:360px;overflow:auto;resize:both;line-height:1.55}.note-editor:focus,.note-title:focus,.quick-add input:focus{outline:2px solid rgba(240,146,196,.35);border-color:var(--accent)}.note-editor img{display:block;max-width:100%;height:auto;margin:8px 0}.footer{display:flex;justify-content:space-between;gap:10px;padding:11px 15px;border-top:1px solid var(--border);color:var(--muted);font-size:12px}.capsule{height:100vh;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 12px;border:1px solid var(--border);border-radius:999px;background:linear-gradient(135deg,#6c3868,#2b1a32);cursor:move}.capsule strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.capsule button{border-radius:999px}.toggle{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}.toggle input{accent-color:var(--accent)}
+  </style>
+</head>
+<body>
+  <script>
+    const host=window.chrome?.webview||null;
+    const post=(action,payload={})=>host?.postMessage({action,...payload});
+    const q=selector=>document.querySelector(selector);
+    const qa=selector=>Array.from(document.querySelectorAll(selector));
+    const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+    const order=index=>['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'][index]||`${index+1}.`;
+    let state={workspace:{capsuleEnabled:true,todos:[],notes:[]},topmost:false,collapsed:false};
+    function render(){
+      const workspace=state.workspace;
+      if(state.collapsed){
+        document.body.innerHTML=`<main class="capsule" id="dragSurface"><strong>待办 · ${workspace.todos.filter(todo=>!todo.isCompleted).length} 项未完成</strong><button id="restore">展开</button></main>`;
+        q('#dragSurface').onpointerdown=event=>{if(!event.target.closest('button'))post('beginNativeDrag')};
+        q('#restore').onclick=()=>post('todoRestore');
+        return;
+      }
+      document.body.innerHTML=`<main class="workspace"><header class="titlebar" id="dragSurface"><h1>待办</h1><div class="actions"><label class="toggle"><input id="capsuleEnabled" type="checkbox" ${workspace.capsuleEnabled?'checked':''}>胶囊</label><button id="collapse" title="折叠为胶囊" ${workspace.capsuleEnabled?'':'disabled'}>收起</button><button id="topmost" title="窗口置顶">${state.topmost?'取消置顶':'置顶'}</button><button id="close" title="关闭">×</button></div></header><form class="quick-add" id="quickAdd"><input id="todoText" placeholder="添加待办，按 Enter 保存"><button>添加</button><button type="button" id="newNote">新笔记</button></form><section class="content"><div id="todos">${workspace.todos.map((todo,index)=>`<div class="todo-row ${todo.isCompleted?'done':''}" draggable="true" data-todo-id="${escapeHtml(todo.id)}"><span class="order">${order(index)}</span><button class="check" data-toggle="${escapeHtml(todo.id)}">${todo.isCompleted?'✓':''}</button><span class="todo-text">${escapeHtml(todo.text)}</span><button data-delete="${escapeHtml(todo.id)}">删除</button></div>`).join('')}</div><section id="notes">${workspace.notes.map(note=>`<article class="note" data-note-id="${escapeHtml(note.id)}"><input class="note-title" value="${escapeHtml(note.title)}" aria-label="笔记标题"><div class="note-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="笔记内容">${note.html||''}</div><button data-note-delete="${escapeHtml(note.id)}">删除笔记</button></article>`).join('')}</section></section><footer class="footer"><span>${workspace.todos.filter(todo=>!todo.isCompleted).length} 项未完成 · 已自动保存</span><span>拖动待办插入排序</span></footer></main>`;
+      bind();
+    }
+    function bind(){
+      let draggedId=null;
+      q('#dragSurface').onpointerdown=event=>{if(!event.target.closest('button,input'))post('beginNativeDrag')};
+      q('#close').onclick=()=>post('todoClose');
+      q('#topmost').onclick=()=>post('todoTopmost',{enabled:!state.topmost});
+      q('#capsuleEnabled').onchange=event=>post('todoSetCapsule',{enabled:event.target.checked});
+      q('#collapse').onclick=()=>post('todoCollapse');
+      q('#quickAdd').onsubmit=event=>{event.preventDefault();const input=q('#todoText');if(input.value.trim())post('todoAdd',{text:input.value.trim()})};
+      q('#newNote').onclick=()=>post('todoAddNote',{text:'新笔记'});
+      qa('[data-toggle]').forEach(button=>button.onclick=()=>post('todoToggle',{id:button.dataset.toggle}));
+      qa('[data-delete]').forEach(button=>button.onclick=()=>post('todoDelete',{id:button.dataset.delete}));
+      qa('[data-todo-id]').forEach(row=>{row.ondragstart=()=>{draggedId=row.dataset.todoId};row.ondragover=event=>event.preventDefault();row.ondrop=event=>{event.preventDefault();if(!draggedId||draggedId===row.dataset.todoId)return;const rect=row.getBoundingClientRect();post('todoMove',{id:draggedId,text:row.dataset.todoId,enabled:event.clientY>rect.top+rect.height/2})}});
+      qa('[data-note-id]').forEach(note=>{const editor=note.querySelector('.note-editor');const save=()=>post('todoUpdateNote',{id:note.dataset.noteId,text:note.querySelector('.note-title').value,mode:editor.innerHTML});note.querySelector('.note-title').onchange=save;editor.oninput=save;editor.onpaste=event=>{const item=[...(event.clipboardData?.items||[])].find(value=>value.type.startsWith('image/'));if(!item)return;event.preventDefault();const reader=new FileReader();reader.onload=()=>{const image=document.createElement('img');image.src=reader.result;image.alt='粘贴的图片';const selection=getSelection();if(selection?.rangeCount){const range=selection.getRangeAt(0);range.deleteContents();range.insertNode(image);range.setStartAfter(image);selection.removeAllRanges();selection.addRange(range)}else editor.append(image);save()};reader.readAsDataURL(item.getAsFile())};note.querySelector('[data-note-delete]').onclick=()=>post('todoDeleteNote',{id:note.dataset.noteId})});
+    }
+    host?.addEventListener('message',event=>{if(event.data?.type==='todoState'){state=event.data;render()}});
+    render();post('todoReady');
+  </script>
+</body>
+</html>

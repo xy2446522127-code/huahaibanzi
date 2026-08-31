@@ -78,6 +78,8 @@ public sealed class LocalDataLayout
         SettingsFile = Path.Combine(DataDirectory, "settings.json");
         WindowPositionsFile = Path.Combine(DataDirectory, "window-positions.json");
         ImageDirectory = Path.Combine(DataDirectory, "images");
+        TodoWorkspaceFile = Path.Combine(DataDirectory, "todo-workspace.json");
+        TodoImageDirectory = Path.Combine(DataDirectory, "todo-images");
     }
 
     public string InstallRoot { get; }
@@ -93,6 +95,10 @@ public sealed class LocalDataLayout
     public string WindowPositionsFile { get; }
 
     public string ImageDirectory { get; }
+
+    public string TodoWorkspaceFile { get; }
+
+    public string TodoImageDirectory { get; }
 
     private static string NormalizeUserKey(string value)
     {

@@ -75,6 +75,7 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     private bool updateInstallationInProgress;
     private bool notifyUpdateOnNextSummon;
     private ContentPreviewWindow? contentPreviewWindow;
+    private TodoWorkspaceWindow? todoWorkspaceWindow;
     private Guid? hoveredPreviewRecordId;
 
     public CursorPanelWindow()
@@ -261,6 +262,9 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
     {
         switch (request.Action)
         {
+            case "openTodoWorkspace":
+                await OpenTodoWorkspaceAsync();
+                return;
             case "copy":
                 var copyRecord = FindRecord(request.Id);
                 var hideAfterCopy = request.Enabled != false;
@@ -494,6 +498,14 @@ public sealed partial class CursorPanelWindow : Window, ITransientWindowHost
         }
 
         await PostShellStateAsync();
+    }
+
+    private async Task OpenTodoWorkspaceAsync()
+    {
+        todoWorkspaceWindow ??= new TodoWorkspaceWindow(
+            compositionRoot.TodoWorkspaceService,
+            Path.Combine(AppContext.BaseDirectory, "Assets"));
+        await todoWorkspaceWindow.OpenAsync();
     }
 
     private ClipboardRecord FindRecord(string? id)

@@ -55,6 +55,9 @@ public static class WebBridgeProtocol
         "snoozeUpdate",
         "installUpdate",
         "openRelease"
+        , "openTodoWorkspace", "todoReady", "todoAdd", "todoToggle", "todoDelete", "todoMove",
+        "todoAddNote", "todoUpdateNote", "todoDeleteNote", "todoSetCapsule", "todoCollapse",
+        "todoRestore", "todoClose", "todoTopmost"
     };
 
     public static bool IsSupported(string? action) =>

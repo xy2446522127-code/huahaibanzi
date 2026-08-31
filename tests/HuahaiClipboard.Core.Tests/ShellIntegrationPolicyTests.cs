@@ -105,7 +105,8 @@ public sealed class ShellIntegrationPolicyTests
             "setPetals", "setReduceMotion", "setClickDuration", "setRightDoubleClick",
             "setShortcut", "setPreviewShortcut", "resetShortcut", "setExclusions", "openDataFolder", "setStartup",
             "setBackground", "setOutsideAutoHide", "beginNativeDrag"
-            , "previewPanelScale", "commitPanelScale", "cancelPanelScale", "setPanelScale", "setCheckUpdatesOnStartup", "checkUpdate", "snoozeUpdate", "installUpdate", "openRelease"
+            , "previewPanelScale", "commitPanelScale", "cancelPanelScale", "setPanelScale", "setCheckUpdatesOnStartup", "checkUpdate", "snoozeUpdate", "installUpdate", "openRelease",
+            "openTodoWorkspace", "todoReady", "todoAdd", "todoToggle", "todoDelete", "todoMove", "todoAddNote", "todoUpdateNote", "todoDeleteNote", "todoSetCapsule", "todoCollapse", "todoRestore", "todoClose", "todoTopmost"
         ];
 
         foreach (var action in actions)

@@ -3,6 +3,7 @@ using HuahaiClipboard.App.Infrastructure.Storage;
 using HuahaiClipboard.App.Presentation.Windows;
 using HuahaiClipboard.Core.Presentation;
 using HuahaiClipboard.Core.Services;
+using HuahaiClipboard.Core.Todo;
 
 namespace HuahaiClipboard.App;
 
@@ -18,6 +19,7 @@ public sealed class CompositionRoot
     private readonly JsonSettingsStore settingsStore;
     private readonly ClipboardCaptureService captureService;
     private readonly ClipboardRetentionService retentionService;
+    private readonly TodoWorkspaceService todoWorkspaceService;
 
     public CompositionRoot()
     {
@@ -44,6 +46,9 @@ public sealed class CompositionRoot
             settingsStore,
             imageStore,
             clipboardWriteOriginGuard);
+        todoWorkspaceService = new TodoWorkspaceService(
+            new JsonTodoWorkspaceStore(dataLayout.TodoWorkspaceFile),
+            new TodoNoteImageRewriter(new TodoImageStore(dataLayout.TodoImageDirectory)));
     }
 
     public PanelViewModel CreatePanel(WindowNavigator navigator) =>
@@ -68,4 +73,6 @@ public sealed class CompositionRoot
     public LocalDataLayout DataLayout => dataLayout;
 
     public ClipboardRetentionService RetentionService => retentionService;
+
+    public TodoWorkspaceService TodoWorkspaceService => todoWorkspaceService;
 }
