@@ -1,11 +1,33 @@
 using HuahaiClipboard.Core.Services;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Win32;
+using System.Runtime.Versioning;
 
 namespace HuahaiClipboard.Core.Tests;
 
 [TestClass]
 public sealed class DataLocationRegistryTests
 {
+    [TestMethod]
+    [SupportedOSPlatform("windows")]
+    public async Task WindowsRegistryDataLocationRegistry_RoundTripsCurrentUserDataRoot()
+    {
+        var subKey = $"Software\\HuahaiClipboard.Tests\\{Guid.NewGuid():N}";
+        try
+        {
+            var registry = new WindowsRegistryDataLocationRegistry(subKey);
+            await registry.WriteAsync(@"F:\\HuahaiClipboard\\Data", CancellationToken.None);
+
+            Assert.AreEqual(
+                Path.GetFullPath(@"F:\\HuahaiClipboard\\Data"),
+                await registry.ReadAsync(CancellationToken.None));
+        }
+        finally
+        {
+            Registry.CurrentUser.DeleteSubKeyTree(subKey, throwOnMissingSubKey: false);
+        }
+    }
+
     [TestMethod]
     public async Task ResolveDataRootAsync_UsesRegisteredStableRootBeforePopulatedInstallRoot()
     {

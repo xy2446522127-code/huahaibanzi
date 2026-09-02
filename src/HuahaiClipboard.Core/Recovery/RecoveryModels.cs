@@ -39,3 +39,14 @@ public sealed record RecoveryInspection(
     int ImageCount,
     IReadOnlyDictionary<string, string> FileManifest,
     string? ErrorCode);
+
+public sealed class DataRootRecoveryRequiredException : IOException
+{
+    public DataRootRecoveryRequiredException(IReadOnlyList<string> conflictingRoots)
+        : base("检测到多个非空的剪贴板数据目录，需要先进行恢复选择。")
+    {
+        ConflictingRoots = conflictingRoots ?? throw new ArgumentNullException(nameof(conflictingRoots));
+    }
+
+    public IReadOnlyList<string> ConflictingRoots { get; }
+}

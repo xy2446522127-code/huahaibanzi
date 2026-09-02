@@ -11,6 +11,7 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
     private readonly string filePath;
     private readonly ITextProtector protector;
     private readonly IClipboardImageStore? imageStore;
+    private readonly AtomicJsonFileStore atomicFileStore = new();
     private readonly SemaphoreSlim gate = new(1, 1);
     private List<ClipboardRecord>? records;
     private Exception? loadFailure;
@@ -321,16 +322,19 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
 
     private async Task SaveAsync(CancellationToken cancellationToken)
     {
-        var directory = Path.GetDirectoryName(filePath);
-        if (!string.IsNullOrEmpty(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        var json = JsonSerializer.Serialize(records);
-        var protectedJson = protector.Protect(json);
-        var temporaryPath = filePath + ".tmp";
-        await File.WriteAllTextAsync(temporaryPath, protectedJson, cancellationToken);
-        File.Move(temporaryPath, filePath, overwrite: true);
+        await atomicFileStore.WriteVerifiedAsync(
+            filePath,
+            records!,
+            values => protector.Protect(JsonSerializer.Serialize(values)),
+            protectedJson =>
+            {
+                var json = protector.Unprotect(protectedJson);
+                return JsonSerializer.Deserialize<List<ClipboardRecord>>(json) ?? [];
+            },
+            values =>
+            {
+                _ = values.Count;
+            },
+            cancellationToken);
     }
 }

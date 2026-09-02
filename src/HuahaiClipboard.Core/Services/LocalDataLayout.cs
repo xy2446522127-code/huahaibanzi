@@ -139,6 +139,40 @@ public sealed class LocalDataLayout
         TodoImageDirectory = Path.Combine(DataDirectory, "todo-images");
     }
 
+    public static LocalDataLayout FromDataRoot(string dataRoot, string userKey)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(dataRoot);
+        var normalizedRoot = Path.GetFullPath(dataRoot)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return new LocalDataLayout(normalizedRoot, userKey, dataRootIsStable: true);
+    }
+
+    private LocalDataLayout(string root, string userKey, bool dataRootIsStable)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(root);
+        ArgumentException.ThrowIfNullOrWhiteSpace(userKey);
+        var normalizedRoot = Path.GetFullPath(root)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        InstallRoot = dataRootIsStable
+            ? Path.GetDirectoryName(normalizedRoot) ?? normalizedRoot
+            : normalizedRoot;
+        DataRoot = dataRootIsStable ? normalizedRoot : Path.Combine(normalizedRoot, "Data");
+        DataDirectory = Path.GetFullPath(Path.Combine(DataRoot, NormalizeUserKey(userKey)));
+        if (!string.Equals(
+                Path.GetDirectoryName(DataDirectory),
+                DataRoot,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("The user data directory must be a direct child of Data.");
+        }
+        HistoryFile = Path.Combine(DataDirectory, "history.dat");
+        SettingsFile = Path.Combine(DataDirectory, "settings.json");
+        WindowPositionsFile = Path.Combine(DataDirectory, "window-positions.json");
+        ImageDirectory = Path.Combine(DataDirectory, "images");
+        TodoWorkspaceFile = Path.Combine(DataDirectory, "todo-workspace.json");
+        TodoImageDirectory = Path.Combine(DataDirectory, "todo-images");
+    }
+
     public string InstallRoot { get; }
 
     public string DataRoot { get; }

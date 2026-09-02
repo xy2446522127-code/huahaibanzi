@@ -4,6 +4,7 @@ using HuahaiClipboard.App.Presentation.Windows;
 using HuahaiClipboard.Core.Presentation;
 using HuahaiClipboard.Core.Services;
 using HuahaiClipboard.Core.Todo;
+using HuahaiClipboard.Core.Recovery;
 
 namespace HuahaiClipboard.App;
 
@@ -23,12 +24,7 @@ public sealed class CompositionRoot
 
     public CompositionRoot()
     {
-        dataLayout = new LocalDataLayout(
-            LocalDataLayout.ResolveInstallRoot(),
-            LocalDataLayout.ResolveUserKey());
-        LocalDataMigrator.MigrateIfNeeded(
-            dataLayout,
-            LocalDataLayout.ResolveLegacyDataDirectory());
+        dataLayout = ResolveDataLayout();
         var protector = new DpapiTextProtector();
         settingsStore = new JsonSettingsStore(dataLayout.SettingsFile);
         imageStore = new ProtectedClipboardImageStore(dataLayout.ImageDirectory, protector);
@@ -49,6 +45,51 @@ public sealed class CompositionRoot
         todoWorkspaceService = new TodoWorkspaceService(
             new JsonTodoWorkspaceStore(dataLayout.TodoWorkspaceFile),
             new TodoNoteImageRewriter(new TodoImageStore(dataLayout.TodoImageDirectory)));
+    }
+
+    private static LocalDataLayout ResolveDataLayout()
+    {
+        var installRoot = LocalDataLayout.ResolveInstallRoot();
+        var userKey = LocalDataLayout.ResolveUserKey();
+        var legacyRoot = LocalDataLayout.ResolveLegacyDataDirectory();
+        IDataLocationRegistry? registry = OperatingSystem.IsWindows()
+            ? new WindowsRegistryDataLocationRegistry()
+            : null;
+
+        var resolution = LocalDataLayout.ResolveDataRootAsync(
+                registry ?? new NullDataLocationRegistry(),
+                installRoot,
+                legacyRoot)
+            .GetAwaiter()
+            .GetResult();
+
+        if (resolution.Kind == DataRootResolutionKind.RecoveryRequired)
+        {
+            throw new DataRootRecoveryRequiredException(resolution.ConflictingDataRoots);
+        }
+
+        var layout = resolution.Kind == DataRootResolutionKind.Registered
+            ? LocalDataLayout.FromDataRoot(resolution.DataRoot!, userKey)
+            : new LocalDataLayout(installRoot, userKey);
+
+        if (resolution.LegacyMigrationSource is not null)
+        {
+            LocalDataMigrator.MigrateIfNeeded(layout, resolution.LegacyMigrationSource);
+        }
+
+        if (registry is not null && resolution.Kind != DataRootResolutionKind.Registered)
+        {
+            registry.WriteAsync(layout.DataRoot, CancellationToken.None).GetAwaiter().GetResult();
+        }
+
+        return layout;
+    }
+
+    private sealed class NullDataLocationRegistry : IDataLocationRegistry
+    {
+        public Task<string?> ReadAsync(CancellationToken cancellationToken) => Task.FromResult<string?>(null);
+
+        public Task WriteAsync(string dataRoot, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
     public PanelViewModel CreatePanel(WindowNavigator navigator) =>

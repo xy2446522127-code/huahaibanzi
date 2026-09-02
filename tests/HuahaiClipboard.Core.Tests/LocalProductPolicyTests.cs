@@ -26,6 +26,19 @@ public sealed class LocalProductPolicyTests
     }
 
     [TestMethod]
+    public void LocalDataLayout_CanUseAStableRegisteredDataRoot()
+    {
+        var layout = LocalDataLayout.FromDataRoot(@"F:\\HuahaiClipboard\\StableData", "S-1-5-21-1000");
+
+        Assert.AreEqual(
+            Path.GetFullPath(@"F:\\HuahaiClipboard\\StableData\\S-1-5-21-1000"),
+            layout.DataDirectory);
+        Assert.AreEqual(
+            Path.GetFullPath(@"F:\\HuahaiClipboard\\StableData"),
+            layout.DataRoot);
+    }
+
+    [TestMethod]
     public void LocalDataLayout_UsesExplicitInstallAndUserRootsWhenPresent()
     {
         var previousInstallRoot = Environment.GetEnvironmentVariable("HUAHAI_CLIPBOARD_INSTALL_ROOT");
@@ -72,7 +85,7 @@ public sealed class LocalProductPolicyTests
     }
 
     [TestMethod]
-    public void LocalDataMigrator_MovesKnownDataAndRemovesTheVerifiedLegacyDirectory()
+    public void LocalDataMigrator_MovesKnownDataAndRetainsTheVerifiedLegacyDirectory()
     {
         var root = Path.Combine(Path.GetTempPath(), $"HuahaiClipboard.DataMigration.{Guid.NewGuid():N}");
         var installRoot = Path.Combine(root, "Install", "HuahaiClipboard");
@@ -96,7 +109,8 @@ public sealed class LocalProductPolicyTests
             Assert.AreEqual("positions-v1", File.ReadAllText(layout.WindowPositionsFile));
             Assert.AreEqual("image-v1", File.ReadAllText(Path.Combine(layout.ImageDirectory, "image.bin")));
             Assert.IsFalse(Directory.Exists(Path.Combine(layout.DataDirectory, "Updates")));
-            Assert.IsFalse(Directory.Exists(legacyRoot));
+            Assert.IsTrue(Directory.Exists(legacyRoot));
+            Assert.AreEqual("history-v1", File.ReadAllText(Path.Combine(legacyRoot, "history.dat")));
         }
         finally
         {

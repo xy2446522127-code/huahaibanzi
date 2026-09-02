@@ -38,7 +38,6 @@ public static class LocalDataMigrator
             AssertEquivalent(source, temporary, skipTopLevelUpdates: true);
             Directory.Move(temporary, layout.DataDirectory);
             AssertEquivalent(source, layout.DataDirectory, skipTopLevelUpdates: true);
-            Directory.Delete(source, recursive: true);
             return LocalDataMigrationResult.Migrated;
         }
         catch
