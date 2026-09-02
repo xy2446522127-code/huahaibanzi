@@ -71,7 +71,7 @@ static object UpgradeCommand(IReadOnlyDictionary<string, string> options)
         active,
         backup,
         Directory.Exists,
-        Directory.Move,
+        MoveDirectoryWithRetry,
         path =>
         {
             if (!Directory.Exists(path)) return true;
@@ -156,24 +156,32 @@ static void ExtractInstaller(string installerPath, string destination)
     if (Directory.Exists(destination)) Directory.Delete(destination, recursive: true);
     Directory.CreateDirectory(destination);
     var root = Path.GetFullPath(destination).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-    var assembly = Assembly.LoadFrom(installerPath);
-    using var resource = assembly.GetManifestResourceStream(PayloadResource)
-        ?? throw new InvalidDataException($"Installer is missing {PayloadResource}.");
-    using var archive = new ZipArchive(resource, ZipArchiveMode.Read, leaveOpen: false);
-    foreach (var entry in archive.Entries)
+    var loadContext = new AssemblyLoadContext($"installer-payload-{Guid.NewGuid():N}", isCollectible: true);
+    try
     {
-        var target = Path.GetFullPath(Path.Combine(destination, entry.FullName));
-        if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+        var assembly = loadContext.LoadFromAssemblyPath(installerPath);
+        using var resource = assembly.GetManifestResourceStream(PayloadResource)
+            ?? throw new InvalidDataException($"Installer is missing {PayloadResource}.");
+        using var archive = new ZipArchive(resource, ZipArchiveMode.Read, leaveOpen: false);
+        foreach (var entry in archive.Entries)
         {
-            throw new InvalidDataException($"Installer payload escapes its destination: {entry.FullName}");
+            var target = Path.GetFullPath(Path.Combine(destination, entry.FullName));
+            if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidDataException($"Installer payload escapes its destination: {entry.FullName}");
+            }
+            if (string.IsNullOrEmpty(entry.Name))
+            {
+                Directory.CreateDirectory(target);
+                continue;
+            }
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            entry.ExtractToFile(target, overwrite: false);
         }
-        if (string.IsNullOrEmpty(entry.Name))
-        {
-            Directory.CreateDirectory(target);
-            continue;
-        }
-        Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-        entry.ExtractToFile(target, overwrite: false);
+    }
+    finally
+    {
+        loadContext.Unload();
     }
     if (!RequiredPayloadExists(destination))
     {
@@ -206,6 +214,26 @@ static string Sha256(string path)
 {
     using var stream = File.OpenRead(path);
     return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
+}
+
+static void MoveDirectoryWithRetry(string source, string destination)
+{
+    for (var attempt = 0; ; attempt++)
+    {
+        try
+        {
+            Directory.Move(source, destination);
+            return;
+        }
+        catch (IOException) when (attempt < 74)
+        {
+            Thread.Sleep(200);
+        }
+        catch (UnauthorizedAccessException) when (attempt < 74)
+        {
+            Thread.Sleep(200);
+        }
+    }
 }
 
 static Dictionary<string, string> ParseOptions(string[] values)
