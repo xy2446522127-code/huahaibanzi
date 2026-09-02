@@ -129,6 +129,7 @@ try {
     ) + $references + @(
         (Join-Path $PSScriptRoot 'PrerequisitePolicy.cs'),
         (Join-Path $PSScriptRoot 'InstallLocationPolicy.cs'),
+        (Join-Path $PSScriptRoot 'BootstrapperInstallPathPolicy.cs'),
         (Join-Path $PSScriptRoot 'InstallTargetPolicy.cs'),
         (Join-Path $PSScriptRoot 'InstallDataPreserver.cs'),
         (Join-Path $PSScriptRoot 'PostInstallLaunchPolicy.cs'),

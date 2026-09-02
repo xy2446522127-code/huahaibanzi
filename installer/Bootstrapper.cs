@@ -38,6 +38,7 @@ internal static class Bootstrapper
 
         bool silent = HasArgument(args, "--silent");
         bool noLaunch = HasArgument(args, "--no-launch");
+        bool migrationMode = HasArgument(args, "--migration");
         bool createdNew;
 
         using (var mutex = new Mutex(true, @"Local\HuahaiClipboardInstaller", out createdNew))
@@ -55,13 +56,16 @@ internal static class Bootstrapper
             {
                 defaultInstallRoot = InstallLocationPolicy.DefaultForRoots(GetAvailableFixedDriveRoots(), ProductFolderName);
                 string requestedInstallRoot = GetArgumentValue(args, "--install-dir");
-                if (!silent && String.IsNullOrWhiteSpace(requestedInstallRoot))
+                string registeredInstallRoot = GetRegisteredInstallRoot();
+                if (String.IsNullOrWhiteSpace(registeredInstallRoot) && !silent && String.IsNullOrWhiteSpace(requestedInstallRoot))
                 {
                     requestedInstallRoot = ChooseInstallRoot(defaultInstallRoot);
                     if (requestedInstallRoot == null)
                         return 4;
                 }
-                installRoot = InstallLocationPolicy.Resolve(requestedInstallRoot, defaultInstallRoot);
+                installRoot = String.IsNullOrWhiteSpace(registeredInstallRoot)
+                    ? InstallLocationPolicy.Resolve(requestedInstallRoot, defaultInstallRoot)
+                    : BootstrapperInstallPathPolicy.Resolve(requestedInstallRoot, registeredInstallRoot, migrationMode);
                 restartRequired = Install(installRoot);
             }
             catch (Exception ex)
