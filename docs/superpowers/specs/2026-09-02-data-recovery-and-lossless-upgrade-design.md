@@ -99,10 +99,10 @@ The value identifies the stable data root containing direct Windows SID children
 1. Valid registered `DataLocation`.
 2. Existing data under the registered install location.
 3. Existing data under the running executable location.
-4. Verified legacy local-app-data source.
-5. Only when none exists, a new data root for a genuinely new installation.
+4. A verified legacy local-app-data source as a migration candidate, never as a `DataLocation` value.
+5. Only when no stable root exists, a new data root for a genuinely new installation.
 
-Resolution that finds multiple non-empty sources enters recovery-required state instead of choosing by timestamp. Existing users are registered in place during the hotfix; their data is not moved merely to introduce the new key.
+Resolution that finds multiple non-empty stable roots enters recovery-required state instead of choosing by timestamp. Existing users are registered in place during the hotfix; their data is not moved merely to introduce the new key. The legacy local-app-data directory has a different single-user layout, so it is first snapshotted, copied into the selected stable root's SID child, validated through production readers, and retained until the health receipt verifies the migrated set. It is never written directly to `DataLocation` and is not deleted by the hotfix.
 
 The uninstall entry may be repaired, removed, or recreated without changing `DataLocation`. Normal uninstall preserves data and the product key. Permanent data deletion is a separate explicit operation that displays the exact data path and requires a second confirmation.
 

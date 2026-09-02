@@ -45,7 +45,7 @@
 - Create: tests/HuahaiClipboard.Core.Tests/DataLocationRegistryTests.cs
 - Modify: tests/HuahaiClipboard.Core.Tests/LocalProductPolicyTests.cs
 
-**Produces:** IDataLocationRegistry, DataRootResolution, and RecoverySource. LocalDataLayout.ResolveDataRootAsync uses valid registered data before install and legacy roots and reports RecoveryRequired for multiple populated roots.
+**Produces:** IDataLocationRegistry, DataRootResolution, and RecoverySource. LocalDataLayout.ResolveDataRootAsync uses only valid stable registered and install data roots, reports RecoveryRequired for multiple populated stable roots, and returns a legacy migration candidate separately.
 
 - [ ] **Step 1: Write failing priority and ambiguity tests**
 
@@ -80,7 +80,7 @@ Expected: compilation failure because the registry contract and resolver do not 
 - [ ] **Step 3: Implement the smallest deterministic resolver**
 
 ~~~csharp
-public enum DataRootResolutionKind { Registered, InstallRoot, Legacy, NewInstall, RecoveryRequired }
+public enum DataRootResolutionKind { Registered, InstallRoot, NewInstall, RecoveryRequired }
 public sealed record DataRootResolution(DataRootResolutionKind Kind, string? DataRoot, IReadOnlyList<string> Candidates);
 public interface IDataLocationRegistry
 {
@@ -89,7 +89,7 @@ public interface IDataLocationRegistry
 }
 ~~~
 
-Normalize paths; reject invalid roots; define populated as a direct SID child containing a recognized data file. More than one populated root returns RecoveryRequired, never a timestamp-based guess.
+Normalize stable paths; reject invalid roots; define populated as a direct SID child containing a recognized data file. More than one populated stable root returns RecoveryRequired, never a timestamp-based guess. The old `%LocalAppData%` layout is surfaced only as a migration candidate; snapshot it, copy into the selected SID child, validate it, and retain the old directory until the health receipt succeeds.
 
 - [ ] **Step 4: Verify GREEN**
 
