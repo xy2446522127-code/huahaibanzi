@@ -1,6 +1,6 @@
 {
   "product_scale": "medium",
-  "change_scale": "medium",
+  "change_scale": "large",
   "risk_level": "high",
   "delivery_maturity": "release",
   "runtime_topology": "desktop-first",
@@ -18,16 +18,18 @@
       "overrides": []
     },
     "change": {
-      "scale": "medium",
-      "score": 14,
+      "scale": "large",
+      "score": 20,
       "dimensions": {
-        "workflows": 3,
-        "surfaces": 2,
-        "boundaries": 3,
+        "workflows": 4,
+        "surfaces": 4,
+        "boundaries": 5,
         "integrations": 3,
-        "slices": 3
+        "slices": 4
       },
-      "overrides": []
+      "overrides": [
+        "Data recovery, stable data identity, upgrade rollback, and release gating cross the installer/application boundary."
+      ]
     },
     "repositories": 1,
     "release_targets": 1,
