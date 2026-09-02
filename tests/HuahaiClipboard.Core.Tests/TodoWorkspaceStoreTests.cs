@@ -59,6 +59,28 @@ public sealed class TodoWorkspaceStoreTests
     }
 
     [TestMethod]
+    public async Task SaveAsync_RetainsTwoReadableWorkspaceBackups()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-todo-backups-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "todo-workspace.json");
+        try
+        {
+            var store = new JsonTodoWorkspaceStore(path);
+            await store.SaveAsync(new TodoWorkspace(true, [new TodoItem("one", "第一版", false, 1)], []));
+            await store.SaveAsync(new TodoWorkspace(false, [new TodoItem("two", "第二版", false, 1)], []));
+            await store.SaveAsync(new TodoWorkspace(true, [new TodoItem("three", "第三版", true, 1)], []));
+
+            Assert.AreEqual("第三版", (await new JsonTodoWorkspaceStore(path).LoadAsync()).Todos.Single().Text);
+            Assert.AreEqual("第二版", (await new JsonTodoWorkspaceStore(path + ".bak1").LoadAsync()).Todos.Single().Text);
+            Assert.AreEqual("第一版", (await new JsonTodoWorkspaceStore(path + ".bak2").LoadAsync()).Todos.Single().Text);
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [TestMethod]
     public async Task LoadAsync_WhenStoredJsonIsInvalid_ReturnsSafeDefaultWorkspace()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"huahai-todo-{Guid.NewGuid():N}");

@@ -7,6 +7,7 @@ namespace HuahaiClipboard.Core.Services;
 public sealed class JsonSettingsStore(string filePath) : ISettingsStore
 {
     private readonly SemaphoreSlim gate = new(1, 1);
+    private readonly AtomicJsonFileStore atomicFileStore = new();
 
     public async Task<ShellSettings> LoadAsync(CancellationToken cancellationToken)
     {
@@ -62,10 +63,13 @@ public sealed class JsonSettingsStore(string filePath) : ISettingsStore
                 Directory.CreateDirectory(directory);
             }
 
-            var temporaryPath = filePath + ".tmp";
-            var json = JsonSerializer.Serialize(settings);
-            await File.WriteAllTextAsync(temporaryPath, json, cancellationToken);
-            File.Move(temporaryPath, filePath, overwrite: true);
+            await atomicFileStore.WriteVerifiedAsync(
+                filePath,
+                settings,
+                value => JsonSerializer.Serialize(value),
+                json => Normalize(JsonSerializer.Deserialize<ShellSettings>(json)),
+                value => _ = value.Appearance,
+                cancellationToken);
         }
         finally
         {

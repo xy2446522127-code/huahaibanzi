@@ -8,6 +8,7 @@ public sealed class JsonWindowPlacementStore
 {
     private readonly string filePath;
     private readonly SemaphoreSlim gate = new(1, 1);
+    private readonly AtomicJsonFileStore atomicFileStore = new();
 
     public JsonWindowPlacementStore(string filePath)
     {
@@ -55,9 +56,13 @@ public sealed class JsonWindowPlacementStore
             state.LastDisplayId = placement.DisplayId;
             var directory = Path.GetDirectoryName(filePath);
             if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
-            var temporaryPath = filePath + ".tmp";
-            await File.WriteAllTextAsync(temporaryPath, JsonSerializer.Serialize(state), cancellationToken);
-            File.Move(temporaryPath, filePath, overwrite: true);
+            await atomicFileStore.WriteVerifiedAsync(
+                filePath,
+                state,
+                value => JsonSerializer.Serialize(value),
+                json => JsonSerializer.Deserialize<WindowPlacementState>(json) ?? throw new InvalidDataException("窗口位置数据为空。"),
+                value => ValidateState(value),
+                cancellationToken);
         }
         finally
         {
@@ -80,6 +85,22 @@ public sealed class JsonWindowPlacementStore
         catch (IOException)
         {
             return new WindowPlacementState();
+        }
+    }
+
+    private static void ValidateState(WindowPlacementState state)
+    {
+        if (state.Positions is null)
+        {
+            throw new InvalidDataException("窗口位置数据缺少位置集合。");
+        }
+
+        foreach (var pair in state.Positions)
+        {
+            if (string.IsNullOrWhiteSpace(pair.Key) || pair.Value is null)
+            {
+                throw new InvalidDataException("窗口位置数据包含无效项。");
+            }
         }
     }
 

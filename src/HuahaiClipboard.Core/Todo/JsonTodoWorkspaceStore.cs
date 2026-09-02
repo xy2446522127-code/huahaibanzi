@@ -1,4 +1,5 @@
 using System.Text.Json;
+using HuahaiClipboard.Core.Services;
 
 namespace HuahaiClipboard.Core.Todo;
 
@@ -6,6 +7,7 @@ public sealed class JsonTodoWorkspaceStore
 {
     private readonly string filePath;
     private readonly SemaphoreSlim gate = new(1, 1);
+    private readonly AtomicJsonFileStore atomicFileStore = new();
 
     public JsonTodoWorkspaceStore(string filePath)
     {
@@ -55,10 +57,13 @@ public sealed class JsonTodoWorkspaceStore
                 Directory.CreateDirectory(directory);
             }
 
-            var temporaryPath = filePath + ".tmp";
-            var json = JsonSerializer.Serialize(workspace.Normalize());
-            await File.WriteAllTextAsync(temporaryPath, json, cancellationToken);
-            File.Move(temporaryPath, filePath, overwrite: true);
+            await atomicFileStore.WriteVerifiedAsync(
+                filePath,
+                workspace.Normalize(),
+                value => JsonSerializer.Serialize(value),
+                json => JsonSerializer.Deserialize<TodoWorkspace>(json) ?? throw new InvalidDataException("待办数据为空。"),
+                value => _ = value.Normalize(),
+                cancellationToken);
         }
         finally
         {

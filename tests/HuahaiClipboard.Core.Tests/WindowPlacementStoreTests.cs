@@ -28,4 +28,26 @@ public sealed class WindowPlacementStoreTests
             }
         }
     }
+
+    [TestMethod]
+    public async Task SaveAsync_RetainsTwoReadablePlacementBackups()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-placement-backups-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "window-positions.json");
+        try
+        {
+            var store = new JsonWindowPlacementStore(path);
+            await store.SaveAsync(new WindowPlacement("display", 10, 20));
+            await store.SaveAsync(new WindowPlacement("display", 30, 40));
+            await store.SaveAsync(new WindowPlacement("display", 50, 60));
+
+            Assert.AreEqual(new WindowPlacement("display", 50, 60), await new JsonWindowPlacementStore(path).LoadLastAsync());
+            Assert.AreEqual(new WindowPlacement("display", 30, 40), await new JsonWindowPlacementStore(path + ".bak1").LoadLastAsync());
+            Assert.AreEqual(new WindowPlacement("display", 10, 20), await new JsonWindowPlacementStore(path + ".bak2").LoadLastAsync());
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
 }

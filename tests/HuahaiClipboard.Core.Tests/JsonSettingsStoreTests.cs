@@ -59,6 +59,28 @@ public sealed class JsonSettingsStoreTests
     }
 
     [TestMethod]
+    public async Task Settings_SaveRetainsTwoReadableBackups()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"huahai-settings-backups-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "settings.json");
+        try
+        {
+            var store = new JsonSettingsStore(path);
+            await store.SaveAsync(ShellSettings.Default with { Appearance = ShellSettings.Default.Appearance with { ThemeId = "rose-purple" } }, CancellationToken.None);
+            await store.SaveAsync(ShellSettings.Default with { Appearance = ShellSettings.Default.Appearance with { ThemeId = "cobalt-blue" } }, CancellationToken.None);
+            await store.SaveAsync(ShellSettings.Default with { Appearance = ShellSettings.Default.Appearance with { ThemeId = "emerald-cyan" } }, CancellationToken.None);
+
+            Assert.AreEqual("emerald-cyan", (await new JsonSettingsStore(path).LoadAsync(CancellationToken.None)).Appearance.ThemeId);
+            Assert.AreEqual("cobalt-blue", (await new JsonSettingsStore(path + ".bak1").LoadAsync(CancellationToken.None)).Appearance.ThemeId);
+            Assert.AreEqual("rose-purple", (await new JsonSettingsStore(path + ".bak2").LoadAsync(CancellationToken.None)).Appearance.ThemeId);
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [TestMethod]
     public async Task Settings_OldInputWithoutPreviewShortcutLoadsUnbound()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"huahai-settings-preview-shortcut-{Guid.NewGuid():N}");
