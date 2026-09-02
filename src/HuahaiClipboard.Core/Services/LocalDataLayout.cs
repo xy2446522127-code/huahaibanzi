@@ -59,6 +59,63 @@ public sealed class LocalDataLayout
         return Path.Combine(Path.GetFullPath(localApplicationData), "HuahaiClipboard");
     }
 
+    public static async Task<DataRootResolution> ResolveDataRootAsync(
+        IDataLocationRegistry registry,
+        string installRoot,
+        string legacyDataDirectory,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(registry);
+        ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
+        ArgumentException.ThrowIfNullOrWhiteSpace(legacyDataDirectory);
+
+        var registeredDataRoot = NormalizeExistingDirectory(
+            await registry.ReadAsync(cancellationToken));
+        var installDataRoot = NormalizeDirectory(Path.Combine(installRoot, "Data"));
+        var populatedRoots = new[] { registeredDataRoot, installDataRoot }
+            .Where(root => root is not null && HasRecognizedPerUserData(root))
+            .Cast<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var legacySource = HasRecognizedLegacyData(legacyDataDirectory)
+            ? NormalizeDirectory(legacyDataDirectory)
+            : null;
+
+        if (populatedRoots.Length > 1)
+        {
+            return new DataRootResolution(
+                DataRootResolutionKind.RecoveryRequired,
+                null,
+                legacySource,
+                populatedRoots);
+        }
+
+        if (registeredDataRoot is not null &&
+            (HasRecognizedPerUserData(registeredDataRoot) || !HasRecognizedPerUserData(installDataRoot)))
+        {
+            return new DataRootResolution(
+                DataRootResolutionKind.Registered,
+                registeredDataRoot,
+                legacySource,
+                []);
+        }
+
+        if (HasRecognizedPerUserData(installDataRoot))
+        {
+            return new DataRootResolution(
+                DataRootResolutionKind.InstallRoot,
+                installDataRoot,
+                legacySource,
+                []);
+        }
+
+        return new DataRootResolution(
+            DataRootResolutionKind.NewInstall,
+            installDataRoot,
+            legacySource,
+            []);
+    }
+
     public LocalDataLayout(string installRoot, string userKey)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
@@ -121,5 +178,45 @@ public sealed class LocalDataLayout
             || ReservedWindowsFileNames.Contains(baseName)
                 ? DefaultUserKey
                 : normalized;
+    }
+
+    private static string? NormalizeExistingDirectory(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return null;
+        var normalized = NormalizeDirectory(path);
+        return Directory.Exists(normalized) ? normalized : null;
+    }
+
+    private static string NormalizeDirectory(string path) =>
+        Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+    private static bool HasRecognizedPerUserData(string? dataRoot)
+    {
+        if (string.IsNullOrWhiteSpace(dataRoot) || !Directory.Exists(dataRoot)) return false;
+        try
+        {
+            return Directory.EnumerateDirectories(dataRoot)
+                .Where(path => (File.GetAttributes(path) & FileAttributes.ReparsePoint) == 0)
+                .Any(path => HasKnownDataFile(path));
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    private static bool HasRecognizedLegacyData(string legacyDirectory) =>
+        Directory.Exists(legacyDirectory) && HasKnownDataFile(legacyDirectory);
+
+    private static bool HasKnownDataFile(string directory)
+    {
+        return File.Exists(Path.Combine(directory, "history.dat")) ||
+               File.Exists(Path.Combine(directory, "settings.json")) ||
+               File.Exists(Path.Combine(directory, "todo-workspace.json")) ||
+               File.Exists(Path.Combine(directory, "window-positions.json"));
     }
 }
