@@ -50,3 +50,23 @@ public sealed class DataRootRecoveryRequiredException : IOException
 
     public IReadOnlyList<string> ConflictingRoots { get; }
 }
+
+public sealed record RecoveryReportSource(
+    string Root,
+    string Provenance,
+    RecoveryInspectionState State,
+    int HistoryCount,
+    int TodoCount,
+    int NoteCount,
+    int ImageCount,
+    IReadOnlyList<string> FileHashes,
+    string? ErrorCode);
+
+public sealed record RecoveryReport(
+    string ReportId,
+    DateTimeOffset CreatedAt,
+    IReadOnlyList<RecoveryReportSource> Sources,
+    IReadOnlyList<RecoveryConflict> Conflicts,
+    IReadOnlyList<string> SensitiveValues);
+
+public sealed record RecoveryReportResult(string JsonPath, string TextPath);
