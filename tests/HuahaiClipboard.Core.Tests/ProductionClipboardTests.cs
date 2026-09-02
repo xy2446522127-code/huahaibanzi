@@ -92,7 +92,7 @@ public sealed class ProductionClipboardTests
     }
 
     [TestMethod]
-    public async Task History_CorruptFileIsQuarantinedBeforeNewHistoryIsWritten()
+    public async Task History_CorruptFileBlocksMutationWithoutRenamingTheOnlyCopy()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"huahai-corrupt-{Guid.NewGuid():N}");
         var path = Path.Combine(directory, "history.dat");
@@ -103,14 +103,13 @@ public sealed class ProductionClipboardTests
             await File.WriteAllTextAsync(path, corruptContents);
             var source = new JsonClipboardHistorySource(path, new ThrowingTextProtector());
 
-            await source.UpsertAsync(
-                CreateRecord("new value", DateTimeOffset.Parse("2026-08-05T10:00:00+08:00")),
-                CancellationToken.None);
+            await Assert.ThrowsExceptionAsync<HistoryRecoveryRequiredException>(() =>
+                source.UpsertAsync(
+                    CreateRecord("new value", DateTimeOffset.Parse("2026-08-05T10:00:00+08:00")),
+                    CancellationToken.None));
 
-            var quarantineFiles = Directory.GetFiles(directory, "history.dat.corrupt*");
-            Assert.AreEqual(1, quarantineFiles.Length);
-            Assert.AreEqual(corruptContents, await File.ReadAllTextAsync(quarantineFiles[0]));
-            Assert.AreNotEqual(corruptContents, await File.ReadAllTextAsync(path));
+            Assert.AreEqual(corruptContents, await File.ReadAllTextAsync(path));
+            Assert.AreEqual(0, Directory.GetFiles(directory, "history.dat.corrupt*").Length);
         }
         finally
         {

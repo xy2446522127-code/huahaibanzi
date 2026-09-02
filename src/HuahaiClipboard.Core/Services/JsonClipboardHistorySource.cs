@@ -4,6 +4,8 @@ using HuahaiClipboard.Core.Models;
 
 namespace HuahaiClipboard.Core.Services;
 
+public sealed class HistoryRecoveryRequiredException(string message, Exception innerException) : IOException(message, innerException);
+
 public sealed class JsonClipboardHistorySource : IClipboardHistorySource
 {
     private readonly string filePath;
@@ -11,6 +13,7 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
     private readonly IClipboardImageStore? imageStore;
     private readonly SemaphoreSlim gate = new(1, 1);
     private List<ClipboardRecord>? records;
+    private Exception? loadFailure;
 
     public JsonClipboardHistorySource(
         string filePath,
@@ -28,6 +31,7 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
         try
         {
             await EnsureLoadedAsync(cancellationToken);
+            ThrowIfRecoveryRequired();
             return records!
                 .OrderByDescending(record => record.IsPinned)
                 .ThenByDescending(record => record.LastCopiedAt)
@@ -45,6 +49,7 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
         try
         {
             await EnsureLoadedAsync(cancellationToken);
+            ThrowIfRecoveryRequired();
             return records!.FirstOrDefault(record => record.Id == recordId);
         }
         finally
@@ -63,6 +68,7 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
         try
         {
             await EnsureLoadedAsync(cancellationToken);
+            ThrowIfRecoveryRequired();
             var index = records!.FindIndex(record => record.Id == recordId);
             if (index < 0)
             {
@@ -154,6 +160,7 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
         try
         {
             await EnsureLoadedAsync(cancellationToken);
+            ThrowIfRecoveryRequired();
             var beforeAssets = ReferencedAssets(records!);
             var removed = records!.RemoveAll(value =>
                 value.LastCopiedAt < cutoff &&
@@ -181,6 +188,7 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
         try
         {
             await EnsureLoadedAsync(cancellationToken);
+            ThrowIfRecoveryRequired();
             var overflow = records!
                 .Where(value => !value.IsFavorite && !value.IsPinned)
                 .OrderByDescending(value => value.LastCopiedAt)
@@ -220,6 +228,7 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
         try
         {
             await EnsureLoadedAsync(cancellationToken);
+            ThrowIfRecoveryRequired();
             var beforeAssets = ReferencedAssets(records!);
             mutation(records!);
             await SaveAsync(cancellationToken);
@@ -265,6 +274,11 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
             return;
         }
 
+        if (loadFailure is not null)
+        {
+            ThrowIfRecoveryRequired();
+        }
+
         if (!File.Exists(filePath))
         {
             records = [];
@@ -281,20 +295,18 @@ public sealed class JsonClipboardHistorySource : IClipboardHistorySource
         }
         catch (Exception exception) when (exception is JsonException or FormatException or System.Security.Cryptography.CryptographicException)
         {
-            QuarantineCorruptHistory();
-            records = [];
+            loadFailure = exception;
         }
     }
 
-    private void QuarantineCorruptHistory()
+    private void ThrowIfRecoveryRequired()
     {
-        var recoveryPath = filePath + ".corrupt";
-        for (var suffix = 2; File.Exists(recoveryPath); suffix++)
+        if (loadFailure is not null)
         {
-            recoveryPath = filePath + $".corrupt.{suffix}";
+            throw new HistoryRecoveryRequiredException(
+                "剪贴板历史数据无法读取，需要进入恢复流程。",
+                loadFailure);
         }
-
-        File.Move(filePath, recoveryPath);
     }
 
     private static ClipboardRecord NormalizeLegacyRecord(ClipboardRecord record)
