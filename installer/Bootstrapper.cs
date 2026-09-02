@@ -175,6 +175,18 @@ internal static class Bootstrapper
             activeStep = "检查 Microsoft 运行时";
             bool restartRequired = InstallMissingPrerequisites(stagingRoot);
             Log("Prerequisites verified. RestartRequired=" + restartRequired);
+            activeStep = "创建升级前数据快照";
+            string registeredDataRoot = DataLocationPolicy.ReadRegistered();
+            string stableDataRoot = DataLocationPolicy.Resolve(installRoot, registeredDataRoot);
+            if (Directory.Exists(stableDataRoot))
+            {
+                string snapshotParent = Path.Combine(
+                    Path.GetTempPath(),
+                    "HuahaiClipboard",
+                    "UpgradeSnapshots");
+                string snapshotRoot = UpgradePreflightPolicy.CreateVerifiedSnapshot(stableDataRoot, snapshotParent);
+                Log("Verified data snapshot created: " + snapshotRoot);
+            }
             activeStep = "关闭旧版本";
             StopInstalledProcesses(installRoot);
             activeStep = "保留安装目录中的用户数据";
