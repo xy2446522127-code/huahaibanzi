@@ -190,6 +190,9 @@ internal static class Bootstrapper
                 TryDeleteDirectory,
                 delegate
                 {
+                    activeStep = "登记稳定数据位置";
+                    DataLocationPolicy.WriteRegistered(
+                        DataLocationPolicy.Resolve(installRoot, DataLocationPolicy.ReadRegistered()));
                     activeStep = "写入安装所有权标记";
                     InstallTargetPolicy.WriteOwnerMarker(installRoot);
                     activeStep = "创建快捷方式";
