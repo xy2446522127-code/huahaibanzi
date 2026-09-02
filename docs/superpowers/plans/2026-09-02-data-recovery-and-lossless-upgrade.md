@@ -537,4 +537,3 @@ git commit -m "test: verify lossless clipboard upgrades"
 - Tasks 6-7 enforce installer preflight, original target reuse, receipt-based rollback, and recovery-required startup.
 - Task 8 verifies released-version paths and failure injection without real user data.
 - Every task has exact files, concrete API or behavior, a failure-first test, a pass command, and an owned commit set.
-
