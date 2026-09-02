@@ -8,6 +8,7 @@ public static class WebBridgeProtocol
         "hide",
         "resize",
         "beginNativeDrag",
+        "beginNativeResize",
         "openPreview",
         "previewHover",
         "previewHoverEnd",

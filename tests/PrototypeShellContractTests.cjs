@@ -31,7 +31,7 @@ for (const file of files) {
     const html = fs.readFileSync(file, 'utf8');
     const marker = '<script type="module">';
     const start = html.indexOf(marker);
-    const end = html.lastIndexOf('</script>');
+    const end = html.indexOf('</script>', start);
 
     assert.notEqual(start, -1);
     assert.notEqual(end, -1);
@@ -55,7 +55,7 @@ for (const file of files) {
   });
 }
 
-test('production shell exposes a hide-to-background button beside settings', () => {
+test('production shell exposes the approved tabs and toolbar controls', () => {
   const html = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
   const toolbarStart = html.indexOf('<div class="toolbar">');
   const filtersStart = html.indexOf('<div class="filters"', toolbarStart);
@@ -69,6 +69,9 @@ test('production shell exposes a hide-to-background button beside settings', () 
   assert.ok(minimizeIndex < settingsIndex);
   assert.match(toolbar, /id="minimizeButton"[^>]*title="隐藏到后台"/);
   assert.match(html, /hhQ\('#minimizeButton'\)\.onclick=hidePanel/);
+  assert.match(html, /product-tabs/);
+  assert.match(html, /id=\"clipboardTab\"/);
+  assert.match(html, /id=\"todoTab\"/);
   assert.match(html, /\.toolbar\{[^}]*grid-template-columns:minmax\(0,1fr\) 42px 42px/);
 });
 
@@ -130,4 +133,72 @@ test('production pin keeps the approved silhouette while mirroring and rotating 
   assert.doesNotMatch(html, /\.pin-glyph\{[^}]*rotate\(-12deg\)/);
   assert.match(html, /id="pinSolidPath"/);
   assert.match(html, /id="pinOutlinePath"/);
+});
+
+test('preview paper reuses todo surface tokens and exposes paper gestures', () => {
+  const html = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
+  assert.match(html, /\.preview-window\.glass\{[^}]*border-radius:23px/);
+  assert.match(html, /id=\"previewResize\"/);
+  assert.match(html, /function beginPreviewResize/);
+  assert.match(html, /function beginPreviewDrag/);
+  assert.match(html, /class=\"preview-board preview-window glass\"/);
+  assert.match(html, /class=\"preview-header preview-titlebar\"/);
+  assert.match(html, /class=\"resize-handle preview-resizer\"/);
+  assert.match(html, /preview-topmost-pin/);
+  assert.doesNotMatch(html, /<button class="preview-icon[^>]*>⌖<\/button>/);
+});
+
+test('web prototype opens one shared preview window from the record context menu', () => {
+  const html = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
+
+  assert.match(html, /<script src="preview-prototype\.js"><\/script>/);
+  assert.match(html, /<section class="preview-board preview-window glass"[^>]*id="previewWindow"/);
+  assert.match(html, /recordList\.addEventListener\('contextmenu'[\s\S]*openPreviewRecord\(item,'右键'\)/);
+  assert.doesNotMatch(html, /toast\('原型中右键会打开完整内容预览'\)/);
+});
+
+test('shared preview renders final paper icons without a mutation observer patch', () => {
+  const html = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
+
+  assert.match(html, /id="previewTopmost"/);
+  assert.match(html, /previewTopmost:'<svg class="preview-topmost-pin" viewBox="0 -52 64 36"/);
+  assert.match(html, /id="previewHide"[\s\S]*M5 12h14/);
+  assert.match(html, /id="previewClose"[\s\S]*m18 6-12 12M6 6l12 12/);
+});
+
+test('preview topmost reuses the todo paper pin source and styling', () => {
+  const html = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
+
+  assert.match(html, /previewTopmost:'<svg class="preview-topmost-pin" viewBox="0 -52 64 36"/);
+  assert.match(html, /getElementById\('previewTopmost'\)\?\.classList\.contains\('active'\)\?'#pinSolidPath':'#pinOutlinePath'/);
+  assert.match(html, /\.preview-topmost-pin\{[^}]*transform:rotate\(130deg\) scaleX\(-1\)/);
+  assert.match(html, /\.preview-icon\.active\.pin[^}]*color:#ff4968/);
+});
+
+test('shared preview exposes note save close restore drag and resize controls', () => {
+  const html = fs.readFileSync('src/HuahaiClipboard.App/Assets/Web/product-shell.html', 'utf8');
+
+  for (const id of [
+    'previewNoteToggle',
+    'previewNoteEditor',
+    'previewNoteSave',
+    'previewSave',
+    'previewDiscard',
+    'previewCopy',
+    'previewReopen',
+    'previewDrag',
+    'previewResize',
+  ]) {
+    assert.match(html, new RegExp('id="' + id + '"'), id);
+  }
+  assert.match(html, /savePreviewRecord/);
+  assert.match(html, /beginPreviewDrag/);
+  assert.match(html, /beginPreviewResize/);
+});
+
+test('native preview host keeps transparent corners', () => {
+  const cs = fs.readFileSync('src/HuahaiClipboard.App/Presentation/Windows/ContentPreviewWindow.xaml.cs', 'utf8');
+  assert.match(cs, /previewWebView\.DefaultBackgroundColor\s*=\s*Colors\.Transparent/);
+  assert.match(cs, /DwmSetWindowAttribute\(handle, 33/);
+  assert.match(cs, /DwmSetWindowAttribute\(handle, 34/);
 });

@@ -28,7 +28,8 @@
       'MediaNextTrack', 'MediaPreviousTrack', 'MediaStop', 'MediaPlayPause'
     ]);
     if (!functionKey && !characterKey && !numpadDigit && !namedKeys.has(key)) return '';
-    if (parts.length === 0 && !functionKey) return '';
+    if (parts.length === 0 && !functionKey) return `双击 ${key}`;
+    if (parts.length === 0) return key;
     parts.push(key);
     return parts.join(' + ');
   }

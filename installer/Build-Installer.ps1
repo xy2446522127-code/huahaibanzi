@@ -93,6 +93,7 @@ try {
         '.huahai-install-owner',
         'Data',
         'prerequisites',
+        'product-shell.pre-5177-backup.html',
         'Uninstall.ps1',
         'UninstallPolicy.ps1'
     )

@@ -25,8 +25,26 @@ public sealed class ShellIntegrationPolicyTests
         AssertGesture(tryParse, "Alt + 鼠标右键", "RightMouse", 0x0001u, 0u);
         AssertGesture(tryParse, "Ctrl + Numpad1", "Keyboard", 0x0002u, 0x61u);
         AssertGesture(tryParse, "Ctrl + MediaPlayPause", "Keyboard", 0x0002u, 0xB3u);
+        AssertGesture(tryParse, "双击 A", "KeyboardDoubleTap", 0u, 0x41u);
+        AssertGesture(tryParse, "双空格", "KeyboardDoubleTap", 0u, 0x20u);
+        AssertGesture(tryParse, "双击 空格", "KeyboardDoubleTap", 0u, 0x20u);
+        AssertGesture(tryParse, "Double Space", "KeyboardDoubleTap", 0u, 0x20u);
+        AssertGesture(tryParse, "A A", "KeyboardDoubleTap", 0u, 0x41u);
         Assert.IsFalse(TryParse(tryParse, "A", out _), "Plain typing keys must not be captured globally.");
         Assert.IsFalse(TryParse(tryParse, "鼠标左键", out _), "Bare primary clicks must not replace normal Windows input.");
+    }
+
+    [TestMethod]
+    public void KeyDoubleTapDetector_RequiresSameKeyWithinWindow()
+    {
+        var detector = new HuahaiClipboard.Core.Services.KeyDoubleTapDetector(300);
+        Assert.IsFalse(detector.RegisterDown(0x41, 1000));
+        Assert.IsTrue(detector.RegisterDown(0x41, 1200));
+        Assert.IsFalse(detector.RegisterDown(0x41, 1301));
+        Assert.IsFalse(detector.RegisterDown(0x41, 1700));
+        Assert.IsFalse(detector.RegisterDown(0x42, 1800));
+        Assert.IsFalse(detector.RegisterDown(0x41, 1900));
+        Assert.IsTrue(detector.RegisterDown(0x41, 2000));
     }
 
     [TestMethod]
@@ -104,7 +122,7 @@ public sealed class ShellIntegrationPolicyTests
             "setRetentionDays", "setAutoCleanupCountEnabled", "setAutoCleanupCount", "clearOrdinary", "clearAll", "setTheme", "setOpacity",
             "setPetals", "setReduceMotion", "setClickDuration", "setRightDoubleClick",
             "setShortcut", "setPreviewShortcut", "resetShortcut", "setExclusions", "openDataFolder", "setStartup",
-            "setBackground", "setOutsideAutoHide", "beginNativeDrag"
+            "setBackground", "setOutsideAutoHide", "beginNativeDrag", "beginNativeResize"
             , "previewPanelScale", "commitPanelScale", "cancelPanelScale", "setPanelScale", "setCheckUpdatesOnStartup", "checkUpdate", "snoozeUpdate", "installUpdate", "openRelease",
             "openTodoWorkspace", "todoReady", "todoAdd", "todoToggle", "todoDelete", "todoMove", "todoAddNote", "todoUpdateNote", "todoDeleteNote", "todoSetCapsule", "todoCollapse", "todoRestore", "todoClose", "todoTopmost"
         ];

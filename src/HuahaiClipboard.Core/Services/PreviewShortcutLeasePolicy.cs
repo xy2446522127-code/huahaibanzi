@@ -11,7 +11,8 @@ public static class PreviewShortcutLeasePolicy
     {
         if (!mainPanelVisible || !hasHoveredRecord || settingsOpen ||
             !ShortcutGestureParser.TryParse(previewShortcut, out var previewGesture) ||
-            previewGesture is not { Kind: ShortcutGestureKind.Keyboard })
+            previewGesture is null ||
+            !IsKeyboardGesture(previewGesture.Kind))
         {
             return false;
         }
@@ -20,4 +21,7 @@ public static class PreviewShortcutLeasePolicy
                summonGesture is null ||
                previewGesture != summonGesture;
     }
+
+    private static bool IsKeyboardGesture(ShortcutGestureKind kind) =>
+        kind is ShortcutGestureKind.Keyboard or ShortcutGestureKind.KeyboardDoubleTap;
 }

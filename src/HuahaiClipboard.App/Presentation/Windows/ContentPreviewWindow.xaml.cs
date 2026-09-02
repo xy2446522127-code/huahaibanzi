@@ -5,6 +5,7 @@ using HuahaiClipboard.Core.Services;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI;
 using Microsoft.Web.WebView2.Core;
 using Windows.Graphics;
 
@@ -15,6 +16,7 @@ public sealed class ContentPreviewWindow : Window
     private const int ShowWindowHide = 0;
     private const uint WmNcLeftButtonDown = 0x00A1;
     private const int HitTestCaption = 2;
+    private const int HitTestBottomRight = 17;
     private static readonly TimeSpan AutoHideDelay = TimeSpan.FromMilliseconds(250);
 
     private readonly Func<Guid, PreviewEdit, Task<PreviewEditResult>> saveAsync;
@@ -54,6 +56,7 @@ public sealed class ContentPreviewWindow : Window
         this.placementStore = placementStore;
         this.assetsDirectory = assetsDirectory;
         Content = previewWebView;
+        previewWebView.DefaultBackgroundColor = Colors.Transparent;
         Activated += (_, _) => ConfigureWindow();
         Closed += (_, _) => IsOpen = false;
     }
@@ -105,6 +108,8 @@ public sealed class ContentPreviewWindow : Window
             presenter.IsAlwaysOnTop = topmost;
         }
 
+        ApplyTransparentWindowChrome();
+
         if (appWindow is not null)
         {
             appWindow.Closing += PreviewWindow_Closing;
@@ -113,6 +118,15 @@ public sealed class ContentPreviewWindow : Window
         autoHideTimer.Interval = AutoHideDelay;
         autoHideTimer.IsRepeating = false;
         autoHideTimer.Tick += AutoHideTimer_Tick;
+    }
+
+    private void ApplyTransparentWindowChrome()
+    {
+        var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        var cornerPreference = 2;
+        _ = DwmSetWindowAttribute(handle, 33, ref cornerPreference, sizeof(int));
+        var borderColor = unchecked((int)0xFFFFFFFE);
+        _ = DwmSetWindowAttribute(handle, 34, ref borderColor, sizeof(int));
     }
 
     private async Task RestorePlacementAsync(RectInt32 initialBounds)
@@ -229,6 +243,9 @@ public sealed class ContentPreviewWindow : Window
                 return;
             case "beginNativeDrag":
                 BeginNativeDrag();
+                return;
+            case "beginNativeResize":
+                BeginNativeResize();
                 return;
         }
     }
@@ -408,6 +425,13 @@ public sealed class ContentPreviewWindow : Window
         _ = SendMessage(handle, WmNcLeftButtonDown, new IntPtr(HitTestCaption), IntPtr.Zero);
     }
 
+    private void BeginNativeResize()
+    {
+        var handle = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        _ = ReleaseCapture();
+        _ = SendMessage(handle, WmNcLeftButtonDown, new IntPtr(HitTestBottomRight), IntPtr.Zero);
+    }
+
     private static PreviewWorkArea ToPreviewWorkArea(RectInt32 area) => new(area.X, area.Y, area.Width, area.Height);
 
     private static string DisplayKey(DisplayArea display) => display.DisplayId.Value.ToString("X16");
@@ -433,4 +457,7 @@ public sealed class ContentPreviewWindow : Window
 
     [DllImport("user32.dll")]
     private static extern IntPtr SendMessage(IntPtr windowHandle, uint message, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr windowHandle, int attribute, ref int value, int valueSize);
 }

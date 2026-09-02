@@ -39,11 +39,16 @@ test('keyboard shortcut formatting keeps supported modifiers and the final key',
   }), 'Ctrl + Numpad1');
 });
 
-test('keyboard shortcut formatting rejects gestures the native parser cannot register', () => {
+test('keyboard shortcut formatting maps plain named keys to double-tap gestures', () => {
   const event = key => ({ ctrlKey: false, altKey: false, shiftKey: false, metaKey: false, key });
-  assert.equal(shortcutInput.formatKey(event('Enter')), '');
-  assert.equal(shortcutInput.formatKey(event('Tab')), '');
-  assert.equal(shortcutInput.formatKey(event('ArrowLeft')), '');
+  assert.equal(shortcutInput.formatKey(event('Enter')), '双击 Enter');
+  assert.equal(shortcutInput.formatKey(event('Tab')), '双击 Tab');
+  assert.equal(shortcutInput.formatKey(event('ArrowLeft')), '双击 Left');
   assert.equal(shortcutInput.formatKey({ ...event('Enter'), ctrlKey: true, code: 'NumpadEnter' }), '');
   assert.equal(shortcutInput.formatKey({ ...event('Enter'), ctrlKey: true }), 'Ctrl + Enter');
+});
+
+test('keyboard shortcut formatting turns plain keys into double-tap gestures', () => {
+  assert.equal(shortcutInput.formatKey({ ctrlKey: false, altKey: false, shiftKey: false, metaKey: false, key: 'a' }), '双击 A');
+  assert.equal(shortcutInput.formatKey({ ctrlKey: false, altKey: false, shiftKey: false, metaKey: false, key: ' ' }), '双击 Space');
 });

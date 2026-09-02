@@ -3,6 +3,7 @@ namespace HuahaiClipboard.Core.Services;
 public enum ShortcutGestureKind
 {
     Keyboard,
+    KeyboardDoubleTap,
     LeftMouse,
     RightMouse,
     MiddleMouse,
@@ -28,6 +29,7 @@ public static class ShortcutGestureParser
         new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)
         {
             ["Space"] = 0x20,
+            ["空格"] = 0x20,
             ["Tab"] = 0x09,
             ["Enter"] = 0x0D,
             ["Return"] = 0x0D,
@@ -68,6 +70,11 @@ public static class ShortcutGestureParser
         if (string.IsNullOrEmpty(normalized))
         {
             return false;
+        }
+
+        if (TryParseDoubleTap(normalized, out gesture))
+        {
+            return true;
         }
 
         var parts = normalized
@@ -154,6 +161,48 @@ public static class ShortcutGestureParser
         }
 
         return NamedKeys.TryGetValue(value, out var key) ? key : 0;
+    }
+
+    private static bool TryParseDoubleTap(string value, out ShortcutGesture? gesture)
+    {
+        gesture = null;
+        var keyName = value;
+        if (value.StartsWith("双击", StringComparison.OrdinalIgnoreCase))
+        {
+            keyName = value[2..].Trim();
+        }
+        else if (value.Equals("双空格", StringComparison.OrdinalIgnoreCase))
+        {
+            keyName = "Space";
+        }
+        else if (value.StartsWith("Double ", StringComparison.OrdinalIgnoreCase))
+        {
+            keyName = value[7..].Trim();
+        }
+        else
+        {
+            var tokens = value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (tokens.Length != 2 || !tokens[0].Equals(tokens[1], StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            keyName = tokens[0];
+        }
+
+        if (string.IsNullOrWhiteSpace(keyName))
+        {
+            return false;
+        }
+
+        var key = ParseVirtualKey(keyName);
+        if (key == 0 || keyName.Contains('+', StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        gesture = new ShortcutGesture(ShortcutGestureKind.KeyboardDoubleTap, 0, key);
+        return true;
     }
 
     private static ShortcutGestureKind? ParseMouseKind(string value) => value switch

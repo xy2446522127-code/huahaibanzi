@@ -15,6 +15,7 @@ public sealed class GlobalInputService : IDisposable
     private const uint WmClipboardUpdate = 0x031D;
     private const uint WmHotkey = 0x0312;
     private const int WhMouseLowLevel = 14;
+    private const int WhKeyboardLowLevel = 13;
     private const uint WmLeftButtonDown = 0x0201;
     private const uint WmLeftButtonUp = 0x0202;
     private const uint WmRightButtonDown = 0x0204;
@@ -24,6 +25,10 @@ public sealed class GlobalInputService : IDisposable
     private const uint WmMouseWheel = 0x020A;
     private const uint WmXButtonDown = 0x020B;
     private const uint WmXButtonUp = 0x020C;
+    private const uint WmKeyDown = 0x0100;
+    private const uint WmKeyUp = 0x0101;
+    private const uint WmSysKeyDown = 0x0104;
+    private const uint WmSysKeyUp = 0x0105;
     private const uint ModifierAlt = 0x0001;
     private const uint ModifierControl = 0x0002;
     private const uint ModifierShift = 0x0004;
@@ -43,12 +48,17 @@ public sealed class GlobalInputService : IDisposable
     private readonly Action previewShortcutAction;
     private readonly SubclassProcedure subclassProcedure;
     private readonly MouseHookProcedure mouseHookProcedure;
+    private readonly KeyboardHookProcedure keyboardHookProcedure;
+    private readonly KeyDoubleTapDetector customDoubleTapDetector = new();
+    private readonly KeyDoubleTapDetector previewDoubleTapDetector = new();
+    private readonly HashSet<uint> pressedKeys = [];
     private readonly List<string> initializationWarnings = [];
     private readonly PointerDoubleClickDetector rightDoubleClickDetector = new(
         global::System.Windows.Forms.SystemInformation.DoubleClickTime,
         global::System.Windows.Forms.SystemInformation.DoubleClickSize.Width,
         global::System.Windows.Forms.SystemInformation.DoubleClickSize.Height);
     private IntPtr mouseHook;
+    private IntPtr keyboardHook;
     private bool disposed;
     private bool subclassInstalled;
     private bool clipboardListenerRegistered;
@@ -74,6 +84,7 @@ public sealed class GlobalInputService : IDisposable
         this.previewShortcutAction = previewShortcutAction;
         subclassProcedure = WindowSubclassProcedure;
         mouseHookProcedure = MouseHook;
+        keyboardHookProcedure = KeyboardHook;
 
         subclassInstalled = SetWindowSubclass(windowHandle, subclassProcedure, UIntPtr.Zero, UIntPtr.Zero);
         if (!subclassInstalled)
@@ -95,6 +106,12 @@ public sealed class GlobalInputService : IDisposable
         if (mouseHook == IntPtr.Zero)
         {
             initializationWarnings.Add("右键双击监听未能启动，请使用 Ctrl+Shift+V 或托盘图标。");
+        }
+
+        keyboardHook = SetWindowsHookEx(WhKeyboardLowLevel, keyboardHookProcedure, GetModuleHandle(null), 0);
+        if (keyboardHook == IntPtr.Zero)
+        {
+            initializationWarnings.Add("双击键盘快捷键监听未能启动，请使用组合键或托盘图标。");
         }
     }
 
@@ -148,6 +165,71 @@ public sealed class GlobalInputService : IDisposable
         UnmanagedCallbackGuard.Invoke(
             () => MouseHookCore(code, wParam, lParam),
             () => CallNextHookEx(mouseHook, code, wParam, lParam));
+
+    private IntPtr KeyboardHook(int code, UIntPtr wParam, IntPtr lParam) =>
+        UnmanagedCallbackGuard.Invoke(
+            () => KeyboardHookCore(code, wParam, lParam),
+            () => CallNextHookEx(keyboardHook, code, wParam, lParam));
+
+    private IntPtr KeyboardHookCore(int code, UIntPtr wParam, IntPtr lParam)
+    {
+        if (code < 0)
+        {
+            return CallNextHookEx(keyboardHook, code, wParam, lParam);
+        }
+
+        var message = unchecked((uint)wParam.ToUInt64());
+        var data = Marshal.PtrToStructure<KeyboardHookData>(lParam);
+        if (message is WmKeyUp or WmSysKeyUp)
+        {
+            pressedKeys.Remove(data.virtualKey);
+            return CallNextHookEx(keyboardHook, code, wParam, lParam);
+        }
+
+        if (message is not (WmKeyDown or WmSysKeyDown) || !pressedKeys.Add(data.virtualKey))
+        {
+            return CallNextHookEx(keyboardHook, code, wParam, lParam);
+        }
+
+        var settings = settingsSnapshot.Current;
+        if (!settings.HotkeyEnabled || !ModifiersMatch(0))
+        {
+            customDoubleTapDetector.Reset();
+            previewDoubleTapDetector.Reset();
+            return CallNextHookEx(keyboardHook, code, wParam, lParam);
+        }
+
+        var customIsDoubleTap = ShortcutGestureParser.TryParse(settings.CustomShortcut, out var customGesture) &&
+            customGesture is { Kind: ShortcutGestureKind.KeyboardDoubleTap };
+        var customMatched = customIsDoubleTap && customDoubleTapDetector.RegisterDown(data.virtualKey, data.time);
+        if (!customIsDoubleTap)
+        {
+            customDoubleTapDetector.Reset();
+        }
+        if (customMatched && customGesture!.VirtualKey == data.virtualKey)
+        {
+            var target = GetForegroundWindow();
+            _ = GetCursorPos(out var point);
+            _ = dispatcherQueue.TryEnqueue(() => summonAction(target, new PointInt32(point.X, point.Y)));
+        }
+
+        ShortcutGesture? previewGesture = null;
+        var previewIsDoubleTap = previewHotkeyLeased &&
+            PreviewShortcutLeasePolicy.ShouldLease(true, true, false, settings.PreviewShortcut, settings.CustomShortcut) &&
+            ShortcutGestureParser.TryParse(settings.PreviewShortcut, out previewGesture) &&
+            previewGesture is { Kind: ShortcutGestureKind.KeyboardDoubleTap };
+        var previewMatched = previewIsDoubleTap && previewDoubleTapDetector.RegisterDown(data.virtualKey, data.time);
+        if (!previewIsDoubleTap)
+        {
+            previewDoubleTapDetector.Reset();
+        }
+        if (previewMatched && previewGesture!.VirtualKey == data.virtualKey)
+        {
+            _ = dispatcherQueue.TryEnqueue(() => previewShortcutAction());
+        }
+
+        return CallNextHookEx(keyboardHook, code, wParam, lParam);
+    }
 
     private IntPtr MouseHookCore(int code, UIntPtr wParam, IntPtr lParam)
     {
@@ -240,6 +322,7 @@ public sealed class GlobalInputService : IDisposable
 
     private void ApplyHotkeyRegistration(InputSettings settings)
     {
+        customDoubleTapDetector.Reset();
         if (!subclassInstalled)
         {
             return;
@@ -282,6 +365,7 @@ public sealed class GlobalInputService : IDisposable
 
     private void ApplyPreviewHotkeyRegistration(InputSettings settings)
     {
+        previewDoubleTapDetector.Reset();
         if (!subclassInstalled)
         {
             return;
@@ -331,6 +415,11 @@ public sealed class GlobalInputService : IDisposable
             _ = UnhookWindowsHookEx(mouseHook);
             mouseHook = IntPtr.Zero;
         }
+        if (keyboardHook != IntPtr.Zero)
+        {
+            _ = UnhookWindowsHookEx(keyboardHook);
+            keyboardHook = IntPtr.Zero;
+        }
 
         if (hotkeyRegistered)
         {
@@ -373,8 +462,19 @@ public sealed class GlobalInputService : IDisposable
         public UIntPtr extraInfo;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct KeyboardHookData
+    {
+        public uint virtualKey;
+        public uint scanCode;
+        public uint flags;
+        public uint time;
+        public UIntPtr extraInfo;
+    }
+
     private delegate IntPtr SubclassProcedure(IntPtr hwnd, uint message, UIntPtr wParam, IntPtr lParam, UIntPtr subclassId, UIntPtr referenceData);
     private delegate IntPtr MouseHookProcedure(int code, UIntPtr wParam, IntPtr lParam);
+    private delegate IntPtr KeyboardHookProcedure(int code, UIntPtr wParam, IntPtr lParam);
 
     [DllImport("comctl32.dll", SetLastError = true)]
     private static extern bool SetWindowSubclass(IntPtr hwnd, SubclassProcedure procedure, UIntPtr id, UIntPtr referenceData);
@@ -399,6 +499,9 @@ public sealed class GlobalInputService : IDisposable
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr SetWindowsHookEx(int hookId, MouseHookProcedure procedure, IntPtr module, uint threadId);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr SetWindowsHookEx(int hookId, KeyboardHookProcedure procedure, IntPtr module, uint threadId);
 
     [DllImport("user32.dll")]
     private static extern bool UnhookWindowsHookEx(IntPtr hook);

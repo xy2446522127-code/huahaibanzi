@@ -19,6 +19,8 @@ public sealed class PreviewWindowPolicyTests
         Assert.IsFalse(PreviewShortcutLeasePolicy.ShouldLease(true, true, true, "Ctrl+Alt+P", "Ctrl+Shift+V"));
         Assert.IsFalse(PreviewShortcutLeasePolicy.ShouldLease(true, true, false, "鼠标右键", "Ctrl+Shift+V"));
         Assert.IsFalse(PreviewShortcutLeasePolicy.ShouldLease(true, true, false, "CTRL + SHIFT + V", "Ctrl+Shift+V"));
+        Assert.IsTrue(PreviewShortcutLeasePolicy.ShouldLease(true, true, false, "双击 P", "Ctrl+Shift+V"));
+        Assert.IsFalse(PreviewShortcutLeasePolicy.ShouldLease(true, true, false, "双击 P", "双击 P"));
     }
 
     [TestMethod]

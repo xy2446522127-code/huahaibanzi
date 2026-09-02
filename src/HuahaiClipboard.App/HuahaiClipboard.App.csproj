@@ -13,6 +13,7 @@
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <StartupObject>HuahaiClipboard.App.Program</StartupObject>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Assets\Web\product-shell.pre-5177-backup.html</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
@@ -22,6 +23,7 @@
     <ProjectReference Include="..\HuahaiClipboard.Core\HuahaiClipboard.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Assets\Web\product-shell.pre-5177-backup.html" />
     <Content Include="Assets\Web\product-shell.html" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Assets\Web\todo-shell.html" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Assets\Web\retention-policy.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
@@ -31,6 +33,11 @@
     <Content Include="Assets\Web\panel-drag.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Assets\Web\virtual-record-list.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Assets\Web\shortcut-input.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\Web\interaction-contract.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\Web\shell-router.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\Web\capsule-geometry.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\Web\preview-prototype.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\Web\preview-overlay.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Assets\Brand\fox-icon-source.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
